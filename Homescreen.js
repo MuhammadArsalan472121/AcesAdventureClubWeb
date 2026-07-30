@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+
 import {
   View,
   Text,
@@ -10,6 +11,7 @@ import {
   SafeAreaView,
   StatusBar,
   Dimensions,
+  TextInput,
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
@@ -38,33 +40,42 @@ menuVisible && (
 
 <View style={styles.mobileMenu}>
 
-<TouchableOpacity>
-<Text style={styles.menuItem}>🏠 Home</Text>
-</TouchableOpacity>
+  <TouchableOpacity style={styles.menuRow}>
+    <Ionicons name="home-outline" size={22} color="#0B5CAD" />
+    <Text style={styles.menuItem}>Home</Text>
+  </TouchableOpacity>
 
-<TouchableOpacity>
-<Text style={styles.menuItem}>ℹ️ About</Text>
-</TouchableOpacity>
+  <TouchableOpacity style={styles.menuRow}>
+    <Ionicons name="information-circle-outline" size={22} color="#0B5CAD" />
+    <Text style={styles.menuItem}>About</Text>
+  </TouchableOpacity>
 
-<TouchableOpacity>
-<Text style={styles.menuItem}>🧭 Browse Trips</Text>
-</TouchableOpacity>
+  <TouchableOpacity style={styles.menuRow}>
+    <Ionicons name="compass-outline" size={22} color="#0B5CAD" />
+    <Text style={styles.menuItem}>Browse Trips</Text>
+  </TouchableOpacity>
 
-<TouchableOpacity>
-<Text style={styles.menuItem}>🖼 Gallery</Text>
-</TouchableOpacity>
+  <TouchableOpacity style={styles.menuRow}>
+    <Ionicons name="images-outline" size={22} color="#0B5CAD" />
+    <Text style={styles.menuItem}>Gallery</Text>
+  </TouchableOpacity>
 
-<TouchableOpacity>
-<Text style={styles.menuItem}>🗺 Map</Text>
-</TouchableOpacity>
+  <TouchableOpacity style={styles.menuRow}>
+    <Ionicons name="map-outline" size={22} color="#0B5CAD" />
+    <Text style={styles.menuItem}>Map</Text>
+  </TouchableOpacity>
 
-<TouchableOpacity>
-<Text style={styles.menuItem}>🤝 Sponsors</Text>
-</TouchableOpacity>
+  <TouchableOpacity style={styles.menuRow}>
+    <Ionicons name="people-outline" size={22} color="#0B5CAD" />
+    <Text style={styles.menuItem}>Sponsors</Text>
+  </TouchableOpacity>
 
-<TouchableOpacity>
-<Text style={styles.menuItem}>📞 Contact</Text>
-</TouchableOpacity>
+  <TouchableOpacity style={styles.menuRow}>
+    <Ionicons name="call-outline" size={22} color="#0B5CAD" />
+    <Text style={styles.menuItem}>Contact</Text>
+  </TouchableOpacity>
+
+
 
 <TouchableOpacity style={styles.loginButton}>
 <Text style={styles.loginButtonText}>
@@ -427,6 +438,466 @@ Sign Up
 </ScrollView>
 
 </View>
+{/* ================= STATS SECTION ================= */}
+
+<View style={styles.statsSection}>
+
+  <View style={styles.statsRow}>
+
+    <View style={styles.statItem}>
+      <Text style={styles.statNumber}>100+</Text>
+      <Text style={styles.statLabel}>TRIPS{"\n"}COMPLETED</Text>
+    </View>
+
+    <View style={styles.statItem}>
+      <Text style={styles.statNumber}>500+</Text>
+      <Text style={styles.statLabel}>ELITE{"\n"}EXPLORERS</Text>
+    </View>
+
+  </View>
+
+  <View style={styles.statsRow}>
+
+    <View style={styles.statItem}>
+      <Text style={styles.statNumber}>50+</Text>
+      <Text style={styles.statLabel}>GLOBAL{"\n"}DESTINATIONS</Text>
+    </View>
+
+    <View style={styles.statItem}>
+      <Text style={styles.statNumber}>20+</Text>
+      <Text style={styles.statLabel}>EXPERT{"\n"}GUIDES</Text>
+    </View>
+
+  </View>
+
+</View>
+{/* ================= FEATURED ADVENTURES ================= */}
+
+<View style={styles.featuredSection}>
+
+<Text style={styles.featuredSmallTitle}>
+POPULAR DESTINATIONS
+</Text>
+
+<Text style={styles.featuredTitle}>
+FEATURED <Text style={styles.blueItalic}>ADVENTURES</Text>
+</Text>
+
+<Text style={styles.featuredDescription}>
+Discover handpicked adventures crafted for explorers seeking unforgettable experiences.
+</Text>
+
+</View>
+<ScrollView
+  horizontal
+  showsHorizontalScrollIndicator={false}
+  contentContainerStyle={styles.featuredScroll}
+>
+
+  {/* CARD 1 */}
+
+  <ImageBackground
+    source={require("./assets/featured1.jpg")}
+    style={styles.featuredCard}
+    imageStyle={styles.featuredImage}
+  >
+
+    <View style={styles.featuredOverlay}>
+
+      <View style={styles.badge}>
+        <Text style={styles.badgeText}>Most Popular</Text>
+      </View>
+
+      <Text style={styles.location}>
+        Gilgit, Pakistan
+      </Text>
+
+      <Text style={styles.placeName}>
+        Hunza Valley
+      </Text>
+
+      <Text style={styles.placeDescription}>
+        Experience the breathtaking beauty of Hunza's mountains and valleys.
+      </Text>
+
+      <View style={styles.cardFooter}>
+
+        <View style={styles.footerItem}>
+          <Text style={styles.footerIcon}>🕒</Text>
+          <Text style={styles.footerText}>3 Days</Text>
+        </View>
+
+        <View style={styles.footerItem}>
+          <Text style={styles.footerIcon}>⛰️</Text>
+          <Text style={styles.footerText}>Easy</Text>
+        </View>
+
+        <Text style={styles.price}>
+          PKR 40,000
+        </Text>
+
+      </View>
+
+    </View>
+
+  </ImageBackground>
+
+  {/* CARD 2 */}
+
+  <ImageBackground
+    source={require("./assets/featured2.jpg")}
+    style={styles.featuredCard}
+    imageStyle={styles.featuredImage}
+  >
+
+    <View style={styles.featuredOverlay}>
+
+      <View style={styles.badge}>
+        <Text style={styles.badgeText}>Most Visited</Text>
+      </View>
+
+      <Text style={styles.location}>
+        Skardu, Pakistan
+      </Text>
+
+      <Text style={styles.placeName}>
+        Skardu Adventure
+      </Text>
+
+      <Text style={styles.placeDescription}>
+        Explore majestic lakes, valleys and unforgettable mountain views.
+      </Text>
+
+      <View style={styles.cardFooter}>
+
+        <View style={styles.footerItem}>
+          <Text style={styles.footerIcon}>🕒</Text>
+          <Text style={styles.footerText}>14 Days</Text>
+        </View>
+
+        <View style={styles.footerItem}>
+          <Text style={styles.footerIcon}>⛰️</Text>
+          <Text style={styles.footerText}>Moderate</Text>
+        </View>
+
+        <Text style={styles.price}>
+          PKR 100,000
+        </Text>
+
+      </View>
+
+    </View>
+
+  </ImageBackground>
+
+  {/* CARD 3 */}
+
+  <ImageBackground
+    source={require("./assets/featured3.jpg")}
+    style={styles.featuredCard}
+    imageStyle={styles.featuredImage}
+  >
+
+    <View style={styles.featuredOverlay}>
+
+      <View style={styles.badge}>
+        <Text style={styles.badgeText}>Most Liked</Text>
+      </View>
+
+      <Text style={styles.location}>
+        Kashmir, Pakistan
+      </Text>
+
+      <Text style={styles.placeName}>
+        Fairy Meadows Trek
+      </Text>
+
+      <Text style={styles.placeDescription}>
+        Journey through scenic trails leading to Pakistan's most iconic landscapes.
+      </Text>
+
+      <View style={styles.cardFooter}>
+
+        <View style={styles.footerItem}>
+          <Text style={styles.footerIcon}>🕒</Text>
+          <Text style={styles.footerText}>9 Days</Text>
+        </View>
+
+        <View style={styles.footerItem}>
+          <Text style={styles.footerIcon}>⛰️</Text>
+          <Text style={styles.footerText}>Hard</Text>
+        </View>
+
+        <Text style={styles.price}>
+          PKR 70,000
+        </Text>
+
+      </View>
+
+    </View>
+
+  </ImageBackground>
+
+</ScrollView>
+{/* ================= WHY CHOOSE US ================= */}
+
+<View style={styles.chooseSection}>
+
+<Text style={styles.chooseSmall}>
+WHY ADVENTURE CLUB
+</Text>
+
+<Text style={styles.chooseTitle}>
+Choose <Text style={styles.blueItalic}>Us</Text>
+</Text>
+
+<Text style={styles.chooseDescription}>
+We create safe, memorable and carefully curated adventures for every explorer.
+</Text>
+
+</View>
+{/* ================= CHOOSE US CARDS ================= */}
+
+<View style={styles.chooseCards}>
+
+  {/* CARD 1 */}
+
+  <View style={styles.chooseCard}>
+
+    <View style={styles.iconBox}>
+      <Ionicons name="people-outline" size={26} color="#1E40AF" />
+    </View>
+
+    <Text style={styles.cardHeading}>
+      Expert Guides
+    </Text>
+
+    <Text style={styles.cardText}>
+      Our experienced guides ensure every adventure is safe,
+      informative and unforgettable for every explorer.
+    </Text>
+
+  </View>
+
+  {/* CARD 2 */}
+
+  <View style={styles.chooseCard}>
+
+    <View style={styles.iconBox}>
+      <Ionicons name="shield-checkmark-outline" size={26} color="#1E40AF" />
+    </View>
+
+    <Text style={styles.cardHeading}>
+      Safe Adventures
+    </Text>
+
+    <Text style={styles.cardText}>
+      Every trip is carefully planned with safety as our
+      highest priority from beginning to end.
+    </Text>
+
+  </View>
+
+  {/* CARD 3 */}
+
+  <View style={styles.chooseCard}>
+
+    <View style={styles.iconBox}>
+      <Ionicons name="ribbon-outline" size={26} color="#1E40AF" />
+    </View>
+
+    <Text style={styles.cardHeading}>
+      Memorable Experiences
+    </Text>
+
+    <Text style={styles.cardText}>
+      Create unforgettable memories through unique journeys,
+      breathtaking landscapes and premium adventures.
+    </Text>
+
+  </View>
+
+  {/* CARD 4 */}
+
+  <View style={styles.chooseCard}>
+
+    <View style={styles.iconBox}>
+      <Ionicons name="location-outline" size={26} color="#1E40AF" />
+    </View>
+
+    <Text style={styles.cardHeading}>
+      Unique Destinations
+    </Text>
+
+    <Text style={styles.cardText}>
+      Discover hidden valleys, mountains and destinations
+      selected especially for nature lovers.
+    </Text>
+
+  </View>
+
+  {/* CARD 5 */}
+
+  <View style={styles.chooseCard}>
+
+    <View style={styles.iconBox}>
+      <Ionicons name="people-circle-outline" size={26} color="#1E40AF" />
+    </View>
+
+    <Text style={styles.cardHeading}>
+      Community of Explorers
+    </Text>
+
+    <Text style={styles.cardText}>
+      Connect with fellow adventurers and build lifelong
+      friendships while exploring together.
+    </Text>
+
+  </View>
+
+  {/* CARD 6 */}
+
+  <View style={styles.chooseCard}>
+
+    <View style={styles.iconBox}>
+      <Ionicons name="trail-sign-outline" size={26} color="#1E40AF" />
+    </View>
+
+    <Text style={styles.cardHeading}>
+      Curated Adventures
+    </Text>
+
+    <Text style={styles.cardText}>
+      Every destination is selected to provide the perfect
+      balance of comfort, excitement and adventure.
+    </Text>
+
+  </View>
+
+</View>
+{/* ================= NEWSLETTER SECTION ================= */}
+
+<ImageBackground
+  source={require("./assets/footer-bg.jpg")}
+  style={styles.newsletterBg}
+  imageStyle={styles.newsletterImage}
+>
+
+  <View style={styles.newsletterOverlay}>
+
+    {/* Next Part yahan se start hoga */}
+      <View>
+
+  <Text style={styles.stayText}>
+    STAY TUNED
+  </Text>
+
+  <Text style={styles.newsTitle}>
+    YOUR NEXT{"\n"}
+    ADVENTURE{" "}
+    <Text style={styles.blueText}>AWAITS</Text>
+  </Text>
+
+  <Text style={styles.newsDescription}>
+    Join our community of explorers and discover breathtaking
+    destinations, unforgettable experiences and adventures that
+    create memories for a lifetime.
+  </Text>
+
+  {/* Email + Button */}
+
+  <View style={styles.subscribeContainer}>
+
+    <TextInput
+      placeholder="Enter your email address"
+      placeholderTextColor="#D1D5DB"
+      style={styles.emailInput}
+    />
+
+    <TouchableOpacity style={styles.subscribeButton}>
+      <Text style={styles.subscribeButtonText}>
+        Subscribe Free
+      </Text>
+    </TouchableOpacity>
+
+  </View>
+
+  <Text style={styles.smallText}>
+    No spam ever • Unsubscribe in one click
+  </Text>
+
+</View>
+
+  </View>
+
+</ImageBackground>
+{/* ================= START BUTTON ================= */}
+
+<TouchableOpacity style={styles.startButton}>
+
+  <Text style={styles.startButtonText}>
+    Start Exploring
+  </Text>
+
+</TouchableOpacity>
+
+{/* ================= FOOTER ================= */}
+
+<View style={styles.footer}>
+
+  <Image
+    source={require("./assets/logo.png")}
+    style={styles.footerLogo}
+  />
+
+  <Text style={styles.footerTagline}>
+Explore Pakistan Beyond The Horizon
+</Text>
+
+  <Text style={styles.footerTitle}>
+    ACES Adventure Club
+  </Text>
+
+  <Text style={styles.footerDescription}>
+    Creating unforgettable adventures across Pakistan.
+    Discover mountains, forests and breathtaking destinations
+    with our passionate community.
+  </Text>
+
+  {/* Social Icons */}
+
+  <View style={styles.socialRow}>
+
+    <TouchableOpacity style={styles.socialIcon}>
+      <Ionicons name="logo-facebook" size={20} color="#FFFFFF" />
+    </TouchableOpacity>
+
+    <TouchableOpacity style={styles.socialIcon}>
+      <Ionicons name="logo-instagram" size={20} color="#FFFFFF" />
+    </TouchableOpacity>
+
+    <TouchableOpacity style={styles.socialIcon}>
+      <Ionicons name="logo-youtube" size={20} color="#FFFFFF" />
+    </TouchableOpacity>
+
+    <TouchableOpacity style={styles.socialIcon}>
+      <Ionicons name="logo-linkedin" size={20} color="#FFFFFF" />
+    </TouchableOpacity>
+
+  </View>
+
+  <View style={styles.footerLine}/>
+
+  <Text style={styles.copyText}>
+    © 2026 ACES Adventure Club
+  </Text>
+
+  <Text style={styles.versionText}>
+    Version 1.0.0
+  </Text>
+      
+</View>
+
 
       </ScrollView>
 
@@ -563,21 +1034,17 @@ borderRadius:18,
 padding:18,
 
 },
+menuRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  paddingVertical: 14,
+},
 
-menuItem:{
-
-fontSize:17,
-
-fontWeight:"600",
-
-color:"#1E293B",
-
-paddingVertical:14,
-
-borderBottomWidth:0.5,
-
-borderBottomColor:"#E5E7EB",
-
+menuItem: {
+  fontSize: 17,
+  color: "#0B5CAD",
+  fontWeight: "600",
+  marginLeft: 14,
 },
 
 loginButton:{
@@ -959,7 +1426,467 @@ cardIcon: {
 cardIconText: {
   fontSize: 22,
 },
+/* ================= STATS SECTION ================= */
 
+statsSection: {
+  backgroundColor: "#41537C",
+  paddingVertical: 30,
+  paddingHorizontal: 20,
+},
+
+statsRow: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  marginBottom: 25,
+},
+
+statItem: {
+  width: "48%",
+  alignItems: "center",
+},
+
+statNumber: {
+  fontSize: 34,
+  fontWeight: "700",
+  color: "#FFFFFF",
+},
+
+statLabel: {
+  marginTop: 8,
+  textAlign: "center",
+  fontSize: 13,
+  color: "#D6E3F8",
+  lineHeight: 20,
+  letterSpacing: 1,
+},
+/* ================= FEATURED ADVENTURES ================= */
+
+featuredSection:{
+paddingTop:45,
+paddingHorizontal:20,
+backgroundColor:"#F7FAFD",
+},
+
+featuredSmallTitle:{
+fontSize:12,
+fontWeight:"700",
+color:"#1E88E5",
+letterSpacing:1,
+},
+
+featuredTitle:{
+fontSize:33,
+fontWeight:"700",
+marginTop:6,
+color:"#1E293B",
+},
+
+featuredDescription:{
+fontSize:15,
+color:"#64748B",
+marginTop:10,
+lineHeight:22,
+width:"92%",
+},
+/* ================= FEATURED ADVENTURES ================= */
+
+featuredScroll: {
+  paddingTop: 25,
+  paddingBottom: 15,
+  paddingLeft: 20,
+  paddingRight: 8,
+},
+
+featuredCard: {
+  width: 300,
+  height: 245,
+  marginRight: 18,
+  borderRadius: 22,
+  overflow: "hidden",
+
+  shadowColor: "#000",
+  shadowOpacity: 0.18,
+  shadowRadius: 12,
+  shadowOffset: {
+    width: 0,
+    height: 8,
+  },
+  elevation: 10,
+},
+
+featuredImage: {
+  borderRadius: 22,
+},
+
+featuredOverlay: {
+  flex: 1,
+  justifyContent: "flex-end",
+  padding: 16,
+  backgroundColor: "rgba(0,0,0,0.28)",
+},
+
+badge: {
+  position: "absolute",
+  top: 12,
+  left: 12,
+
+  backgroundColor: "#2F6BFF",
+  paddingHorizontal: 12,
+  paddingVertical: 5,
+
+  borderRadius: 50,
+},
+
+badgeText: {
+  color: "#FFF",
+  fontSize: 11,
+  fontWeight: "700",
+},
+
+location: {
+  color: "#58A8FF",
+  fontSize: 11,
+  fontWeight: "600",
+  marginBottom: 3,
+},
+
+placeName: {
+  color: "#FFF",
+  fontSize: 30,
+  fontWeight: "700",
+},
+
+placeDescription: {
+  color: "#E2E8F0",
+  fontSize: 13,
+  lineHeight: 19,
+  marginTop: 6,
+},
+
+cardFooter: {
+  marginTop: 16,
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+},
+
+footerItem: {
+  flexDirection: "row",
+  alignItems: "center",
+},
+
+footerIcon: {
+  fontSize: 15,
+  marginRight: 5,
+},
+
+footerText: {
+  color: "#FFFFFF",
+  fontSize: 13,
+  fontWeight: "600",
+},
+
+price: {
+  color: "#1E88E5",
+  fontSize: 13,
+  fontWeight: "700",
+},
+/* ================= WHY CHOOSE US ================= */
+
+chooseSection:{
+paddingHorizontal:20,
+paddingTop:45,
+backgroundColor:"#F7FAFD",
+},
+
+chooseSmall:{
+fontSize:12,
+fontWeight:"700",
+letterSpacing:1,
+color:"#1E88E5",
+},
+
+chooseTitle:{
+marginTop:6,
+fontSize:34,
+fontWeight:"700",
+color:"#1E293B",
+},
+
+chooseDescription:{
+marginTop:10,
+fontSize:15,
+lineHeight:24,
+color:"#64748B",
+width:"92%",
+},
+/* ================= WHY CHOOSE US ================= */
+
+chooseCards: {
+  paddingHorizontal: 20,
+  paddingTop: 25,
+  paddingBottom: 50,
+  backgroundColor: "#F7FAFD",
+},
+
+chooseCard: {
+  backgroundColor: "#FFFFFF",
+
+  borderRadius: 22,
+
+  padding: 22,
+
+  marginBottom: 20,
+
+  shadowColor: "#000",
+  shadowOpacity: 0.08,
+  shadowRadius: 12,
+  shadowOffset: {
+    width: 0,
+    height: 5,
+  },
+  elevation: 6,
+
+  borderWidth: 1,
+  borderColor: "#EEF2F7",
+},
+
+iconBox: {
+  width: 56,
+  height: 56,
+
+  borderRadius: 14,
+
+  borderWidth: 1.5,
+  borderColor: "#3B82F6",
+
+  justifyContent: "center",
+  alignItems: "center",
+
+  marginBottom: 18,
+
+  backgroundColor: "#FFFFFF",
+},
+
+cardHeading: {
+  fontSize: 23,
+  fontWeight: "700",
+  color: "#1E293B",
+
+  marginBottom: 10,
+},
+
+cardText: {
+  fontSize: 15,
+  color: "#64748B",
+  lineHeight: 24,
+},
+/* ================= NEWSLETTER ================= */
+
+newsletterBg: {
+  height: 520,
+  marginHorizontal: 18,
+  marginTop: 40,
+  marginBottom: 30,
+  borderRadius: 28,
+  overflow: "hidden",
+},
+
+newsletterImage: {
+  borderRadius: 28,
+},
+
+newsletterOverlay: {
+  flex: 1,
+
+  backgroundColor: "rgba(7,17,34,0.58)",
+
+  paddingHorizontal: 25,
+  paddingTop: 45,
+  paddingBottom: 35,
+
+  justifyContent: "space-between",
+},
+/* ================= NEWSLETTER CONTENT ================= */
+
+stayText: {
+  color: "#E5E7EB",
+  fontSize: 12,
+  letterSpacing: 2,
+  alignSelf: "center",
+},
+
+newsTitle: {
+  marginTop: 10,
+  color: "#FFFFFF",
+  fontSize: 34,
+  fontWeight: "700",
+  textAlign: "center",
+  lineHeight: 42,
+},
+
+blueText: {
+  color: "#1E88E5",
+},
+
+newsDescription: {
+  marginTop: 16,
+  color: "#E5E7EB",
+  textAlign: "center",
+  fontSize: 15,
+  lineHeight: 24,
+  paddingHorizontal: 8,
+},
+
+subscribeContainer: {
+  marginTop: 28,
+},
+
+emailInput: {
+  height: 55,
+  borderRadius: 28,
+  borderWidth: 1,
+  borderColor: "rgba(255,255,255,0.5)",
+  color: "#FFFFFF",
+  paddingHorizontal: 20,
+  fontSize: 15,
+  backgroundColor: "rgba(255,255,255,0.12)",
+},
+
+subscribeButton: {
+  marginTop: 14,
+  height: 55,
+  borderRadius: 28,
+  backgroundColor: "#1E88E5",
+
+  justifyContent: "center",
+  alignItems: "center",
+},
+
+subscribeButtonText: {
+  color: "#FFFFFF",
+  fontSize: 16,
+  fontWeight: "700",
+},
+
+smallText: {
+  marginTop: 12,
+  color: "#CBD5E1",
+  textAlign: "center",
+  fontSize: 12,
+},
+/* ================= FOOTER ================= */
+
+/* ================= FOOTER ================= */
+
+startButton: {
+  height: 58,
+  borderRadius: 30,
+  backgroundColor: "#1E88E5",
+  justifyContent: "center",
+  alignItems: "center",
+  marginTop: 35,
+
+  shadowColor: "#1E88E5",
+  shadowOpacity: 0.35,
+  shadowRadius: 10,
+  shadowOffset: {
+    width: 0,
+    height: 5,
+  },
+  elevation: 8,
+},
+
+startButtonText: {
+  color: "#FFFFFF",
+  fontSize: 18,
+  fontWeight: "700",
+},
+
+footer: {
+  marginTop: 45,
+  paddingTop: 35,
+  paddingBottom: 30,
+  paddingHorizontal: 20,
+
+  backgroundColor: "rgba(4,18,40,0.75)",
+
+  borderTopLeftRadius: 28,
+  borderTopRightRadius: 28,
+
+  alignItems: "center",
+},
+
+footerLogo: {
+  width: 75,
+  height: 75,
+  resizeMode: "contain",
+},
+
+footerTitle: {
+  marginTop: 14,
+  fontSize: 24,
+  fontWeight: "700",
+  color: "#FFFFFF",
+},
+
+footerDescription: {
+  marginTop: 12,
+  textAlign: "center",
+  color: "#D8E4F5",
+  fontSize: 15,
+  lineHeight: 24,
+  paddingHorizontal: 15,
+},
+
+socialRow: {
+  marginTop: 28,
+  flexDirection: "row",
+},
+
+socialIcon: {
+  width: 50,
+  height: 50,
+  borderRadius: 25,
+
+  backgroundColor: "rgba(255,255,255,0.10)",
+
+  justifyContent: "center",
+  alignItems: "center",
+
+  marginHorizontal: 8,
+
+  borderWidth: 1,
+  borderColor: "rgba(255,255,255,0.18)",
+},
+
+footerLine: {
+  width: "100%",
+  height: 1,
+
+  backgroundColor: "rgba(255,255,255,0.15)",
+
+  marginTop: 30,
+  marginBottom: 20,
+},
+
+copyText: {
+  color: "#FFFFFF",
+  fontSize: 14,
+  fontWeight: "600",
+},
+
+versionText: {
+  marginTop: 6,
+  color: "#9DB4D6",
+  fontSize: 13,
+},
+footerTagline: {
+  marginTop: 6,
+  fontSize: 14,
+  color: "#60A5FA",
+  fontWeight: "600",
+},
 });
 
 
