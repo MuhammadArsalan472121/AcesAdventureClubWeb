@@ -1809,7 +1809,7 @@ footer: {
   paddingBottom: 30,
   paddingHorizontal: 20,
 
-  backgroundColor: "rgba(4,18,40,0.75)",
+  backgroundColor: "#16233C",
 
   borderTopLeftRadius: 28,
   borderTopRightRadius: 28,
