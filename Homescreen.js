@@ -778,7 +778,7 @@ We create safe, memorable and carefully curated adventures for every explorer.
 {/* ================= NEWSLETTER SECTION ================= */}
 
 <ImageBackground
-  source={require("./assets/footer-bg.jpg")}
+  source={require("./assets/adventure-bg.jpg")}
   style={styles.newsletterBg}
   imageStyle={styles.newsletterImage}
 >

@@ -1,6 +1,6 @@
 import React from "react";
-import ExploreTripsScreen from "./ExploreTripsScreen";
+import ViewTripScreen from "./ViewTripScreen";
 
 export default function App() {
-  return <ExploreTripsScreen />;
+  return <ViewTripScreen />;
 }
