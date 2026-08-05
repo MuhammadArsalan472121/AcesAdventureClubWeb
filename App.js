@@ -1,6 +1,6 @@
 import React from "react";
-import ViewTripScreen from "./ViewTripScreen";
+import MapScreen from "./MapScreen";
 
 export default function App() {
-  return <ViewTripScreen />;
+  return <MapScreen />;
 }
