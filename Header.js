@@ -7,98 +7,80 @@ import {
   StyleSheet,
 } from "react-native";
 
+import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function Header() {
-
+  const navigation = useNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
 
+  const navigateTo = (screenName) => {
+    setMenuVisible(false);
+    navigation.navigate(screenName);
+  };
+
   return (
-
     <>
-
-      {/* ================= HEADER ================= */}
-
       <View style={styles.header}>
+        <Image source={require("./assets/logo.png")} style={styles.logo} />
 
-        <Image
-          source={require("./assets/logo.png")}
-          style={styles.logo}
-        />
-
-        <TouchableOpacity
-          onPress={() => setMenuVisible(!menuVisible)}
-        >
+        <TouchableOpacity onPress={() => setMenuVisible(!menuVisible)}>
           <Ionicons
             name={menuVisible ? "close" : "menu"}
             size={34}
             color="#FFFFFF"
           />
         </TouchableOpacity>
-
       </View>
 
-      {/* ================= MOBILE MENU ================= */}
-
       {menuVisible && (
-
         <View style={styles.mobileMenu}>
-
-          <TouchableOpacity style={styles.menuRow}>
+          <TouchableOpacity style={styles.menuRow} onPress={() => navigateTo("Home")}>
             <Ionicons name="home-outline" size={22} color="#0B5CAD" />
             <Text style={styles.menuItem}>Home</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuRow}>
+          <TouchableOpacity style={styles.menuRow} onPress={() => navigateTo("About")}>
             <Ionicons name="information-circle-outline" size={22} color="#0B5CAD" />
             <Text style={styles.menuItem}>About</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuRow}>
+          <TouchableOpacity style={styles.menuRow} onPress={() => navigateTo("BrowseTrips")}>
             <Ionicons name="compass-outline" size={22} color="#0B5CAD" />
             <Text style={styles.menuItem}>Browse Trips</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuRow}>
+          <TouchableOpacity style={styles.menuRow} onPress={() => navigateTo("Gallery")}>
             <Ionicons name="images-outline" size={22} color="#0B5CAD" />
             <Text style={styles.menuItem}>Gallery</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuRow}>
+          <TouchableOpacity style={styles.menuRow} onPress={() => navigateTo("Map")}>
             <Ionicons name="map-outline" size={22} color="#0B5CAD" />
             <Text style={styles.menuItem}>Map</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuRow}>
+          <TouchableOpacity style={styles.menuRow} onPress={() => navigateTo("Sponsors")}>
             <Ionicons name="people-outline" size={22} color="#0B5CAD" />
             <Text style={styles.menuItem}>Sponsors</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuRow}>
+          <TouchableOpacity style={styles.menuRow} onPress={() => navigateTo("Contact")}>
             <Ionicons name="call-outline" size={22} color="#0B5CAD" />
             <Text style={styles.menuItem}>Contact</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.loginButton}>
-            <Text style={styles.loginButtonText}>
-              Login
-            </Text>
+          <TouchableOpacity style={styles.loginButton} onPress={() => navigateTo("Login")}>
+            <Text style={styles.loginButtonText}>Login</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.signupButton}>
-            <Text style={styles.signupButtonText}>
-              Sign Up
-            </Text>
+          <TouchableOpacity style={styles.signupButton} onPress={() => navigateTo("Signup")}>
+            <Text style={styles.signupButtonText}>Sign Up</Text>
           </TouchableOpacity>
-
         </View>
-
       )}
-
     </>
-
   );
-
 }
 
 const styles = StyleSheet.create({

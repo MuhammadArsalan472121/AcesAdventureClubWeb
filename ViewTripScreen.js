@@ -15,14 +15,14 @@ import {
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 
 import Header from "./Header";
 
 const { width, height } = Dimensions.get("window");
 
 export default function ViewTripScreen() {
-
-  const [menuVisible, setMenuVisible] = useState(false);
+  const navigation = useNavigation();
 
   return (
 
@@ -150,7 +150,7 @@ export default function ViewTripScreen() {
 
       </View>
 
-      <TouchableOpacity style={styles.heroButton}>
+      <TouchableOpacity style={styles.heroButton} onPress={() => navigation.navigate("BrowseTrips")}>
 
         <Text style={styles.heroButtonText}>
           EXPLORE MORE
@@ -245,7 +245,7 @@ export default function ViewTripScreen() {
 
   </View>
 
-  <TouchableOpacity style={styles.learnButton}>
+  <TouchableOpacity style={styles.learnButton} onPress={() => navigation.navigate("Contact")}>
 
     <Text style={styles.learnButtonText}>
       Learn More
@@ -596,7 +596,7 @@ export default function ViewTripScreen() {
       style={styles.emailInput}
     />
 
-    <TouchableOpacity style={styles.subscribeButton}>
+    <TouchableOpacity style={styles.subscribeButton} onPress={() => navigation.navigate("Signup")}>
       <Text style={styles.subscribeButtonText}>
         Subscribe Free
       </Text>
@@ -615,7 +615,7 @@ export default function ViewTripScreen() {
 </ImageBackground>
 {/* ================= START BUTTON ================= */}
 
-<TouchableOpacity style={styles.startButton}>
+<TouchableOpacity style={styles.startButton} onPress={() => navigation.navigate("BrowseTrips")}>
 
   <Text style={styles.startButtonText}>
     Start Exploring
@@ -650,19 +650,19 @@ export default function ViewTripScreen() {
     
       <View style={styles.socialRow}>
     
-        <TouchableOpacity style={styles.socialIcon}>
+        <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
           <Ionicons name="logo-facebook" size={20} color="#FFFFFF" />
         </TouchableOpacity>
     
-        <TouchableOpacity style={styles.socialIcon}>
+        <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
           <Ionicons name="logo-instagram" size={20} color="#FFFFFF" />
         </TouchableOpacity>
     
-        <TouchableOpacity style={styles.socialIcon}>
+        <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
           <Ionicons name="logo-youtube" size={20} color="#FFFFFF" />
         </TouchableOpacity>
     
-        <TouchableOpacity style={styles.socialIcon}>
+        <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
           <Ionicons name="logo-linkedin" size={20} color="#FFFFFF" />
         </TouchableOpacity>
     

@@ -15,11 +15,13 @@ import {
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import Header from "./Header";
 
 const { width, height } = Dimensions.get("window");
 
 export default function ContactScreen() {
+  const navigation = useNavigation();
 
   return (
 
@@ -75,7 +77,7 @@ export default function ContactScreen() {
 
 <View style={styles.introSection}>
 
-  <TouchableOpacity style={styles.backButton}>
+  <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate("Home")}>
 
     <Text style={styles.backButtonText}>
       ← Back to Home
@@ -213,7 +215,7 @@ export default function ContactScreen() {
     style={styles.messageInput}
   />
 
-  <TouchableOpacity style={styles.submitButton}>
+  <TouchableOpacity style={styles.submitButton} onPress={() => navigation.navigate("Home")}>
 
     <Text style={styles.submitButtonText}>
       SEND ADVENTURE REQUEST
@@ -400,19 +402,19 @@ Explore Pakistan Beyond The Horizon
 
   <View style={styles.socialRow}>
 
-    <TouchableOpacity style={styles.socialIcon}>
+    <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
       <Ionicons name="logo-facebook" size={20} color="#FFFFFF" />
     </TouchableOpacity>
 
-    <TouchableOpacity style={styles.socialIcon}>
+    <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
       <Ionicons name="logo-instagram" size={20} color="#FFFFFF" />
     </TouchableOpacity>
 
-    <TouchableOpacity style={styles.socialIcon}>
+    <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
       <Ionicons name="logo-youtube" size={20} color="#FFFFFF" />
     </TouchableOpacity>
 
-    <TouchableOpacity style={styles.socialIcon}>
+    <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
       <Ionicons name="logo-linkedin" size={20} color="#FFFFFF" />
     </TouchableOpacity>
 

@@ -15,12 +15,14 @@ TextInput,
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 
 import Header from "./Header";
 
 const { width, height } = Dimensions.get("window");
 
 export default function ExploreTripsScreen() {
+  const navigation = useNavigation();
   const popularHubs = [
 
   {
@@ -117,7 +119,7 @@ Explore access to the roof of the world.
 
 <View style={styles.buttonRow}>
 
-<TouchableOpacity style={styles.primaryButton}>
+<TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate("BrowseTrips")}>
 
 <Text style={styles.primaryText}>
 View Destinations
@@ -125,7 +127,7 @@ View Destinations
 
 </TouchableOpacity>
 
-<TouchableOpacity style={styles.secondaryButton}>
+<TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate("Gallery")}>
 
 <Text style={styles.secondaryText}>
 View Gallery
@@ -164,7 +166,7 @@ style={styles.searchInput}
 
 <View style={styles.filterContainer}>
 
-<TouchableOpacity style={styles.activeFilter}>
+<TouchableOpacity style={styles.activeFilter} onPress={() => navigation.navigate("BrowseTrips")}>
 
 <Ionicons
 name="options-outline"
@@ -178,7 +180,7 @@ Filters
 
 </TouchableOpacity>
 
-<TouchableOpacity style={styles.filterChip}>
+<TouchableOpacity style={styles.filterChip} onPress={() => navigation.navigate("BrowseTrips")}>
 
 <Ionicons
 name="triangle-outline"
@@ -192,7 +194,7 @@ Mountains
 
 </TouchableOpacity>
 
-<TouchableOpacity style={styles.filterChip}>
+<TouchableOpacity style={styles.filterChip} onPress={() => navigation.navigate("BrowseTrips")}>
 
 <Ionicons
 name="walk-outline"
@@ -206,7 +208,7 @@ Hiking
 
 </TouchableOpacity>
 
-<TouchableOpacity style={styles.filterChip}>
+<TouchableOpacity style={styles.filterChip} onPress={() => navigation.navigate("BrowseTrips")}>
 
 <Ionicons
 name="bonfire-outline"
@@ -220,7 +222,7 @@ Camping
 
 </TouchableOpacity>
 
-<TouchableOpacity style={styles.filterChip}>
+<TouchableOpacity style={styles.filterChip} onPress={() => navigation.navigate("BrowseTrips")}>
 
 <Ionicons
 name="leaf-outline"
@@ -234,7 +236,7 @@ Nature Trails
 
 </TouchableOpacity>
 
-<TouchableOpacity style={styles.filterChip}>
+<TouchableOpacity style={styles.filterChip} onPress={() => navigation.navigate("BrowseTrips")}>
 
 <Ionicons
 name="location-outline"
@@ -528,30 +530,30 @@ Northern Areas
 
 <View style={styles.paginationContainer}>
 
-  <TouchableOpacity style={styles.pageArrow}>
+  <TouchableOpacity style={styles.pageArrow} onPress={() => navigation.navigate("ViewTrip")}>
     <Ionicons name="arrow-back" size={18} color="#111827" />
     <Text style={styles.pageArrowText}>Previous</Text>
   </TouchableOpacity>
 
-  <TouchableOpacity style={styles.activePage}>
+  <TouchableOpacity style={styles.activePage} onPress={() => navigation.navigate("ViewTrip")}>
     <Text style={styles.activePageText}>1</Text>
   </TouchableOpacity>
 
-  <TouchableOpacity style={styles.pageNumber}>
+  <TouchableOpacity style={styles.pageNumber} onPress={() => navigation.navigate("ViewTrip")}>
     <Text style={styles.pageNumberText}>2</Text>
   </TouchableOpacity>
 
-  <TouchableOpacity style={styles.pageNumber}>
+  <TouchableOpacity style={styles.pageNumber} onPress={() => navigation.navigate("ViewTrip")}>
     <Text style={styles.pageNumberText}>3</Text>
   </TouchableOpacity>
 
   <Text style={styles.pageDots}>.......</Text>
 
-  <TouchableOpacity style={styles.pageNumber}>
+  <TouchableOpacity style={styles.pageNumber} onPress={() => navigation.navigate("ViewTrip")}>
     <Text style={styles.pageNumberText}>12</Text>
   </TouchableOpacity>
 
-  <TouchableOpacity style={styles.pageArrow}>
+  <TouchableOpacity style={styles.pageArrow} onPress={() => navigation.navigate("ViewTrip")}>
     <Text style={styles.pageArrowText}>Next</Text>
     <Ionicons name="arrow-forward" size={18} color="#111827" />
   </TouchableOpacity>
@@ -593,6 +595,7 @@ Northern Areas
       key={item.id}
       activeOpacity={0.9}
       style={styles.popularCard}
+      onPress={() => navigation.navigate("ViewTrip")}
     >
 
       <ImageBackground
@@ -644,7 +647,7 @@ Northern Areas
                   {item.duration}
                 </Text>
 
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => navigation.navigate("ViewTrip")}>
 
                   <Text style={styles.popularViewText}>
                     View Package →
@@ -670,7 +673,7 @@ Northern Areas
 
 {/* ================= EXPLORE MORE BUTTON ================= */}
 
-<TouchableOpacity style={styles.exploreMoreButton}>
+<TouchableOpacity style={styles.exploreMoreButton} onPress={() => navigation.navigate("BrowseTrips")}>
 
   <Text style={styles.exploreMoreText}>
     Explore More
@@ -716,7 +719,7 @@ Northern Areas
       style={styles.emailInput}
     />
 
-    <TouchableOpacity style={styles.subscribeButton}>
+    <TouchableOpacity style={styles.subscribeButton} onPress={() => navigation.navigate("Signup")}>
       <Text style={styles.subscribeButtonText}>
         Subscribe Free
       </Text>

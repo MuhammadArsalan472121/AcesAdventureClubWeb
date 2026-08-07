@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 
 import {
   View,
@@ -15,11 +15,13 @@ import {
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import Header from "./Header";
 
 const { width, height } = Dimensions.get("window");
 
 export default function HomeScreen() {
-    const [menuVisible, setMenuVisible] = useState(false);
+  const navigation = useNavigation();
 
   return (
 
@@ -34,65 +36,6 @@ export default function HomeScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
       >
-
-        {
-menuVisible && (
-
-<View style={styles.mobileMenu}>
-
-  <TouchableOpacity style={styles.menuRow}>
-    <Ionicons name="home-outline" size={22} color="#0B5CAD" />
-    <Text style={styles.menuItem}>Home</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity style={styles.menuRow}>
-    <Ionicons name="information-circle-outline" size={22} color="#0B5CAD" />
-    <Text style={styles.menuItem}>About</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity style={styles.menuRow}>
-    <Ionicons name="compass-outline" size={22} color="#0B5CAD" />
-    <Text style={styles.menuItem}>Browse Trips</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity style={styles.menuRow}>
-    <Ionicons name="images-outline" size={22} color="#0B5CAD" />
-    <Text style={styles.menuItem}>Gallery</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity style={styles.menuRow}>
-    <Ionicons name="map-outline" size={22} color="#0B5CAD" />
-    <Text style={styles.menuItem}>Map</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity style={styles.menuRow}>
-    <Ionicons name="people-outline" size={22} color="#0B5CAD" />
-    <Text style={styles.menuItem}>Sponsors</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity style={styles.menuRow}>
-    <Ionicons name="call-outline" size={22} color="#0B5CAD" />
-    <Text style={styles.menuItem}>Contact</Text>
-  </TouchableOpacity>
-
-
-
-<TouchableOpacity style={styles.loginButton}>
-<Text style={styles.loginButtonText}>
-Login
-</Text>
-</TouchableOpacity>
-
-<TouchableOpacity style={styles.signupButton}>
-<Text style={styles.signupButtonText}>
-Sign Up
-</Text>
-</TouchableOpacity>
-
-</View>
-
-)
-}
 
         {/* ================= HERO SECTION ================= */}
 
@@ -112,26 +55,7 @@ Sign Up
 
             {/* ================= HEADER ================= */}
 
-            <View style={styles.header}>
-
-              <Image
-                source={require("./assets/logo.png")}
-                style={styles.logo}
-              />
-
-              <TouchableOpacity
-    onPress={() => setMenuVisible(!menuVisible)}
->
-
-    <Ionicons
-        name={menuVisible ? "close" : "menu"}
-        size={34}
-        color="#FFFFFF"
-    />
-
-</TouchableOpacity>
-
-            </View>
+            <Header />
 
             {/* ================= HERO CONTENT ================= */}
 
@@ -182,7 +106,7 @@ Sign Up
 
               <View style={styles.buttonRow}>
 
-                <TouchableOpacity style={styles.primaryButton}>
+                <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate("BrowseTrips")}>
 
                   <Text style={styles.primaryText}>
 
@@ -192,7 +116,7 @@ Sign Up
 
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.secondaryButton}>
+                <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate("Gallery")}>
 
                   <Text style={styles.secondaryText}>
 
@@ -295,7 +219,7 @@ Sign Up
 
   </View>
 
-  <TouchableOpacity style={styles.learnButton}>
+  <TouchableOpacity style={styles.learnButton} onPress={() => navigation.navigate("About")}>
     <Text style={styles.learnButtonText}>
       Learn More
     </Text>
@@ -356,7 +280,7 @@ Sign Up
 
   {/* Card 1 */}
 
-  <TouchableOpacity style={styles.adventureCard}>
+  <TouchableOpacity style={styles.adventureCard} onPress={() => navigation.navigate("ViewTrip")}>
     <Image
       source={require("./assets/hiking.jpg")}
       style={styles.cardImage}
@@ -376,7 +300,7 @@ Sign Up
 
   {/* Card 2 */}
 
-  <TouchableOpacity style={styles.adventureCard}>
+  <TouchableOpacity style={styles.adventureCard} onPress={() => navigation.navigate("ViewTrip")}>
     <Image
       source={require("./assets/camping.jpg")}
       style={styles.cardImage}
@@ -396,7 +320,7 @@ Sign Up
 
   {/* Card 3 */}
 
-  <TouchableOpacity style={styles.adventureCard}>
+  <TouchableOpacity style={styles.adventureCard} onPress={() => navigation.navigate("ViewTrip")}>
     <Image
       source={require("./assets/trekking.jpg")}
       style={styles.cardImage}
@@ -416,7 +340,7 @@ Sign Up
 
   {/* Card 4 */}
 
-  <TouchableOpacity style={styles.adventureCard}>
+  <TouchableOpacity style={styles.adventureCard} onPress={() => navigation.navigate("ViewTrip")}>
     <Image
       source={require("./assets/nature.jpg")}
       style={styles.cardImage}
@@ -814,7 +738,7 @@ We create safe, memorable and carefully curated adventures for every explorer.
       style={styles.emailInput}
     />
 
-    <TouchableOpacity style={styles.subscribeButton}>
+    <TouchableOpacity style={styles.subscribeButton} onPress={() => navigation.navigate("Contact")}>
       <Text style={styles.subscribeButtonText}>
         Subscribe Free
       </Text>
@@ -833,7 +757,7 @@ We create safe, memorable and carefully curated adventures for every explorer.
 </ImageBackground>
 {/* ================= START BUTTON ================= */}
 
-<TouchableOpacity style={styles.startButton}>
+<TouchableOpacity style={styles.startButton} onPress={() => navigation.navigate("BrowseTrips")}>
 
   <Text style={styles.startButtonText}>
     Start Exploring
@@ -868,19 +792,19 @@ Explore Pakistan Beyond The Horizon
 
   <View style={styles.socialRow}>
 
-    <TouchableOpacity style={styles.socialIcon}>
+    <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
       <Ionicons name="logo-facebook" size={20} color="#FFFFFF" />
     </TouchableOpacity>
 
-    <TouchableOpacity style={styles.socialIcon}>
+    <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
       <Ionicons name="logo-instagram" size={20} color="#FFFFFF" />
     </TouchableOpacity>
 
-    <TouchableOpacity style={styles.socialIcon}>
+    <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
       <Ionicons name="logo-youtube" size={20} color="#FFFFFF" />
     </TouchableOpacity>
 
-    <TouchableOpacity style={styles.socialIcon}>
+    <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
       <Ionicons name="logo-linkedin" size={20} color="#FFFFFF" />
     </TouchableOpacity>
 

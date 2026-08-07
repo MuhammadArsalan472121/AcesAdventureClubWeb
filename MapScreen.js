@@ -12,12 +12,20 @@ import {
   ImageBackground,
   TouchableOpacity,
   Dimensions,
+  Platform,
 } from "react-native";
 
-import MapView, { Marker } from "react-native-maps";
 import { Ionicons } from "@expo/vector-icons";
-
 import Header from "./Header";
+
+let MapView = null;
+let Marker = null;
+
+if (Platform.OS !== "web") {
+  const MapModule = require("react-native-maps");
+  MapView = MapModule.default;
+  Marker = MapModule.Marker;
+}
 
 const { height } = Dimensions.get("window");
 
@@ -48,31 +56,43 @@ export default function MapScreen() {
             <View style={styles.searchBar}>
               <Text style={styles.searchIcon}>🔍</Text>
               <Text style={styles.searchText}>Search premium destination...</Text>
-              <TouchableOpacity style={styles.filterBtn}>
+              <TouchableOpacity style={styles.filterBtn} onPress={() => navigation.navigate("BrowseTrips")}>
                 <Text style={styles.filterText}>ADVANCED{"\n"}FILTERS</Text>
               </TouchableOpacity>
             </View>
 
-            <View style={styles.mapContainer}>
-              <MapView
-                style={styles.map}
-                initialRegion={{
-                  latitude: 33.6844,
-                  longitude: 73.0479,
-                  latitudeDelta: 0.8,
-                  longitudeDelta: 0.8,
-                }}
-                showsMyLocationButton={false}
-                showsCompass={false}
-                zoomControlEnabled={false}
-              >
-                <Marker
-                  coordinate={{ latitude: 33.6844, longitude: 73.0479 }}
-                  title="Premium Destination"
-                  description="Northern Pakistan exploration hub"
-                />
-              </MapView>
-            </View>
+            {Platform.OS !== "web" && MapView ? (
+              <View style={styles.mapContainer}>
+                <MapView
+                  style={styles.map}
+                  initialRegion={{
+                    latitude: 33.6844,
+                    longitude: 73.0479,
+                    latitudeDelta: 0.8,
+                    longitudeDelta: 0.8,
+                  }}
+                  showsMyLocationButton={false}
+                  showsCompass={false}
+                  zoomControlEnabled={false}
+                >
+                  <Marker
+                    coordinate={{ latitude: 33.6844, longitude: 73.0479 }}
+                    title="Premium Destination"
+                    description="Northern Pakistan exploration hub"
+                  />
+                </MapView>
+              </View>
+            ) : (
+              <View style={styles.mapContainer}>
+                <View style={styles.webFallback}>
+                  <Ionicons name="map-outline" size={36} color="#0B5CAD" />
+                  <Text style={styles.webFallbackTitle}>Map view unavailable on web</Text>
+                  <Text style={styles.webFallbackText}>
+                    Open the app on mobile to view the interactive map experience.
+                  </Text>
+                </View>
+              </View>
+            )}
           </View>
         </View>
         {/* ================= NEWSLETTER SECTION ================= */}
@@ -114,7 +134,7 @@ export default function MapScreen() {
               style={styles.emailInput}
             />
         
-            <TouchableOpacity style={styles.subscribeButton}>
+            <TouchableOpacity style={styles.subscribeButton} onPress={() => navigation.navigate("Signup")}>
               <Text style={styles.subscribeButtonText}>
                 Subscribe Free
               </Text>
@@ -133,7 +153,7 @@ export default function MapScreen() {
         </ImageBackground>
         {/* ================= START BUTTON ================= */}
         
-        <TouchableOpacity style={styles.startButton}>
+        <TouchableOpacity style={styles.startButton} onPress={() => navigation.navigate("BrowseTrips")}>
         
           <Text style={styles.startButtonText}>
             Start Exploring
@@ -168,19 +188,19 @@ export default function MapScreen() {
         
           <View style={styles.socialRow}>
         
-            <TouchableOpacity style={styles.socialIcon}>
+            <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
               <Ionicons name="logo-facebook" size={20} color="#FFFFFF" />
             </TouchableOpacity>
         
-            <TouchableOpacity style={styles.socialIcon}>
+            <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
               <Ionicons name="logo-instagram" size={20} color="#FFFFFF" />
             </TouchableOpacity>
         
-            <TouchableOpacity style={styles.socialIcon}>
+            <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
               <Ionicons name="logo-youtube" size={20} color="#FFFFFF" />
             </TouchableOpacity>
         
-            <TouchableOpacity style={styles.socialIcon}>
+            <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
               <Ionicons name="logo-linkedin" size={20} color="#FFFFFF" />
             </TouchableOpacity>
         
@@ -313,6 +333,30 @@ const styles = StyleSheet.create({
 
   map: {
     flex: 1,
+  },
+
+  webFallback: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 20,
+  },
+
+  webFallbackTitle: {
+    marginTop: 12,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#0F172A",
+    textAlign: "center",
+  },
+
+  webFallbackText: {
+    marginTop: 8,
+    fontSize: 14,
+    color: "#64748B",
+    textAlign: "center",
+    lineHeight: 22,
   },
   /* ================= NEWSLETTER ================= */
 

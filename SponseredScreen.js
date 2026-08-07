@@ -14,11 +14,13 @@ import {
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import Header from "./Header";
 
 const { height } = Dimensions.get("window");
 
 export default function PartnerScreen() {
+  const navigation = useNavigation();
 
   return (
 
@@ -75,6 +77,7 @@ export default function PartnerScreen() {
 
                 <TouchableOpacity
                   style={styles.primaryButton}
+                  onPress={() => navigation.navigate("Home")}
                 >
 
                   <Text style={styles.primaryButtonText}>
@@ -85,6 +88,7 @@ export default function PartnerScreen() {
 
                 <TouchableOpacity
                   style={styles.secondaryButton}
+                  onPress={() => navigation.navigate("Contact")}
                 >
 
                   <Text style={styles.secondaryButtonText}>
@@ -297,7 +301,7 @@ export default function PartnerScreen() {
 
     </View>
 
-    <TouchableOpacity>
+    <TouchableOpacity onPress={() => navigation.navigate("BrowseTrips")}>
 
       <Text style={styles.viewAll}>
         View All Trips
@@ -311,7 +315,7 @@ export default function PartnerScreen() {
 
     {/* Card 1 */}
 
-    <TouchableOpacity style={styles.tripCard}>
+    <TouchableOpacity style={styles.tripCard} onPress={() => navigation.navigate("ViewTrip")}>
 
       <ImageBackground
         source={require("./assets/hunza.jpg")}
@@ -355,7 +359,7 @@ export default function PartnerScreen() {
 
     {/* Card 2 */}
 
-    <TouchableOpacity style={styles.tripCard}>
+    <TouchableOpacity style={styles.tripCard} onPress={() => navigation.navigate("ViewTrip")}>
 
       <ImageBackground
         source={require("./assets/fairy.jpg")}
@@ -399,7 +403,7 @@ export default function PartnerScreen() {
 
     {/* Card 3 */}
 
-    <TouchableOpacity style={styles.tripCard}>
+    <TouchableOpacity style={styles.tripCard} onPress={() => navigation.navigate("ViewTrip")}>
 
       <ImageBackground
         source={require("./assets/skardu.jpg")}
@@ -537,7 +541,7 @@ export default function PartnerScreen() {
 
     <View style={styles.ctaButtons}>
 
-      <TouchableOpacity style={styles.partnerBtn}>
+      <TouchableOpacity style={styles.partnerBtn} onPress={() => navigation.navigate("Home")}>
 
         <Text style={styles.partnerBtnText}>
           Partner With Us
@@ -545,7 +549,7 @@ export default function PartnerScreen() {
 
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.contactBtn}>
+      <TouchableOpacity style={styles.contactBtn} onPress={() => navigation.navigate("Contact")}>
 
         <Text style={styles.contactBtnText}>
           Contact Team
@@ -585,19 +589,19 @@ Explore Pakistan Beyond The Horizon
 
   <View style={styles.socialRow}>
 
-    <TouchableOpacity style={styles.socialIcon}>
+    <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
       <Ionicons name="logo-facebook" size={20} color="#FFFFFF" />
     </TouchableOpacity>
 
-    <TouchableOpacity style={styles.socialIcon}>
+    <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
       <Ionicons name="logo-instagram" size={20} color="#FFFFFF" />
     </TouchableOpacity>
 
-    <TouchableOpacity style={styles.socialIcon}>
+    <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
       <Ionicons name="logo-youtube" size={20} color="#FFFFFF" />
     </TouchableOpacity>
 
-    <TouchableOpacity style={styles.socialIcon}>
+    <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
       <Ionicons name="logo-linkedin" size={20} color="#FFFFFF" />
     </TouchableOpacity>
 

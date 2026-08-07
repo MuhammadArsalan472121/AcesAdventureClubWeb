@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import { useNavigation } from "@react-navigation/native";
 import {
   View,
   Text,
@@ -13,7 +14,8 @@ import {
 
 const { height } = Dimensions.get("window");
 
-export default function Onboarding1({ navigation }) {
+export default function Onboarding1() {
+  const navigation = useNavigation();
 
   const fade = useRef(new Animated.Value(0)).current;
   const slide = useRef(new Animated.Value(50)).current;

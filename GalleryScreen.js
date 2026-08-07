@@ -15,11 +15,13 @@ import {
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import Header from "./Header";
 
 const { height } = Dimensions.get("window");
 
 export default function GalleryScreen() {
+  const navigation = useNavigation();
   const galleryData = [
     { id: 1, image: require("./assets/gallery1.jpg"), category: "Mountains" },
     { id: 2, image: require("./assets/gallery2.jpg"), category: "Lakes" },
@@ -54,7 +56,7 @@ export default function GalleryScreen() {
               <Text style={styles.heroDescription}>
                 Experience breathtaking mountains, hidden trails, peaceful lakes and unforgettable landscapes through our curated adventure showcase.
               </Text>
-              <TouchableOpacity style={styles.heroButton}>
+              <TouchableOpacity style={styles.heroButton} onPress={() => navigation.navigate("BrowseTrips")}>
                 <Text style={styles.heroButtonText}>EXPLORE TRIPS →</Text>
               </TouchableOpacity>
             </View>
@@ -110,7 +112,7 @@ export default function GalleryScreen() {
 
     {/* Card 1 */}
 
-    <TouchableOpacity style={styles.destinationCard}>
+    <TouchableOpacity style={styles.destinationCard} onPress={() => navigation.navigate("ViewTrip")}>
 
       <ImageBackground
         source={require("./assets/hub1.jpg")}
@@ -158,7 +160,7 @@ export default function GalleryScreen() {
 
     {/* Card 2 */}
 
-    <TouchableOpacity style={styles.destinationCard}>
+    <TouchableOpacity style={styles.destinationCard} onPress={() => navigation.navigate("ViewTrip")}>
 
       <ImageBackground
         source={require("./assets/hub2.jpg")}
@@ -206,7 +208,7 @@ export default function GalleryScreen() {
 
     {/* Card 3 */}
 
-    <TouchableOpacity style={styles.destinationCard}>
+    <TouchableOpacity style={styles.destinationCard} onPress={() => navigation.navigate("ViewTrip")}>
 
       <ImageBackground
         source={require("./assets/hub3.jpg")}
@@ -294,7 +296,7 @@ export default function GalleryScreen() {
       style={styles.emailInput}
     />
 
-    <TouchableOpacity style={styles.subscribeButton}>
+    <TouchableOpacity style={styles.subscribeButton} onPress={() => navigation.navigate("Signup")}>
       <Text style={styles.subscribeButtonText}>
         Subscribe Free
       </Text>
@@ -313,7 +315,7 @@ export default function GalleryScreen() {
 </ImageBackground>
 {/* ================= START BUTTON ================= */}
 
-<TouchableOpacity style={styles.startButton}>
+<TouchableOpacity style={styles.startButton} onPress={() => navigation.navigate("BrowseTrips")}>
 
   <Text style={styles.startButtonText}>
     Start Exploring
@@ -348,19 +350,19 @@ Explore Pakistan Beyond The Horizon
 
   <View style={styles.socialRow}>
 
-    <TouchableOpacity style={styles.socialIcon}>
+    <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
       <Ionicons name="logo-facebook" size={20} color="#FFFFFF" />
     </TouchableOpacity>
 
-    <TouchableOpacity style={styles.socialIcon}>
+    <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
       <Ionicons name="logo-instagram" size={20} color="#FFFFFF" />
     </TouchableOpacity>
 
-    <TouchableOpacity style={styles.socialIcon}>
+    <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
       <Ionicons name="logo-youtube" size={20} color="#FFFFFF" />
     </TouchableOpacity>
 
-    <TouchableOpacity style={styles.socialIcon}>
+    <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
       <Ionicons name="logo-linkedin" size={20} color="#FFFFFF" />
     </TouchableOpacity>
 

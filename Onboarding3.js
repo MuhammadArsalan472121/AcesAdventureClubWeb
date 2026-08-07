@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import { useNavigation } from "@react-navigation/native";
 import {
   View,
   Text,
@@ -13,7 +14,8 @@ import {
 
 const { height } = Dimensions.get("window");
 
-export default function Onboarding3({ navigation }) {
+export default function Onboarding3() {
+  const navigation = useNavigation();
 
   const fade = useRef(new Animated.Value(0)).current;
   const slide = useRef(new Animated.Value(50)).current;
@@ -59,9 +61,7 @@ export default function Onboarding3({ navigation }) {
           </View>
 
           <TouchableOpacity
-            onPress={() => alert("Login Screen")}
-            // Login screen banne ke baad ye use karna:
-            // onPress={() => navigation.replace("Login")}
+            onPress={() => navigation.replace("Home")}
           >
             <Text style={styles.skip}>Skip</Text>
           </TouchableOpacity>
@@ -108,9 +108,7 @@ export default function Onboarding3({ navigation }) {
         >
           <TouchableOpacity
             style={styles.button}
-            onPress={() => alert("Login Screen")}
-            // Login screen banne ke baad:
-            // onPress={() => navigation.replace("Login")}
+            onPress={() => navigation.replace("Home")}
           >
             <Text style={styles.buttonText}>
               Get Started

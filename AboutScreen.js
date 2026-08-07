@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   SafeAreaView,
   ScrollView,
@@ -18,8 +18,7 @@ import { Ionicons } from "@expo/vector-icons";
 const { height } = Dimensions.get("window");
 
 export default function AboutScreen() {
-
-  const [menuVisible, setMenuVisible] = useState(false);
+  const navigation = useNavigation();
 
   return (
 
@@ -41,84 +40,7 @@ export default function AboutScreen() {
           <View style={styles.overlay}>
 
             {/* Header */}
-
-         {/* ================= HEADER ================= */}
-
-<View style={styles.header}>
-
-  <Image
-    source={require("./assets/logo.png")}
-    style={styles.logo}
-  />
-
-  <TouchableOpacity
-    onPress={() => setMenuVisible(!menuVisible)}
-  >
-    <Ionicons
-      name="menu"
-      size={34}
-      color="#FFFFFF"
-    />
-  </TouchableOpacity>
-
-</View>
-
-{
-menuVisible && (
-
-<View style={styles.mobileMenu}>
-
-  <TouchableOpacity style={styles.menuRow}>
-    <Ionicons name="home-outline" size={22} color="#0B5CAD" />
-    <Text style={styles.menuItem}>Home</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity style={styles.menuRow}>
-    <Ionicons name="information-circle-outline" size={22} color="#0B5CAD" />
-    <Text style={styles.menuItem}>About</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity style={styles.menuRow}>
-    <Ionicons name="compass-outline" size={22} color="#0B5CAD" />
-    <Text style={styles.menuItem}>Browse Trips</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity style={styles.menuRow}>
-    <Ionicons name="images-outline" size={22} color="#0B5CAD" />
-    <Text style={styles.menuItem}>Gallery</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity style={styles.menuRow}>
-    <Ionicons name="map-outline" size={22} color="#0B5CAD" />
-    <Text style={styles.menuItem}>Map</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity style={styles.menuRow}>
-    <Ionicons name="people-outline" size={22} color="#0B5CAD" />
-    <Text style={styles.menuItem}>Sponsors</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity style={styles.menuRow}>
-    <Ionicons name="call-outline" size={22} color="#0B5CAD" />
-    <Text style={styles.menuItem}>Contact</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity style={styles.loginButton}>
-    <Text style={styles.loginButtonText}>
-      Login
-    </Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity style={styles.signupButton}>
-    <Text style={styles.signupButtonText}>
-      Sign Up
-    </Text>
-  </TouchableOpacity>
-
-</View>
-
-)
-}
+            <Header />
 
             {/* Hero Content */}
 
@@ -149,13 +71,13 @@ menuVisible && (
 
               <View style={styles.buttonRow}>
 
-                <TouchableOpacity style={styles.primaryButton}>
+                <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate("BrowseTrips")}>
                   <Text style={styles.primaryButtonText}>
                     OUR LEGACY
                   </Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.secondaryButton}>
+                <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate("Contact")}>
                   <Text style={styles.secondaryButtonText}>
                     WATCH THE FILM
                   </Text>
@@ -535,7 +457,7 @@ memories with every journey.
 
 <View style={styles.ctaButtons}>
 
-<TouchableOpacity style={styles.ctaPrimary}>
+<TouchableOpacity style={styles.ctaPrimary} onPress={() => navigation.navigate("BrowseTrips")}>
 
 <Text style={styles.ctaPrimaryText}>
 Explore Trips
@@ -543,7 +465,7 @@ Explore Trips
 
 </TouchableOpacity>
 
-<TouchableOpacity style={styles.ctaSecondary}>
+<TouchableOpacity style={styles.ctaSecondary} onPress={() => navigation.navigate("Contact")}>
 
 <Text style={styles.ctaSecondaryText}>
 Contact Us
@@ -588,19 +510,19 @@ Explore Pakistan Beyond The Horizon
 
   <View style={styles.socialRow}>
 
-    <TouchableOpacity style={styles.socialIcon}>
+    <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
       <Ionicons name="logo-facebook" size={20} color="#FFFFFF" />
     </TouchableOpacity>
 
-    <TouchableOpacity style={styles.socialIcon}>
+    <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
       <Ionicons name="logo-instagram" size={20} color="#FFFFFF" />
     </TouchableOpacity>
 
-    <TouchableOpacity style={styles.socialIcon}>
+    <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
       <Ionicons name="logo-youtube" size={20} color="#FFFFFF" />
     </TouchableOpacity>
 
-    <TouchableOpacity style={styles.socialIcon}>
+    <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
       <Ionicons name="logo-linkedin" size={20} color="#FFFFFF" />
     </TouchableOpacity>
 
