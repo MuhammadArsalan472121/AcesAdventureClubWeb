@@ -13,17 +13,20 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Header from "./Header";
+import Footer from "./Footer";
+import useResponsive from "./useResponsive";
 
-const { height } = Dimensions.get("window");
+const { height, width } = Dimensions.get("window");
 
 export default function LoginScreen() {
   const navigation = useNavigation();
+  const { isDesktop, height } = useResponsive();
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
       <ScrollView showsVerticalScrollIndicator={false}>
-        <ImageBackground source={require("./assets/hero.jpg")} style={styles.hero} resizeMode="cover">
+        <ImageBackground source={require("./assets/hero.jpg")} style={[styles.hero, { minHeight: height }]} resizeMode="cover">
           <View style={styles.overlay}>
             <Header />
             <View style={styles.heroContent}>
@@ -60,6 +63,7 @@ export default function LoginScreen() {
             </View>
           </View>
         </ImageBackground>
+        <Footer />
       </ScrollView>
     </SafeAreaView>
   );
@@ -72,19 +76,19 @@ const styles = StyleSheet.create({
   },
   hero: {
     width: "100%",
-    height: height * 0.95,
   },
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.45)",
     paddingHorizontal: 22,
-    paddingTop: 55,
+    paddingTop: 20,
+    paddingBottom: 40,
   },
   heroContent: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingBottom: 24,
+    paddingVertical: 30,
   },
   smallTitle: {
     color: "#DCEAFE",
@@ -103,14 +107,21 @@ const styles = StyleSheet.create({
     color: "#E2E8F0",
     fontSize: 15,
     textAlign: "center",
-    width: "85%",
+    maxWidth: 500,
+    width: "90%",
     marginBottom: 24,
   },
   card: {
     width: "100%",
+    maxWidth: 460,
     backgroundColor: "#FFFFFF",
     borderRadius: 20,
-    padding: 20,
+    padding: 28,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 15,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 10,
   },
   label: {
     color: "#0F172A",
@@ -121,10 +132,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E2E8F0",
     borderRadius: 12,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 12,
-    marginBottom: 14,
+    marginBottom: 16,
     color: "#0F172A",
+    fontSize: 15,
   },
   primaryButton: {
     backgroundColor: "#0B5CAD",
@@ -132,6 +144,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     marginTop: 6,
+    cursor: "pointer",
   },
   primaryButtonText: {
     color: "#FFFFFF",
@@ -143,5 +156,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 16,
     fontWeight: "700",
+    cursor: "pointer",
   },
 });
+

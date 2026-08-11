@@ -1,1584 +1,1048 @@
-import React from "react";
-
+import React, { useState } from "react";
 import {
-View,
-Text,
-StyleSheet,
-Image,
-ImageBackground,
-TouchableOpacity,
-ScrollView,
-SafeAreaView,
-StatusBar,
-Dimensions,
-TextInput,
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  ImageBackground,
+  TouchableOpacity,
+  ScrollView,
+  SafeAreaView,
+  StatusBar,
+  TextInput,
+  Dimensions,
 } from "react-native";
-
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-
 import Header from "./Header";
+import Footer from "./Footer";
+import useResponsive from "./useResponsive";
 
-const { width, height } = Dimensions.get("window");
+const { height, width } = Dimensions.get("window");
 
 export default function ExploreTripsScreen() {
   const navigation = useNavigation();
+  const [activeFilter, setActiveFilter] = useState("All");
+  const {
+    isDesktop,
+    isTablet,
+    isLargeDesktop,
+    contentMaxWidth,
+    paddingHorizontal,
+  } = useResponsive();
+
+  const curatedTrips = [
+    {
+      id: 1,
+      image: require("./assets/hunza.jpg"),
+      badge: "Featured",
+      location: "Gilgit, Pakistan",
+      title: "Hunza Explorer",
+      description: "Experience breathtaking mountain landscapes and culture.",
+      duration: "5 Days",
+      difficulty: "Easy",
+      difficultyColor: "#22C55E",
+    },
+    {
+      id: 2,
+      image: require("./assets/fairy.jpg"),
+      badge: "Popular",
+      location: "Diamer, Pakistan",
+      title: "Fairy Meadows Trek",
+      description: "Base camp of mighty Nanga Parbat mountain.",
+      duration: "7 Days",
+      difficulty: "Hard",
+      difficultyColor: "#EF4444",
+    },
+    {
+      id: 3,
+      image: require("./assets/skardu.jpg"),
+      badge: "Recommended",
+      location: "Skardu, Pakistan",
+      title: "Skardu Adventure",
+      description: "Lakes, cold deserts and unforgettable mountain views.",
+      duration: "10 Days",
+      difficulty: "Moderate",
+      difficultyColor: "#F59E0B",
+    },
+    {
+      id: 4,
+      image: require("./assets/naran.jpg"),
+      badge: "Trending",
+      location: "Mansehra, Pakistan",
+      title: "Naran Valley Escape",
+      description: "Enjoy lush green valleys and alpine lake views.",
+      duration: "4 Days",
+      difficulty: "Easy",
+      difficultyColor: "#22C55E",
+    },
+    {
+      id: 5,
+      image: require("./assets/hunza.jpg"),
+      badge: "Featured",
+      location: "Gilgit, Pakistan",
+      title: "Hunza Explorer",
+      description: "Experience breathtaking mountain landscapes and culture.",
+      duration: "5 Days",
+      difficulty: "Easy",
+      difficultyColor: "#22C55E",
+    },
+    {
+      id: 6,
+      image: require("./assets/fairy.jpg"),
+      badge: "Popular",
+      location: "Diamer, Pakistan",
+      title: "Fairy Meadows Trek",
+      description: "Base camp of mighty Nanga Parbat mountain.",
+      duration: "7 Days",
+      difficulty: "Hard",
+      difficultyColor: "#EF4444",
+    },
+    {
+      id: 7,
+      image: require("./assets/skardu.jpg"),
+      badge: "Recommended",
+      location: "Skardu, Pakistan",
+      title: "Skardu Adventure",
+      description: "Lakes, cold deserts and unforgettable mountain views.",
+      duration: "10 Days",
+      difficulty: "Moderate",
+      difficultyColor: "#F59E0B",
+    },
+    {
+      id: 8,
+      image: require("./assets/naran.jpg"),
+      badge: "Trending",
+      location: "Mansehra, Pakistan",
+      title: "Naran Valley Escape",
+      description: "Enjoy lush green valleys and alpine lake views.",
+      duration: "4 Days",
+      difficulty: "Easy",
+      difficultyColor: "#22C55E",
+    },
+  ];
+
   const popularHubs = [
-
-  {
-    id: 1,
-    image: require("./assets/hub1.jpg"),
-    badge: "Most Popular",
-
-    title: "Hunza Valley",
-
-    description:
-      "Experience the breathtaking beauty of Pakistan's majestic mountains and valleys.",
-
-    price: "30000 Rs",
-
-    duration: "3 days",
-  },
-
-  {
-    id: 2,
-    image: require("./assets/hub2.jpg"),
-    badge: "Most Liked",
-
-    title: "Fairy Meadows Trek",
-
-    description:
-      "Journey through scenic trails leading to one of Pakistan's most iconic landscapes.",
-
-    price: "40000 Rs",
-
-    duration: "7 days",
-  },
-
-  {
-    id: 3,
-    image: require("./assets/hub3.jpg"),
-    badge: "Most Visited",
-
-    title: "Skardu Adventure",
-
-    description:
-      "Explore majestic lakes, valleys and unforgettable mountain views.",
-
-    price: "70000 Rs",
-
-    duration: "14 days",
-  },
-  
-
-];
-
-return (
-
-<SafeAreaView style={styles.container}>
-
-<StatusBar
-translucent
-backgroundColor="transparent"
-barStyle="light-content"
-/>
-
-<ScrollView
-showsVerticalScrollIndicator={false}
->
-
-{/* HERO */}
-
-<ImageBackground
-
-source={require("./assets/explore-hero.jpg")}
-
-style={styles.hero}
-
->
-
-<View style={styles.overlay}>
-
-<Header />
-
-<View style={styles.heroContent}>
-
-<Text style={styles.heroBlue}>
-EXPLORE
-</Text>
-
-<Text style={styles.heroWhite}>
-ADVENTURES
-</Text>
-
-<Text style={styles.heroDescription}>
-Discover breathtaking destinations and unforgettable outdoor
-experiences across Pakistan's beautiful landscapes.
-Explore access to the roof of the world.
-</Text>
-
-<View style={styles.buttonRow}>
-
-<TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate("BrowseTrips")}>
-
-<Text style={styles.primaryText}>
-View Destinations
-</Text>
-
-</TouchableOpacity>
-
-<TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate("Gallery")}>
-
-<Text style={styles.secondaryText}>
-View Gallery
-</Text>
-
-</TouchableOpacity>
-
-</View>
-
-</View>
-
-</View>
-
-</ImageBackground>
-
-{/* Search & Filters yahan se next part me */}
-{/* ================= SEARCH ================= */}
-
-<View style={styles.searchSection}>
-
-<View style={styles.searchBox}>
-
-<Ionicons
-name="search-outline"
-size={22}
-color="#4F7EE8"
-/>
-
-<TextInput
-placeholder="Search Mountains, Locations, Places Or Adventures ..."
-placeholderTextColor="#7B8798"
-style={styles.searchInput}
-/>
-
-</View>
-
-<View style={styles.filterContainer}>
-
-<TouchableOpacity style={styles.activeFilter} onPress={() => navigation.navigate("BrowseTrips")}>
-
-<Ionicons
-name="options-outline"
-size={16}
-color="#FFFFFF"
-/>
-
-<Text style={styles.activeFilterText}>
-Filters
-</Text>
-
-</TouchableOpacity>
-
-<TouchableOpacity style={styles.filterChip} onPress={() => navigation.navigate("BrowseTrips")}>
-
-<Ionicons
-name="triangle-outline"
-size={16}
-color="#FFFFFF"
-/>
-
-<Text style={styles.filterText}>
-Mountains
-</Text>
-
-</TouchableOpacity>
-
-<TouchableOpacity style={styles.filterChip} onPress={() => navigation.navigate("BrowseTrips")}>
-
-<Ionicons
-name="walk-outline"
-size={16}
-color="#FFFFFF"
-/>
-
-<Text style={styles.filterText}>
-Hiking
-</Text>
-
-</TouchableOpacity>
-
-<TouchableOpacity style={styles.filterChip} onPress={() => navigation.navigate("BrowseTrips")}>
-
-<Ionicons
-name="bonfire-outline"
-size={16}
-color="#FFFFFF"
-/>
-
-<Text style={styles.filterText}>
-Camping
-</Text>
-
-</TouchableOpacity>
-
-<TouchableOpacity style={styles.filterChip} onPress={() => navigation.navigate("BrowseTrips")}>
-
-<Ionicons
-name="leaf-outline"
-size={16}
-color="#FFFFFF"
-/>
-
-<Text style={styles.filterText}>
-Nature Trails
-</Text>
-
-</TouchableOpacity>
-
-<TouchableOpacity style={styles.filterChip} onPress={() => navigation.navigate("BrowseTrips")}>
-
-<Ionicons
-name="location-outline"
-size={16}
-color="#FFFFFF"
-/>
-
-<Text style={styles.filterText}>
-Northern Areas
-</Text>
-
-</TouchableOpacity>
-
-</View>
-
-</View>
-
-{/* ================= CURATED JOURNEYS ================= */}
-
-<View style={styles.curatedSection}>
-
-  <Text style={styles.curatedSmallTitle}>
-    FEATURED EXPEDITIONS
-  </Text>
-
-  <Text style={styles.curatedTitle}>
-    CURATED JOURNEYS
-  </Text>
-
-  {/* ================= ROW 1 ================= */}
-
-  <ScrollView
-    horizontal
-    showsHorizontalScrollIndicator={false}
-    contentContainerStyle={styles.curatedScroll}
-  >
-
-    {[
-      {
-        image: require("./assets/hunza.jpg"),
-        badge: "Sponsored",
-        location: "Hunza Valley",
-        title: "Hunza Explorer",
-        description: "Experience breathtaking mountain landscapes.",
-        duration: "8 Days",
-        difficulty: "Moderate",
-        difficultyColor: "#F59E0B",
-      },
-
-      {
-        image: require("./assets/fairy.jpg"),
-        badge: "",
-        location: "Fairy Meadows",
-        title: "Fairy Meadows",
-        description: "Base camp of mighty Nanga Parbat.",
-        duration: "10 Days",
-        difficulty: "Hard",
-        difficultyColor: "#EF4444",
-      },
-
-      {
-        image: require("./assets/skardu.jpg"),
-        badge: "Sponsored",
-        location: "Skardu",
-        title: "Skardu Adventure",
-        description: "Lakes, mountains and unforgettable views.",
-        duration: "7 Days",
-        difficulty: "Easy",
-        difficultyColor: "#22C55E",
-      },
-
-      {
-        image: require("./assets/naran.jpg"),
-        badge: "",
-        location: "Naran",
-        title: "Naran Escape",
-        description: "Enjoy lush green valleys and rivers.",
-        duration: "5 Days",
-        difficulty: "Easy",
-        difficultyColor: "#22C55E",
-      },
-
-    ].map((item,index)=>(
-
-      <View key={index} style={styles.curatedCard}>
-
-        <Image source={item.image} style={styles.curatedImage}/>
-
-        {item.badge!==""&&(
-          <View style={styles.curatedBadge}>
-            <Text style={styles.curatedBadgeText}>
-              {item.badge}
-            </Text>
-          </View>
-        )}
-
-        <View style={styles.curatedContent}>
-
-          <Text style={styles.curatedLocation}>
-            {item.location}
-          </Text>
-
-          <Text style={styles.curatedCardTitle}>
-            {item.title}
-          </Text>
-
-          <Text style={styles.curatedDescription}>
-            {item.description}
-          </Text>
-
-          <View style={styles.curatedBlueLine}/>
-
-          <View style={styles.curatedBottom}>
-
-            <View>
-
-              <Text style={styles.curatedLabel}>
-                DURATION
+    {
+      id: 1,
+      image: require("./assets/hub1.jpg"),
+      badge: "Most Popular",
+      location: "Gilgit, Pakistan",
+      title: "Hunza Valley",
+      description: "Experience the breathtaking beauty of Hunza's mountains and valleys.",
+      duration: "3 Days",
+      difficulty: "Easy",
+      price: "PKR 40,000",
+    },
+    {
+      id: 2,
+      image: require("./assets/hub2.jpg"),
+      badge: "Most Liked",
+      location: "Diamer, Pakistan",
+      title: "Fairy Meadows Trek",
+      description: "Journey through scenic trails leading to Nanga Parbat base camp.",
+      duration: "5 Days",
+      difficulty: "Hard",
+      price: "PKR 55,000",
+    },
+    {
+      id: 3,
+      image: require("./assets/hub3.jpg"),
+      badge: "Best View",
+      location: "Skardu, Pakistan",
+      title: "Skardu Adventure",
+      description: "Explore Karakoram peaks, Shangrila lake and Cold Desert.",
+      duration: "7 Days",
+      difficulty: "Moderate",
+      price: "PKR 65,000",
+    },
+  ];
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* ================= HERO SECTION ================= */}
+        <ImageBackground
+          source={require("./assets/explore-hero.jpg")}
+          style={[styles.hero, { height: isDesktop ? 650 : height * 0.85 }]}
+          resizeMode="cover"
+        >
+          <View style={[styles.overlay, { paddingHorizontal: paddingHorizontal }]}>
+            <Header />
+
+            <View style={[styles.heroContent, { maxWidth: contentMaxWidth, width: "100%", alignSelf: "center" }]}>
+              <Text style={[styles.heroBlue, { fontSize: isDesktop ? 54 : 36 }]}>EXPLORE</Text>
+              <Text style={[styles.heroWhite, { fontSize: isDesktop ? 54 : 36 }]}>ADVENTURES</Text>
+
+              <Text style={[styles.heroDescription, { fontSize: isDesktop ? 17 : 15, maxWidth: 720 }]}>
+                Uncover the magic of hidden trails, towering peaks, and pristine lakes across Pakistan with our expert-guided expeditions.
               </Text>
 
-              <Text style={styles.curatedValue}>
-                {item.duration}
-              </Text>
-
-            </View>
-
-            <View>
-
-              <Text style={styles.curatedLabel}>
-                DIFFICULTY
-              </Text>
-
-              <Text
-                style={[
-                  styles.curatedValue,
-                  {color:item.difficultyColor}
-                ]}
-              >
-                {item.difficulty}
-              </Text>
-
-            </View>
-
-          </View>
-
-          <TouchableOpacity style={styles.curatedButton}>
-
-            <Text style={styles.curatedButtonText}>
-              View Details
-            </Text>
-
-          </TouchableOpacity>
-
-        </View>
-
-      </View>
-
-    ))}
-
-  </ScrollView>
-
-  {/* ================= ROW 2 ================= */}
-
-  <ScrollView
-    horizontal
-    showsHorizontalScrollIndicator={false}
-    contentContainerStyle={[
-      styles.curatedScroll,
-      {marginTop:20},
-    ]}
-  >
-
-    {[
-      {
-        image: require("./assets/hunza.jpg"),
-        badge: "",
-        location: "Hunza Valley",
-        title: "Hunza Explorer",
-        description: "Experience breathtaking mountain landscapes.",
-        duration: "8 Days",
-        difficulty: "Moderate",
-        difficultyColor: "#F59E0B",
-      },
-
-      {
-        image: require("./assets/fairy.jpg"),
-        badge: "",
-        location: "Fairy Meadows",
-        title: "Fairy Meadows",
-        description: "Base camp of mighty Nanga Parbat.",
-        duration: "10 Days",
-        difficulty: "Hard",
-        difficultyColor: "#EF4444",
-      },
-
-      {
-        image: require("./assets/skardu.jpg"),
-        badge: "",
-        location: "Skardu",
-        title: "Skardu Adventure",
-        description: "Lakes, mountains and unforgettable views.",
-        duration: "7 Days",
-        difficulty: "Easy",
-        difficultyColor: "#22C55E",
-      },
-
-      {
-        image: require("./assets/naran.jpg"),
-        badge: "",
-        location: "Naran",
-        title: "Naran Escape",
-        description: "Enjoy lush green valleys and rivers.",
-        duration: "5 Days",
-        difficulty: "Easy",
-        difficultyColor: "#22C55E",
-      },
-
-    ].map((item,index)=>(
-
-      <View key={index} style={styles.curatedCard}>
-
-        <Image source={item.image} style={styles.curatedImage}/>
-
-        <View style={styles.curatedContent}>
-
-          <Text style={styles.curatedLocation}>
-            {item.location}
-          </Text>
-
-          <Text style={styles.curatedCardTitle}>
-            {item.title}
-          </Text>
-
-          <Text style={styles.curatedDescription}>
-            {item.description}
-          </Text>
-
-          <View style={styles.curatedBlueLine}/>
-
-          <View style={styles.curatedBottom}>
-
-            <View>
-
-              <Text style={styles.curatedLabel}>
-                DURATION
-              </Text>
-
-              <Text style={styles.curatedValue}>
-                {item.duration}
-              </Text>
-
-            </View>
-
-            <View>
-
-              <Text style={styles.curatedLabel}>
-                DIFFICULTY
-              </Text>
-
-              <Text
-                style={[
-                  styles.curatedValue,
-                  {color:item.difficultyColor}
-                ]}
-              >
-                {item.difficulty}
-              </Text>
-
-            </View>
-
-          </View>
-
-          <TouchableOpacity style={styles.curatedButton}>
-
-            <Text style={styles.curatedButtonText}>
-              View Details
-            </Text>
-
-          </TouchableOpacity>
-
-        </View>
-
-      </View>
-
-    ))}
-
-  </ScrollView>
-
-</View>
-{/* ================= PAGINATION ================= */}
-
-<View style={styles.paginationContainer}>
-
-  <TouchableOpacity style={styles.pageArrow} onPress={() => navigation.navigate("ViewTrip")}>
-    <Ionicons name="arrow-back" size={18} color="#111827" />
-    <Text style={styles.pageArrowText}>Previous</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity style={styles.activePage} onPress={() => navigation.navigate("ViewTrip")}>
-    <Text style={styles.activePageText}>1</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity style={styles.pageNumber} onPress={() => navigation.navigate("ViewTrip")}>
-    <Text style={styles.pageNumberText}>2</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity style={styles.pageNumber} onPress={() => navigation.navigate("ViewTrip")}>
-    <Text style={styles.pageNumberText}>3</Text>
-  </TouchableOpacity>
-
-  <Text style={styles.pageDots}>.......</Text>
-
-  <TouchableOpacity style={styles.pageNumber} onPress={() => navigation.navigate("ViewTrip")}>
-    <Text style={styles.pageNumberText}>12</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity style={styles.pageArrow} onPress={() => navigation.navigate("ViewTrip")}>
-    <Text style={styles.pageArrowText}>Next</Text>
-    <Ionicons name="arrow-forward" size={18} color="#111827" />
-  </TouchableOpacity>
-
-</View>
-{/* ================= POPULAR HUBS ================= */}
-
-<View style={styles.popularSection}>
-
-  <Text style={styles.popularSmallTitle}>
-    POPULAR DESTINATIONS
-  </Text>
-
-  <Text style={styles.popularTitle}>
-    POPULAR HUBS
-  </Text>
-
-  <Text style={styles.popularDescription}>
-    Discover handpicked adventures crafted for explorers
-    seeking unforgettable experiences.
-  </Text>
-
-</View>
-{/* ================= POPULAR HUBS DATA ================= */}
-
-
-
-{/* ================= POPULAR HUBS CARDS ================= */}
-
-<ScrollView
-  horizontal
-  showsHorizontalScrollIndicator={false}
-  contentContainerStyle={styles.popularScroll}
->
-
-  {popularHubs.map((item) => (
-
-    <TouchableOpacity
-      key={item.id}
-      activeOpacity={0.9}
-      style={styles.popularCard}
-      onPress={() => navigation.navigate("ViewTrip")}
-    >
-
-      <ImageBackground
-        source={item.image}
-        style={styles.popularImage}
-        imageStyle={styles.popularImageRadius}
-      >
-
-        {/* Dark Overlay */}
-        <View style={styles.popularOverlay}>
-
-          {/* Badge */}
-          <View style={styles.popularBadge}>
-            <Text style={styles.popularBadgeText}>
-              {item.badge}
-            </Text>
-          </View>
-
-          {/* Bottom Content */}
-          <View style={styles.popularContent}>
-
-            <Text style={styles.popularCardTitle}>
-              {item.title}
-            </Text>
-
-            <Text style={styles.popularCardDescription}>
-              {item.description}
-            </Text>
-
-            <View style={styles.popularDivider} />
-
-            <View style={styles.popularBottomRow}>
-
-              <View>
-
-                <Text style={styles.popularSmallText}>
-                  Starting From
-                </Text>
-
-                <Text style={styles.popularPrice}>
-                  {item.price}
-                </Text>
-
-              </View>
-
-              <View style={{ alignItems: "flex-end" }}>
-
-                <Text style={styles.popularSmallText}>
-                  {item.duration}
-                </Text>
-
-                <TouchableOpacity onPress={() => navigation.navigate("ViewTrip")}>
-
-                  <Text style={styles.popularViewText}>
-                    View Package →
-                  </Text>
-
+              <View style={styles.buttonRow}>
+                <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate("BrowseTrips")}>
+                  <Text style={styles.primaryText}>View Destinations</Text>
                 </TouchableOpacity>
 
+                <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate("Gallery")}>
+                  <Text style={styles.secondaryText}>View Gallery</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </ImageBackground>
+
+        {/* ================= SEARCH & FILTERS BAR ================= */}
+        <View style={[styles.searchSectionWrapper, { backgroundColor: "#F8FAFC" }]}>
+          <View
+            style={[
+              styles.searchSection,
+              {
+                maxWidth: contentMaxWidth,
+                width: "100%",
+                alignSelf: "center",
+                paddingHorizontal: paddingHorizontal,
+                paddingVertical: isDesktop ? 35 : 20,
+              },
+            ]}
+          >
+            <View style={[styles.searchFilterRow, isDesktop && { flexDirection: "row", justifyContent: "space-between", alignItems: "center" }]}>
+              {/* Search Input Box */}
+              <View style={[styles.searchBox, isDesktop && { flex: 1, marginRight: 20 }]}>
+                <Ionicons name="search-outline" size={20} color="#64748B" />
+                <TextInput
+                  placeholder="Search Mountains, Locations, Treks Or Adventures ..."
+                  placeholderTextColor="#94A3B8"
+                  style={styles.searchInput}
+                />
               </View>
 
+              {/* Filter Chips Horizontal Row */}
+              <View style={styles.filterChipsRow}>
+                <TouchableOpacity
+                  style={[styles.filterChip, activeFilter === "All" && styles.activeFilterChip]}
+                  onPress={() => setActiveFilter("All")}
+                >
+                  <Text style={[styles.filterChipText, activeFilter === "All" && styles.activeFilterText]}>All Trips</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.filterChip, activeFilter === "Mountains" && styles.activeFilterChip]}
+                  onPress={() => setActiveFilter("Mountains")}
+                >
+                  <Text style={[styles.filterChipText, activeFilter === "Mountains" && styles.activeFilterText]}>⛰️ Mountains</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.filterChip, activeFilter === "Hiking" && styles.activeFilterChip]}
+                  onPress={() => setActiveFilter("Hiking")}
+                >
+                  <Text style={[styles.filterChipText, activeFilter === "Hiking" && styles.activeFilterText]}>🥾 Hiking</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.filterChip, activeFilter === "Camping" && styles.activeFilterChip]}
+                  onPress={() => setActiveFilter("Camping")}
+                >
+                  <Text style={[styles.filterChipText, activeFilter === "Camping" && styles.activeFilterText]}>⛺ Camping</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.filterChip, activeFilter === "Nature" && styles.activeFilterChip]}
+                  onPress={() => setActiveFilter("Nature")}
+                >
+                  <Text style={[styles.filterChipText, activeFilter === "Nature" && styles.activeFilterText]}>🌲 Nature Trails</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.filterChip, activeFilter === "Heritage" && styles.activeFilterChip]}
+                  onPress={() => setActiveFilter("Heritage")}
+                >
+                  <Text style={[styles.filterChipText, activeFilter === "Heritage" && styles.activeFilterText]}>🎒 Heritage Areas</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-
           </View>
-
         </View>
 
-      </ImageBackground>
+        {/* ================= CURATED JOURNEYS (8 Cards Grid) ================= */}
+        <View style={[styles.curatedSectionWrapper, { backgroundColor: "#FFFFFF" }]}>
+          <View
+            style={[
+              styles.curatedSection,
+              {
+                maxWidth: contentMaxWidth,
+                width: "100%",
+                alignSelf: "center",
+                paddingHorizontal: paddingHorizontal,
+                paddingVertical: isDesktop ? 60 : 40,
+              },
+            ]}
+          >
+            <Text style={styles.curatedSmallTitle}>HANDPICKED EXPEDITIONS</Text>
+            <Text style={styles.curatedTitle}>CURATED JOURNEYS</Text>
 
-    </TouchableOpacity>
+            {/* 8 Cards Grid */}
+            <View style={[styles.curatedGrid, isDesktop && { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", marginTop: 35 }]}>
+              {curatedTrips.map((item) => (
+                <View
+                  key={item.id}
+                  style={[styles.curatedCard, isDesktop && { width: "23.5%", marginBottom: 24 }]}
+                >
+                  <View style={styles.cardImageWrapper}>
+                    <Image source={item.image} style={styles.curatedImage} />
+                    {item.badge && (
+                      <View style={styles.curatedBadge}>
+                        <Text style={styles.curatedBadgeText}>{item.badge}</Text>
+                      </View>
+                    )}
+                  </View>
 
-  ))}
+                  <View style={styles.curatedContent}>
+                    <Text style={styles.curatedLocation}>{item.location}</Text>
+                    <Text style={styles.curatedCardTitle}>{item.title}</Text>
+                    <Text style={styles.curatedDescription}>{item.description}</Text>
 
-</ScrollView>
+                    <View style={styles.curatedDivider} />
 
-{/* ================= EXPLORE MORE BUTTON ================= */}
+                    <View style={styles.curatedBottomRow}>
+                      <View>
+                        <Text style={styles.curatedMetaLabel}>DURATION</Text>
+                        <Text style={styles.curatedMetaValue}>{item.duration}</Text>
+                      </View>
 
-<TouchableOpacity style={styles.exploreMoreButton} onPress={() => navigation.navigate("BrowseTrips")}>
+                      <View>
+                        <Text style={styles.curatedMetaLabel}>DIFFICULTY</Text>
+                        <Text style={[styles.curatedMetaValue, { color: item.difficultyColor }]}>
+                          {item.difficulty}
+                        </Text>
+                      </View>
+                    </View>
 
-  <Text style={styles.exploreMoreText}>
-    Explore More
-  </Text>
+                    <TouchableOpacity
+                      style={styles.viewDetailsBtn}
+                      onPress={() => navigation.navigate("ViewTrip")}
+                    >
+                      <Text style={styles.viewDetailsBtnText}>View Details</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+            </View>
 
-</TouchableOpacity>
-{/* ================= NEWSLETTER SECTION ================= */}
+            {/* ================= PAGINATION CONTROL ================= */}
+            <View style={styles.paginationContainer}>
+              <TouchableOpacity style={styles.pageArrowBtn}>
+                <Ionicons name="arrow-back" size={16} color="#0F172A" />
+                <Text style={styles.pageArrowText}>Previous</Text>
+              </TouchableOpacity>
 
-<ImageBackground
-  source={require("./assets/adventure-bg.jpg")}
-  style={styles.newsletterBg}
-  imageStyle={styles.newsletterImage}
->
+              <TouchableOpacity style={styles.activePageBtn}>
+                <Text style={styles.activePageText}>1</Text>
+              </TouchableOpacity>
 
-  <View style={styles.newsletterOverlay}>
+              <TouchableOpacity style={styles.pageNumberBtn}>
+                <Text style={styles.pageNumberText}>2</Text>
+              </TouchableOpacity>
 
-    {/* Next Part yahan se start hoga */}
-      <View>
+              <TouchableOpacity style={styles.pageNumberBtn}>
+                <Text style={styles.pageNumberText}>3</Text>
+              </TouchableOpacity>
 
-  <Text style={styles.stayText}>
-    STAY TUNED
-  </Text>
+              <Text style={styles.pageDotsText}>......</Text>
 
-  <Text style={styles.newsTitle}>
-    YOUR NEXT{"\n"}
-    ADVENTURE{" "}
-    <Text style={styles.blueText}>AWAITS</Text>
-  </Text>
+              <TouchableOpacity style={styles.pageNumberBtn}>
+                <Text style={styles.pageNumberText}>12</Text>
+              </TouchableOpacity>
 
-  <Text style={styles.newsDescription}>
-    Join our community of explorers and discover breathtaking
-    destinations, unforgettable experiences and adventures that
-    create memories for a lifetime.
-  </Text>
+              <TouchableOpacity style={styles.pageArrowBtn}>
+                <Text style={styles.pageArrowText}>Next</Text>
+                <Ionicons name="arrow-forward" size={16} color="#0F172A" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
 
-  {/* Email + Button */}
+        {/* ================= POPULAR HUBS (3 Destination Cards Grid) ================= */}
+        <View style={[styles.popularSectionWrapper, { backgroundColor: "#F7FAFD" }]}>
+          <View
+            style={[
+              styles.popularSection,
+              {
+                maxWidth: contentMaxWidth,
+                width: "100%",
+                alignSelf: "center",
+                paddingHorizontal: paddingHorizontal,
+                paddingVertical: isDesktop ? 80 : 50,
+              },
+            ]}
+          >
+            <Text style={styles.popularSmallTitle}>POPULAR DESTINATIONS</Text>
+            <Text style={styles.popularTitle}>POPULAR HUBS</Text>
+            <Text style={styles.popularDescription}>
+              Discover handpicked destination hubs crafted for explorers seeking unforgettable experiences.
+            </Text>
 
-  <View style={styles.subscribeContainer}>
+            {/* 3 Destination Cards Grid */}
+            <View style={[styles.popularGrid, isDesktop && { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", marginTop: 35 }]}>
+              {popularHubs.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[styles.popularCard, isDesktop && { width: "31.5%", marginBottom: 24 }]}
+                  onPress={() => navigation.navigate("ViewTrip")}
+                >
+                  <ImageBackground
+                    source={item.image}
+                    style={styles.popularCardBg}
+                    imageStyle={{ borderRadius: 20 }}
+                  >
+                    <View style={styles.popularOverlay}>
+                      <View style={styles.popularBadge}>
+                        <Text style={styles.popularBadgeText}>{item.badge}</Text>
+                      </View>
 
-    <TextInput
-      placeholder="Enter your email address"
-      placeholderTextColor="#D1D5DB"
-      style={styles.emailInput}
-    />
+                      <View style={styles.popularCardBottom}>
+                        <Text style={styles.popularCardTitle}>{item.title}</Text>
+                        <Text style={styles.popularCardDesc}>{item.description}</Text>
 
-    <TouchableOpacity style={styles.subscribeButton} onPress={() => navigation.navigate("Signup")}>
-      <Text style={styles.subscribeButtonText}>
-        Subscribe Free
-      </Text>
-    </TouchableOpacity>
+                        <View style={styles.popularFooterRow}>
+                          <View style={styles.footerInfoItem}>
+                            <Text style={styles.footerIcon}>🕒</Text>
+                            <Text style={styles.footerInfoText}>{item.duration}</Text>
+                          </View>
+                          <View style={styles.footerInfoItem}>
+                            <Text style={styles.footerIcon}>⛰️</Text>
+                            <Text style={styles.footerInfoText}>{item.difficulty}</Text>
+                          </View>
+                          <Text style={styles.popularPriceText}>{item.price}</Text>
+                        </View>
+                      </View>
+                    </View>
+                  </ImageBackground>
+                </TouchableOpacity>
+              ))}
+            </View>
 
-  </View>
+            {/* Explore More Center Button */}
+            <View style={{ alignItems: "center", marginTop: 20 }}>
+              <TouchableOpacity style={styles.exploreMoreBtn} onPress={() => navigation.navigate("BrowseTrips")}>
+                <Text style={styles.exploreMoreBtnText}>Explore More</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
 
-  <Text style={styles.smallText}>
-    No spam ever • Unsubscribe in one click
-  </Text>
+        {/* ================= NEWSLETTER CARD SECTION (Stay Tuned) ================= */}
+        <View style={[styles.newsletterSectionWrapper, { backgroundColor: "#FFFFFF", paddingVertical: isDesktop ? 60 : 30 }]}>
+          <View style={{ maxWidth: contentMaxWidth, width: "100%", alignSelf: "center", paddingHorizontal: paddingHorizontal }}>
+            <ImageBackground
+              source={require("./assets/adventure-bg.jpg")}
+              style={styles.newsletterBg}
+              imageStyle={{ borderRadius: 28 }}
+            >
+              <View style={styles.newsletterOverlay}>
+                <View style={{ alignItems: "center", paddingVertical: isDesktop ? 60 : 40, paddingHorizontal: 24 }}>
+                  <View style={styles.stayTunedBadge}>
+                    <Text style={styles.stayTunedBadgeText}>STAY TUNED</Text>
+                  </View>
 
-</View>
+                  <Text style={[styles.newsTitle, { fontSize: isDesktop ? 44 : 28, textAlign: "center" }]}>
+                    YOUR NEXT ADVENTURE <Text style={styles.blueItalicLight}>AWAITS</Text>
+                  </Text>
 
-  </View>
+                  <Text style={[styles.newsDescription, { fontSize: isDesktop ? 16 : 14, textAlign: "center", maxWidth: 680 }]}>
+                    Join our community of explorers and discover breathtaking destinations, unforgettable experiences and adventures that create memories for a lifetime.
+                  </Text>
 
-</ImageBackground>
+                  {/* Form Row */}
+                  <View style={[styles.subscribeContainer, isDesktop && { maxWidth: 540, width: "100%", marginTop: 30 }]}>
+                    <TextInput
+                      placeholder="Enter your email address"
+                      placeholderTextColor="#94A3B8"
+                      style={styles.emailInput}
+                    />
+                    <TouchableOpacity style={styles.subscribeButton} onPress={() => navigation.navigate("Contact")}>
+                      <Text style={styles.subscribeButtonText}>Subscribe Free</Text>
+                    </TouchableOpacity>
+                  </View>
 
-{/* ================= FOOTER ================= */}
+                  <Text style={styles.smallText}>No spam ever • Unsubscribe in one click</Text>
+                </View>
+              </View>
+            </ImageBackground>
 
-<View style={styles.footer}>
+            {/* Start Exploring Center Button */}
+            <View style={{ alignItems: "center", marginTop: 30 }}>
+              <TouchableOpacity style={styles.startExploringBtn} onPress={() => navigation.navigate("BrowseTrips")}>
+                <Text style={styles.startExploringBtnText}>Start Exploring</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
 
-  <Image
-    source={require("./assets/logo.png")}
-    style={styles.footerLogo}
-  />
-
-  <Text style={styles.footerTagline}>
-Explore Pakistan Beyond The Horizon
-</Text>
-
-  <Text style={styles.footerTitle}>
-    ACES Adventure Club
-  </Text>
-
-  <Text style={styles.footerDescription}>
-    Creating unforgettable adventures across Pakistan.
-    Discover mountains, forests and breathtaking destinations
-    with our passionate community.
-  </Text>
-
-  {/* Social Icons */}
-
-  <View style={styles.socialRow}>
-
-    <TouchableOpacity style={styles.socialIcon}>
-      <Ionicons name="logo-facebook" size={20} color="#FFFFFF" />
-    </TouchableOpacity>
-
-    <TouchableOpacity style={styles.socialIcon}>
-      <Ionicons name="logo-instagram" size={20} color="#FFFFFF" />
-    </TouchableOpacity>
-
-    <TouchableOpacity style={styles.socialIcon}>
-      <Ionicons name="logo-youtube" size={20} color="#FFFFFF" />
-    </TouchableOpacity>
-
-    <TouchableOpacity style={styles.socialIcon}>
-      <Ionicons name="logo-linkedin" size={20} color="#FFFFFF" />
-    </TouchableOpacity>
-
-  </View>
-
-  <View style={styles.footerLine}/>
-
-  <Text style={styles.copyText}>
-    © 2026 ACES Adventure Club
-  </Text>
-
-  <Text style={styles.versionText}>
-    Version 1.0.0
-  </Text>
-      
-</View>
-
-</ScrollView>
-
-</SafeAreaView>
-
-);
-
+        {/* ================= FOOTER ================= */}
+        <Footer />
+      </ScrollView>
+    </SafeAreaView>
+  );
 }
+
 const styles = StyleSheet.create({
-
-container:{
-flex:1,
-backgroundColor:"#F8FBFF",
-},
-
-hero:{
-width:"100%",
-height:520,
-},
-
-overlay:{
-flex:1,
-backgroundColor:"rgba(0,0,0,.42)",
-paddingHorizontal:22,
-paddingTop:10,
-},
-
-heroContent:{
-flex:1,
-justifyContent:"center",
-},
-
-heroBlue:{
-fontSize:48,
-fontWeight:"800",
-color:"#2F73FF",
-},
-
-heroWhite:{
-fontSize:48,
-fontWeight:"800",
-color:"#FFFFFF",
-marginTop:-5,
-},
-
-heroDescription:{
-marginTop:20,
-fontSize:15,
-lineHeight:24,
-color:"#E2E8F0",
-width:"82%",
-},
-
-buttonRow:{
-flexDirection:"row",
-marginTop:35,
-},
-
-primaryButton:{
-height:52,
-paddingHorizontal:24,
-borderRadius:30,
-backgroundColor:"#2F73FF",
-justifyContent:"center",
-alignItems:"center",
-marginRight:14,
-},
-
-primaryText:{
-fontSize:15,
-fontWeight:"700",
-color:"#FFFFFF",
-},
-
-secondaryButton:{
-height:52,
-paddingHorizontal:24,
-borderRadius:30,
-borderWidth:1.5,
-borderColor:"#FFFFFF",
-justifyContent:"center",
-alignItems:"center",
-},
-
-secondaryText:{
-fontSize:15,
-fontWeight:"700",
-color:"#FFFFFF",
-},
-/* ================= SEARCH ================= */
-
-searchSection:{
-paddingHorizontal:20,
-paddingVertical:30,
-backgroundColor:"#F8FBFF",
-},
-
-searchBox:{
-
-height:56,
-
-backgroundColor:"#DDEBFF",
-
-borderRadius:18,
-
-flexDirection:"row",
-
-alignItems:"center",
-
-paddingHorizontal:18,
-
-},
-
-searchInput:{
-
-flex:1,
-
-marginLeft:10,
-
-fontSize:15,
-
-color:"#16233C",
-
-},
-
-filterContainer:{
-
-flexDirection:"row",
-
-flexWrap:"wrap",
-
-marginTop:20,
-
-},
-
-activeFilter:{
-
-flexDirection:"row",
-
-alignItems:"center",
-
-backgroundColor:"#4F7EE8",
-
-paddingHorizontal:16,
-
-height:42,
-
-borderRadius:25,
-
-marginRight:10,
-
-marginBottom:12,
-
-},
-
-activeFilterText:{
-
-marginLeft:6,
-
-fontSize:14,
-
-fontWeight:"700",
-
-color:"#FFFFFF",
-
-},
-
-filterChip:{
-
-flexDirection:"row",
-
-alignItems:"center",
-
-backgroundColor:"#111111",
-
-paddingHorizontal:16,
-
-height:42,
-
-borderRadius:25,
-
-marginRight:10,
-
-marginBottom:12,
-
-},
-
-filterText:{
-
-marginLeft:6,
-
-fontSize:14,
-
-fontWeight:"600",
-
-color:"#FFFFFF",
-
-},
-/* ================= CURATED JOURNEYS ================= */
-
-curatedSection:{
-  paddingTop:45,
-  paddingBottom:35,
-  backgroundColor:"#F8FAFC",
-},
-
-curatedSmallTitle:{
-  fontSize:12,
-  color:"#1E88E5",
-  fontWeight:"700",
-  letterSpacing:2,
-
-  paddingLeft:18,
-},
-
-curatedTitle:{
-  marginTop:8,
-  marginBottom:28,
-
-  fontSize:32,
-  fontWeight:"700",
-  color:"#16233C",
-
-  paddingLeft:18,
-},
-curatedScroll:{
-  paddingLeft:18,
-  paddingRight:5,
-},
-
-curatedCard:{
-  width:300,
-  backgroundColor:"#FFFFFF",
-  borderRadius:22,
-  overflow:"hidden",
-  marginRight:16,
-
-  shadowColor:"#000",
-  shadowOpacity:0.08,
-  shadowRadius:10,
-  shadowOffset:{
-    width:0,
-    height:5,
+  container: {
+    flex: 1,
+    backgroundColor: "#F8FAFC",
   },
-  elevation:6,
-},
 
-curatedImage:{
-  width:"100%",
-  height:165,
-},
-
-curatedBadge:{
-  position:"absolute",
-  top:14,
-  right:14,
-
-  backgroundColor:"#1E88E5",
-
-  paddingHorizontal:12,
-  paddingVertical:5,
-
-  borderRadius:20,
-},
-
-curatedBadgeText:{
-  color:"#FFFFFF",
-  fontSize:11,
-  fontWeight:"700",
-},
-
-curatedContent:{
-  padding:16,
-},
-
-curatedLocation:{
-  color:"#6A7586",
-  fontSize:11,
-  fontWeight:"600",
-  textTransform:"uppercase",
-},
-
-curatedCardTitle:{
-  marginTop:6,
-  fontSize:20,
-  fontWeight:"700",
-  color:"#16233C",
-},
-
-curatedDescription:{
-  marginTop:8,
-  color:"#6A7586",
-  fontSize:13,
-  lineHeight:20,
-},
-
-curatedBlueLine:{
-  height:2,
-  backgroundColor:"#1E88E5",
-  borderRadius:10,
-  marginVertical:16,
-},
-
-curatedBottom:{
-  flexDirection:"row",
-  justifyContent:"space-between",
-},
-
-curatedLabel:{
-  fontSize:10,
-  color:"#94A3B8",
-  fontWeight:"700",
-},
-
-curatedValue:{
-  marginTop:5,
-  fontSize:13,
-  fontWeight:"700",
-},
-
-curatedButton:{
-  height:45,
-  backgroundColor:"#1E88E5",
-  borderRadius:12,
-  justifyContent:"center",
-  alignItems:"center",
-  marginTop:18,
-},
-
-curatedButtonText:{
-  color:"#FFFFFF",
-  fontSize:14,
-  fontWeight:"700",
-},
-// Blue Line 
-/* ================= MOBILE RESPONSIVE PAGINATION ================= */
-
-paginationContainer:{
-  flexDirection:"row",
-  alignItems:"center",
-  justifyContent:"center",
-  flexWrap:"wrap",
-
-  paddingHorizontal:15,
-  marginTop:28,
-  marginBottom:40,
-},
-
-pageArrow:{
-  flexDirection:"row",
-  alignItems:"center",
-  paddingHorizontal:6,
-  paddingVertical:8,
-},
-
-pageArrowText:{
-  fontSize:14,
-  color:"#16233C",
-  fontWeight:"600",
-  marginHorizontal:4,
-},
-
-activePage:{
-  width:36,
-  height:36,
-  borderRadius:18,
-  backgroundColor:"#1E5BFF",
-
-  justifyContent:"center",
-  alignItems:"center",
-
-  marginHorizontal:4,
-},
-
-activePageText:{
-  color:"#FFFFFF",
-  fontSize:15,
-  fontWeight:"700",
-},
-
-pageNumber:{
-  width:34,
-  height:34,
-  justifyContent:"center",
-  alignItems:"center",
-  marginHorizontal:2,
-},
-
-pageNumberText:{
-  fontSize:15,
-  color:"#16233C",
-  fontWeight:"600",
-},
-
-pageDots:{
-  fontSize:15,
-  color:"#16233C",
-  marginHorizontal:4,
-  fontWeight:"600",
-},
-/* ================= POPULAR HUBS ================= */
-
-popularSection:{
-  paddingHorizontal:20,
-  marginTop:45,
-},
-
-popularSmallTitle:{
-  color:"#1E88E5",
-  fontSize:12,
-  fontWeight:"700",
-  letterSpacing:1.5,
-},
-
-popularTitle:{
-  marginTop:6,
-  color:"#16233C",
-  fontSize:34,
-  fontWeight:"700",
-},
-
-popularDescription:{
-  marginTop:8,
-  color:"#6A7586",
-  fontSize:15,
-  lineHeight:22,
-},
-/* ================= POPULAR HUBS ================= */
-
-popularScroll:{
-  paddingHorizontal:20,
-  paddingTop:25,
-  paddingBottom:15,
-},
-
-popularCard:{
-  width:250,
-  height:360,
-
-  marginRight:18,
-
-  borderRadius:22,
-  overflow:"hidden",
-
-  backgroundColor:"#FFFFFF",
-
-  elevation:8,
-
-  shadowColor:"#000",
-  shadowOpacity:0.15,
-  shadowRadius:12,
-  shadowOffset:{
-    width:0,
-    height:6,
+  hero: {
+    width: "100%",
   },
-},
 
-popularImage:{
-  flex:1,
-  justifyContent:"space-between",
-},
-
-popularImageRadius:{
-  borderRadius:22,
-},
-
-popularOverlay:{
-  flex:1,
-  backgroundColor:"rgba(0,0,0,.35)",
-  justifyContent:"space-between",
-},
-
-/* Badge */
-
-popularBadge:{
-  alignSelf:"flex-start",
-
-  marginTop:12,
-  marginLeft:12,
-
-  backgroundColor:"#EAF2FF",
-
-  paddingHorizontal:12,
-  paddingVertical:5,
-
-  borderRadius:20,
-},
-
-popularBadgeText:{
-  color:"#2563EB",
-  fontSize:11,
-  fontWeight:"700",
-},
-
-/* Bottom Content */
-
-popularContent:{
-  padding:16,
-},
-
-popularCardTitle:{
-  color:"#FFFFFF",
-  fontSize:24,
-  fontWeight:"700",
-},
-
-popularCardDescription:{
-  color:"#E5E7EB",
-
-  fontSize:13,
-
-  lineHeight:20,
-
-  marginTop:8,
-},
-
-popularDivider:{
-  height:1,
-
-  backgroundColor:"rgba(255,255,255,.35)",
-
-  marginVertical:14,
-},
-
-popularBottomRow:{
-  flexDirection:"row",
-
-  justifyContent:"space-between",
-
-  alignItems:"center",
-},
-
-popularSmallText:{
-  color:"#E5E7EB",
-
-  fontSize:12,
-},
-
-popularPrice:{
-  color:"#3B82F6",
-
-  fontSize:15,
-  fontWeight:"700",
-
-  marginTop:3,
-},
-
-popularViewText:{
-  color:"#38BDF8",
-
-  fontSize:13,
-  fontWeight:"700",
-
-  marginTop:3,
-},
-
-/* Explore Button */
-
-exploreMoreButton:{
-  marginTop:15,
-  marginBottom:45,
-
-  alignSelf:"center",
-
-  backgroundColor:"#2563EB",
-
-  width:180,
-  height:48,
-
-  borderRadius:30,
-
-  justifyContent:"center",
-  alignItems:"center",
-
-  elevation:4,
-},
-
-exploreMoreText:{
-  color:"#FFFFFF",
-
-  fontSize:16,
-  fontWeight:"700",
-},
-/* ================= NEWSLETTER ================= */
-
-newsletterBg: {
-  height: 520,
-  marginHorizontal: 18,
-  marginTop: 40,
-  marginBottom: 30,
-  borderRadius: 28,
-  overflow: "hidden",
-},
-
-newsletterImage: {
-  borderRadius: 28,
-},
-
-newsletterOverlay: {
-  flex: 1,
-
-  backgroundColor: "rgba(7,17,34,0.58)",
-
-  paddingHorizontal: 25,
-  paddingTop: 45,
-  paddingBottom: 35,
-
-  justifyContent: "space-between",
-},
-/* ================= NEWSLETTER CONTENT ================= */
-
-stayText: {
-  color: "#E5E7EB",
-  fontSize: 12,
-  letterSpacing: 2,
-  alignSelf: "center",
-},
-
-newsTitle: {
-  marginTop: 10,
-  color: "#FFFFFF",
-  fontSize: 34,
-  fontWeight: "700",
-  textAlign: "center",
-  lineHeight: 42,
-},
-
-blueText: {
-  color: "#1E88E5",
-},
-
-newsDescription: {
-  marginTop: 16,
-  color: "#E5E7EB",
-  textAlign: "center",
-  fontSize: 15,
-  lineHeight: 24,
-  paddingHorizontal: 8,
-},
-
-subscribeContainer: {
-  marginTop: 28,
-},
-
-emailInput: {
-  height: 55,
-  borderRadius: 28,
-  borderWidth: 1,
-  borderColor: "rgba(255,255,255,0.5)",
-  color: "#FFFFFF",
-  paddingHorizontal: 20,
-  fontSize: 15,
-  backgroundColor: "rgba(255,255,255,0.12)",
-},
-
-subscribeButton: {
-  marginTop: 14,
-  height: 55,
-  borderRadius: 28,
-  backgroundColor: "#1E88E5",
-
-  justifyContent: "center",
-  alignItems: "center",
-},
-
-subscribeButtonText: {
-  color: "#FFFFFF",
-  fontSize: 16,
-  fontWeight: "700",
-},
-
-smallText: {
-  marginTop: 12,
-  color: "#CBD5E1",
-  textAlign: "center",
-  fontSize: 12,
-},
-/* ================= FOOTER ================= */
-
-startButton: {
-  height: 58,
-  borderRadius: 30,
-  backgroundColor: "#1E88E5",
-  justifyContent: "center",
-  alignItems: "center",
-  marginTop: 35,
-
-  shadowColor: "#1E88E5",
-  shadowOpacity: 0.35,
-  shadowRadius: 10,
-  shadowOffset: {
-    width: 0,
-    height: 5,
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.45)",
   },
-  elevation: 8,
-},
 
-startButtonText: {
-  color: "#FFFFFF",
-  fontSize: 18,
-  fontWeight: "700",
-},
+  heroContent: {
+    flex: 1,
+    justifyContent: "center",
+    paddingVertical: 40,
+  },
 
-footer: {
-  marginTop: 45,
-  paddingTop: 35,
-  paddingBottom: 30,
-  paddingHorizontal: 20,
+  heroBlue: {
+    color: "#38BDF8",
+    fontWeight: "900",
+    fontStyle: "italic",
+    letterSpacing: 1,
+  },
 
-  backgroundColor: "#16233C",
+  heroWhite: {
+    color: "#FFFFFF",
+    fontWeight: "900",
+    letterSpacing: 1,
+    marginTop: 2,
+  },
 
-  borderTopLeftRadius: 28,
-  borderTopRightRadius: 28,
+  heroDescription: {
+    color: "#F1F5F9",
+    marginTop: 18,
+    lineHeight: 26,
+  },
 
-  alignItems: "center",
-},
+  buttonRow: {
+    flexDirection: "row",
+    marginTop: 35,
+    gap: 16,
+  },
 
-footerLogo: {
-  width: 75,
-  height: 75,
-  resizeMode: "contain",
-},
+  primaryButton: {
+    backgroundColor: "#0088FF",
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    borderRadius: 30,
+    cursor: "pointer",
+    elevation: 4,
+  },
 
-footerTitle: {
-  marginTop: 14,
-  fontSize: 24,
-  fontWeight: "700",
-  color: "#FFFFFF",
-},
+  primaryText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 15,
+  },
 
-footerDescription: {
-  marginTop: 12,
-  textAlign: "center",
-  color: "#D8E4F5",
-  fontSize: 15,
-  lineHeight: 24,
-  paddingHorizontal: 15,
-},
+  secondaryButton: {
+    borderWidth: 1.5,
+    borderColor: "#FFFFFF",
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    borderRadius: 30,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    cursor: "pointer",
+  },
 
-socialRow: {
-  marginTop: 28,
-  flexDirection: "row",
-},
+  secondaryText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 15,
+  },
 
-socialIcon: {
-  width: 50,
-  height: 50,
-  borderRadius: 25,
+  /* SEARCH & FILTERS */
+  searchSectionWrapper: {},
 
-  backgroundColor: "rgba(255,255,255,0.10)",
+  searchSection: {},
 
-  justifyContent: "center",
-  alignItems: "center",
+  searchFilterRow: {
+    flexDirection: "column",
+    gap: 16,
+  },
 
-  marginHorizontal: 8,
+  searchBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 30,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+  },
 
-  borderWidth: 1,
-  borderColor: "rgba(255,255,255,0.18)",
-},
+  searchInput: {
+    flex: 1,
+    marginLeft: 12,
+    fontSize: 15,
+    color: "#0F172A",
+  },
 
-footerLine: {
-  width: "100%",
-  height: 1,
+  filterChipsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
 
-  backgroundColor: "rgba(255,255,255,0.15)",
+  filterChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: "#0F172A",
+    cursor: "pointer",
+  },
 
-  marginTop: 30,
-  marginBottom: 20,
-},
+  activeFilterChip: {
+    backgroundColor: "#0088FF",
+  },
 
-copyText: {
-  color: "#FFFFFF",
-  fontSize: 14,
-  fontWeight: "600",
-},
+  filterChipText: {
+    color: "#E2E8F0",
+    fontSize: 13,
+    fontWeight: "600",
+  },
 
-versionText: {
-  marginTop: 6,
-  color: "#9DB4D6",
-  fontSize: 13,
-},
-footerTagline: {
-  marginTop: 6,
-  fontSize: 14,
-  color: "#60A5FA",
-  fontWeight: "600",
-},
+  activeFilterText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+  },
+
+  /* CURATED JOURNEYS GRID */
+  curatedSectionWrapper: {},
+
+  curatedSection: {},
+
+  curatedSmallTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#0B5CAD",
+    letterSpacing: 1.5,
+  },
+
+  curatedTitle: {
+    fontSize: 34,
+    fontWeight: "800",
+    color: "#0F172A",
+    marginTop: 6,
+  },
+
+  curatedGrid: {
+    marginTop: 20,
+  },
+
+  curatedCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    marginBottom: 20,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+  },
+
+  cardImageWrapper: {
+    width: "100%",
+    height: 200,
+    position: "relative",
+  },
+
+  curatedImage: {
+    width: "100%",
+    height: "100%",
+  },
+
+  curatedBadge: {
+    position: "absolute",
+    top: 14,
+    right: 14,
+    backgroundColor: "#0088FF",
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 16,
+  },
+
+  curatedBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "700",
+  },
+
+  curatedContent: {
+    padding: 20,
+  },
+
+  curatedLocation: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#0B5CAD",
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+
+  curatedCardTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#0F172A",
+    marginBottom: 6,
+  },
+
+  curatedDescription: {
+    fontSize: 13,
+    color: "#64748B",
+    lineHeight: 20,
+  },
+
+  curatedDivider: {
+    height: 1,
+    backgroundColor: "#F1F5F9",
+    marginVertical: 14,
+  },
+
+  curatedBottomRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+
+  curatedMetaLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#94A3B8",
+    letterSpacing: 1,
+  },
+
+  curatedMetaValue: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#0F172A",
+    marginTop: 2,
+  },
+
+  viewDetailsBtn: {
+    backgroundColor: "#EFF6FF",
+    paddingVertical: 10,
+    borderRadius: 20,
+    alignItems: "center",
+    cursor: "pointer",
+  },
+
+  viewDetailsBtnText: {
+    color: "#0B5CAD",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+
+  /* PAGINATION */
+  paginationContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 40,
+    gap: 8,
+  },
+
+  pageArrowBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: "#F1F5F9",
+    cursor: "pointer",
+    gap: 6,
+  },
+
+  pageArrowText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#0F172A",
+  },
+
+  activePageBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#0088FF",
+    justifyContent: "center",
+    alignItems: "center",
+    cursor: "pointer",
+  },
+
+  activePageText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+
+  pageNumberBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#F1F5F9",
+    justifyContent: "center",
+    alignItems: "center",
+    cursor: "pointer",
+  },
+
+  pageNumberText: {
+    color: "#0F172A",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+
+  pageDotsText: {
+    fontSize: 14,
+    color: "#94A3B8",
+    letterSpacing: 2,
+    marginHorizontal: 4,
+  },
+
+  /* POPULAR HUBS */
+  popularSectionWrapper: {},
+
+  popularSection: {},
+
+  popularSmallTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#0B5CAD",
+    letterSpacing: 1.5,
+  },
+
+  popularTitle: {
+    fontSize: 34,
+    fontWeight: "800",
+    color: "#0F172A",
+    marginTop: 6,
+  },
+
+  popularDescription: {
+    fontSize: 16,
+    color: "#64748B",
+    marginTop: 8,
+    lineHeight: 26,
+    maxWidth: 750,
+  },
+
+  popularGrid: {
+    marginTop: 20,
+  },
+
+  popularCard: {
+    width: "100%",
+    height: 360,
+    borderRadius: 20,
+    overflow: "hidden",
+    marginBottom: 20,
+    elevation: 6,
+    cursor: "pointer",
+  },
+
+  popularCardBg: {
+    width: "100%",
+    height: "100%",
+  },
+
+  popularOverlay: {
+    flex: 1,
+    justifyContent: "space-between",
+    padding: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+  },
+
+  popularBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#0088FF",
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 18,
+  },
+
+  popularBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+
+  popularCardBottom: {},
+
+  popularCardTitle: {
+    color: "#FFFFFF",
+    fontSize: 26,
+    fontWeight: "800",
+  },
+
+  popularCardDesc: {
+    color: "#CBD5E1",
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 6,
+  },
+
+  popularFooterRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 255, 255, 0.2)",
+  },
+
+  footerInfoItem: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  footerIcon: {
+    marginRight: 6,
+    fontSize: 14,
+  },
+
+  footerInfoText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+
+  popularPriceText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "800",
+  },
+
+  exploreMoreBtn: {
+    backgroundColor: "#0088FF",
+    paddingHorizontal: 36,
+    paddingVertical: 14,
+    borderRadius: 28,
+    cursor: "pointer",
+  },
+
+  exploreMoreBtnText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+
+  /* NEWSLETTER CARD */
+  newsletterBg: {
+    width: "100%",
+    overflow: "hidden",
+    borderRadius: 28,
+  },
+
+  newsletterOverlay: {
+    backgroundColor: "rgba(15, 23, 42, 0.65)",
+    borderRadius: 28,
+  },
+
+  stayTunedBadge: {
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.25)",
+    marginBottom: 16,
+  },
+
+  stayTunedBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 1.5,
+  },
+
+  newsTitle: {
+    color: "#FFFFFF",
+    fontWeight: "900",
+    lineHeight: 52,
+  },
+
+  blueItalicLight: {
+    color: "#38BDF8",
+    fontStyle: "italic",
+  },
+
+  newsDescription: {
+    color: "#CBD5E1",
+    marginTop: 14,
+    lineHeight: 24,
+  },
+
+  subscribeContainer: {
+    flexDirection: "row",
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
+    borderRadius: 30,
+    padding: 6,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.25)",
+  },
+
+  emailInput: {
+    flex: 1,
+    paddingHorizontal: 20,
+    color: "#FFFFFF",
+    fontSize: 15,
+  },
+
+  subscribeButton: {
+    backgroundColor: "#0088FF",
+    paddingHorizontal: 28,
+    paddingVertical: 12,
+    borderRadius: 26,
+    cursor: "pointer",
+  },
+
+  subscribeButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 15,
+  },
+
+  smallText: {
+    color: "#94A3B8",
+    fontSize: 13,
+    marginTop: 14,
+  },
+
+  startExploringBtn: {
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 36,
+    paddingVertical: 14,
+    borderRadius: 28,
+    cursor: "pointer",
+    elevation: 4,
+  },
+
+  startExploringBtnText: {
+    color: "#0F172A",
+    fontSize: 16,
+    fontWeight: "700",
+  },
 });
-

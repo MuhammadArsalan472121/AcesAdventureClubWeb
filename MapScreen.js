@@ -11,26 +11,22 @@ import {
   StyleSheet,
   ImageBackground,
   TouchableOpacity,
-  Dimensions,
   Platform,
+  Dimensions,
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
 import Header from "./Header";
+import Footer from "./Footer";
+import useResponsive from "./useResponsive";
+import MapViewComponent from "./MapViewComponent";
 
-let MapView = null;
-let Marker = null;
-
-if (Platform.OS !== "web") {
-  const MapModule = require("react-native-maps");
-  MapView = MapModule.default;
-  Marker = MapModule.Marker;
-}
-
-const { height } = Dimensions.get("window");
+const { height, width } = Dimensions.get("window");
 
 export default function MapScreen() {
   const camera = useRef(null);
+  const { isDesktop, isTablet, height } = useResponsive();
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -61,38 +57,9 @@ export default function MapScreen() {
               </TouchableOpacity>
             </View>
 
-            {Platform.OS !== "web" && MapView ? (
-              <View style={styles.mapContainer}>
-                <MapView
-                  style={styles.map}
-                  initialRegion={{
-                    latitude: 33.6844,
-                    longitude: 73.0479,
-                    latitudeDelta: 0.8,
-                    longitudeDelta: 0.8,
-                  }}
-                  showsMyLocationButton={false}
-                  showsCompass={false}
-                  zoomControlEnabled={false}
-                >
-                  <Marker
-                    coordinate={{ latitude: 33.6844, longitude: 73.0479 }}
-                    title="Premium Destination"
-                    description="Northern Pakistan exploration hub"
-                  />
-                </MapView>
-              </View>
-            ) : (
-              <View style={styles.mapContainer}>
-                <View style={styles.webFallback}>
-                  <Ionicons name="map-outline" size={36} color="#0B5CAD" />
-                  <Text style={styles.webFallbackTitle}>Map view unavailable on web</Text>
-                  <Text style={styles.webFallbackText}>
-                    Open the app on mobile to view the interactive map experience.
-                  </Text>
-                </View>
-              </View>
-            )}
+            <View style={styles.mapContainer}>
+              <MapViewComponent style={styles.map} />
+            </View>
           </View>
         </View>
         {/* ================= NEWSLETTER SECTION ================= */}
@@ -217,6 +184,7 @@ export default function MapScreen() {
           </Text>
         
           </View>
+        <Footer />
       </ScrollView>
     </SafeAreaView>
   );
@@ -257,7 +225,7 @@ const styles = StyleSheet.create({
   },
 
   heroTitle: {
-    fontSize: 38,
+    fontSize: 48,
     fontWeight: "700",
     color: "#FFFFFF",
     textAlign: "center",
@@ -269,18 +237,21 @@ const styles = StyleSheet.create({
 
   heroDescription: {
     marginTop: 16,
-    width: "88%",
+    maxWidth: 700,
     textAlign: "center",
     color: "#F3F4F6",
-    fontSize: 13,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 26,
   },
 
   mapSection: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 24,
     marginTop: -70,
     zIndex: 10,
-    marginBottom: 30,
+    marginBottom: 40,
+    maxWidth: 1400,
+    width: "100%",
+    alignSelf: "center",
   },
 
   mapCard: {

@@ -1,5 +1,4 @@
 import React from "react";
-
 import {
   SafeAreaView,
   StatusBar,
@@ -12,1237 +11,826 @@ import {
   TouchableOpacity,
   Dimensions,
 } from "react-native";
-
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import Header from "./Header";
+import Footer from "./Footer";
+import useResponsive from "./useResponsive";
 
-const { height } = Dimensions.get("window");
+const { height, width } = Dimensions.get("window");
 
 export default function PartnerScreen() {
   const navigation = useNavigation();
+  const {
+    isDesktop,
+    isTablet,
+    isLargeDesktop,
+    contentMaxWidth,
+    paddingHorizontal,
+  } = useResponsive();
+
+  const sponsoredTrips = [
+    {
+      id: 1,
+      image: require("./assets/hub1.jpg"),
+      badge: "Most Popular",
+      title: "Hunza Valley",
+      description: "Experience breathtaking beauty of Hunza's mountains and valleys.",
+      duration: "3 Days",
+      price: "PKR 40,000",
+    },
+    {
+      id: 2,
+      image: require("./assets/hub2.jpg"),
+      badge: "Most Liked",
+      title: "Fairy Meadows Trek",
+      description: "Journey through scenic trails leading to Nanga Parbat base camp.",
+      duration: "5 Days",
+      price: "PKR 55,000",
+    },
+    {
+      id: 3,
+      image: require("./assets/hub3.jpg"),
+      badge: "Most Visited",
+      title: "Skardu Adventure",
+      description: "Explore Karakoram peaks, Shangrila lake and Cold Desert.",
+      duration: "7 Days",
+      price: "PKR 65,000",
+    },
+  ];
 
   return (
-
     <SafeAreaView style={styles.container}>
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
 
-      <StatusBar
-        translucent
-        backgroundColor="transparent"
-        barStyle="light-content"
-      />
-
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-      >
-
-        {/* ================= HERO ================= */}
-
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* ================= HERO SECTION ================= */}
         <ImageBackground
           source={require("./assets/partnerhero.jpg")}
-          style={styles.hero}
+          style={[styles.hero, { height: isDesktop ? 650 : height * 0.85 }]}
           resizeMode="cover"
         >
-
-          <View style={styles.overlay}>
-
+          <View style={[styles.overlay, { paddingHorizontal: paddingHorizontal }]}>
             <Header />
 
-            <View style={styles.heroContent}>
-
+            <View style={[styles.heroContent, { maxWidth: contentMaxWidth, width: "100%", alignSelf: "center" }]}>
               <View style={styles.partnerBadge}>
-
-                <Text style={styles.partnerBadgeText}>
-                  OFFICIAL ADVENTURE PARTNER
-                </Text>
-
+                <Text style={styles.partnerBadgeText}>• OFFICIAL PARTNERSHIPS •</Text>
               </View>
 
-              <Text style={styles.heroTitle}>
-                Our Trusted Adventure
+              <Text style={[styles.heroTitle, { fontSize: isDesktop ? 54 : 34 }]}>
+                Our Trusted Adventure{"\n"}Partner
               </Text>
 
-              <Text style={styles.heroTitle}>
-                Partner
-              </Text>
-
-              <Text style={styles.heroDescription}>
-                Working together to create safe,
-                memorable and premium outdoor
-                experiences for our global
-                community of elite explorers.
+              <Text style={[styles.heroDescription, { fontSize: isDesktop ? 17 : 15, maxWidth: 750 }]}>
+                Work together to create safe, memorable, and premium outdoor experiences across Pakistan's most scenic destinations.
               </Text>
 
               <View style={styles.heroButtons}>
-
-                <TouchableOpacity
-                  style={styles.primaryButton}
-                  onPress={() => navigation.navigate("Home")}
-                >
-
-                  <Text style={styles.primaryButtonText}>
-                    Visit Website
-                  </Text>
-
+                <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate("Home")}>
+                  <Text style={styles.primaryButtonText}>Visit Partner</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.secondaryButton}
-                  onPress={() => navigation.navigate("Contact")}
-                >
-
-                  <Text style={styles.secondaryButtonText}>
-                    Contact Partner
-                  </Text>
-
+                <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate("Contact")}>
+                  <Text style={styles.secondaryButtonText}>Become a Partner</Text>
                 </TouchableOpacity>
-
               </View>
-
             </View>
-
           </View>
-
         </ImageBackground>
 
-       {/* ================= PARTNER PROFILE ================= */}
-
-<View style={styles.partnerSection}>
-
-  {/* Image */}
-
-  <Image
-    source={require("./assets/partnerProfile.jpg")}
-    style={styles.partnerImage}
-    resizeMode="cover"
-  />
-
-  {/* Content */}
-
-  <View style={styles.partnerContent}>
-
-    <Text style={styles.partnerLabel}>
-      Partner Profile
-    </Text>
-
-    <Text style={styles.partnerName}>
-      Mountain Gear
-    </Text>
-
-    <Text style={styles.partnerName}>
-      Pakistan
-    </Text>
-
-    {/* Details */}
-
-    <View style={styles.partnerDetails}>
-
-      <View>
-
-        <Text style={styles.detailHeading}>
-          INDUSTRY
-        </Text>
-
-        <Text style={styles.detailValue}>
-          Outdoor Equipment
-        </Text>
-
-      </View>
-
-      <View>
-
-        <Text style={styles.detailHeading}>
-          LOCATION
-        </Text>
-
-        <Text style={styles.detailValue}>
-          Islamabad, Pakistan
-        </Text>
-
-      </View>
-
-    </View>
-
-    <Text style={styles.partnerDescription}>
-
-      Mountain Gear Pakistan is a premier adventure
-      equipment company dedicated to supporting
-      outdoor and sustainable travel experiences.
-
-      {"\n\n"}
-
-      By providing state-of-the-art gear and expert
-      logistics, they ensure every trek into the
-      Karakoram is backed by safety, reliability
-      and world-class equipment.
-
-    </Text>
-
-  </View>
-
-</View>
-{/* ================= VISION SHARED ================= */}
-
-<View style={styles.visionSection}>
-
-  <Text style={styles.visionTitle}>
-    A Vision Shared
-  </Text>
-
-  <Text style={styles.visionSubtitle}>
-    Our collaboration is built on four core pillars
-    that define the standard of high-altitude exploration.
-  </Text>
-
-  <View style={styles.visionGrid}>
-
-    {/* Card 1 */}
-
-    <View style={styles.visionCard}>
-
-      <Ionicons
-        name="leaf-outline"
-        size={22}
-        color="#FFFFFF"
-      />
-
-      <Text style={styles.visionCardTitle}>
-        Support Eco Tourism
-      </Text>
-
-      <Text style={styles.visionCardDesc}>
-        Promoting sustainable practices to preserve
-        our fragile mountain ecosystem.
-      </Text>
-
-    </View>
-
-    {/* Card 2 */}
-
-    <View style={styles.visionCard}>
-
-      <Ionicons
-        name="shield-checkmark-outline"
-        size={22}
-        color="#FFFFFF"
-      />
-
-      <Text style={styles.visionCardTitle}>
-        Adventure Safety
-      </Text>
-
-      <Text style={styles.visionCardDesc}>
-        Ensuring peak performance and protection
-        in the world's most extreme environments.
-      </Text>
-
-    </View>
-
-    {/* Card 3 */}
-
-    <View style={styles.visionCard}>
-
-      <Ionicons
-        name="diamond-outline"
-        size={22}
-        color="#FFFFFF"
-      />
-
-      <Text style={styles.visionCardTitle}>
-        Premium Equipment
-      </Text>
-
-      <Text style={styles.visionCardDesc}>
-        Providing club members with exclusive
-        access to high-end mountaineering gear.
-      </Text>
-
-    </View>
-
-    {/* Card 4 */}
-
-    <View style={styles.visionCard}>
-
-      <Ionicons
-        name="people-outline"
-        size={22}
-        color="#FFFFFF"
-      />
-
-      <Text style={styles.visionCardTitle}>
-        Community Development
-      </Text>
-
-      <Text style={styles.visionCardDesc}>
-        Investing in local guides and
-        infrastructure for long-term regional prosperity.
-      </Text>
-
-    </View>
-
-  </View>
-
-</View>
-{/* ================= SPONSORED EXPEDITIONS ================= */}
-
-<View style={styles.tripSection}>
-
-  <View style={styles.tripHeader}>
-
-    <View>
-
-      <Text style={styles.tripTitle}>
-        Sponsored Expeditions
-      </Text>
-
-      <Text style={styles.tripSubTitle}>
-        Discover journeys made possible through our strategic partnership.
-      </Text>
-
-    </View>
-
-    <TouchableOpacity onPress={() => navigation.navigate("BrowseTrips")}>
-
-      <Text style={styles.viewAll}>
-        View All Trips
-      </Text>
-
-    </TouchableOpacity>
-
-  </View>
-
-  <View style={styles.tripContainer}>
-
-    {/* Card 1 */}
-
-    <TouchableOpacity style={styles.tripCard} onPress={() => navigation.navigate("ViewTrip")}>
-
-      <ImageBackground
-        source={require("./assets/hunza.jpg")}
-        style={styles.tripImage}
-        imageStyle={styles.tripImageRadius}
-      >
-
-        <View style={styles.tripOverlay}>
-
-          <View style={styles.tripBadge}>
-            <Text style={styles.tripBadgeText}>
-              Most Popular
-            </Text>
+        {/* ================= OFFICIAL PARTNER HIGHLIGHT (2-Column Desktop Section) ================= */}
+        <View style={[styles.partnerSectionWrapper, { backgroundColor: "#FFFFFF" }]}>
+          <View
+            style={[
+              styles.partnerSection,
+              {
+                maxWidth: contentMaxWidth,
+                width: "100%",
+                alignSelf: "center",
+                paddingHorizontal: paddingHorizontal,
+                paddingVertical: isDesktop ? 80 : 50,
+                flexDirection: isDesktop ? "row" : "column",
+                justifyContent: "space-between",
+                alignItems: "center",
+              },
+            ]}
+          >
+            {/* Left Image */}
+            <View style={{ flex: isDesktop ? 1 : undefined, width: "100%", maxWidth: isDesktop ? 580 : "100%", marginBottom: isDesktop ? 0 : 35 }}>
+              <Image source={require("./assets/partnerProfile.jpg")} style={styles.partnerImage} resizeMode="cover" />
+            </View>
+
+            {/* Right Text */}
+            <View style={{ flex: isDesktop ? 1.1 : undefined, maxWidth: isDesktop ? 640 : "100%", marginLeft: isDesktop ? 45 : 0 }}>
+              <Text style={styles.partnerLabel}>OFFICIAL PARTNER</Text>
+              <Text style={styles.partnerName}>Mountain Gear Pakistan</Text>
+
+              <View style={styles.partnerTagsRow}>
+                <View style={styles.tagChip}>
+                  <Text style={styles.tagChipText}>Outdoor Equipment</Text>
+                </View>
+                <View style={styles.tagChip}>
+                  <Text style={styles.tagChipText}>Expedition Supplier</Text>
+                </View>
+              </View>
+
+              <Text style={styles.partnerDescription}>
+                Mountain Gear Pakistan is a premier outdoor equipment company dedicated to supporting outdoor tourism and adventure seekers. By providing state-of-the-art gear and expert equipment logistics, they ensure every trek into the heart of the Karakoram is backed by safety, reliability, and world-class equipment.
+              </Text>
+            </View>
           </View>
-
-          <Text style={styles.tripName}>
-            Hunza Valley
-          </Text>
-
-          <Text style={styles.tripDesc}>
-            Experience breathtaking beauty of Hunza's mountains and valleys.
-          </Text>
-
-          <View style={styles.tripBottom}>
-
-            <Text style={styles.tripPrice}>
-              Starting from{"\n"}30000 Rs
-            </Text>
-
-            <Text style={styles.tripDays}>
-              3 Days
-            </Text>
-
-          </View>
-
         </View>
 
-      </ImageBackground>
+        {/* ================= A VISION SHARED (Dark Navy Outer Card Container) ================= */}
+        <View style={[styles.visionSectionWrapper, { backgroundColor: "#F8FAFC", paddingVertical: isDesktop ? 60 : 30 }]}>
+          <View style={{ maxWidth: contentMaxWidth, width: "100%", alignSelf: "center", paddingHorizontal: paddingHorizontal }}>
+            <View style={styles.visionDarkCard}>
+              <View style={{ alignItems: "center", marginBottom: 35 }}>
+                <Text style={styles.visionSmallTag}>OUR VALUES</Text>
+                <Text style={styles.visionTitle}>A Vision Shared</Text>
+                <Text style={styles.visionSubtitle}>
+                  Our partnerships are built on four core pillars that define the essence of our joint endeavors.
+                </Text>
+              </View>
 
-    </TouchableOpacity>
+              {/* 4 Dark Feature Cards Grid */}
+              <View style={[styles.visionGrid, isDesktop && { flexDirection: "row", justifyContent: "space-between" }]}>
+                <View style={[styles.visionCardItem, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
+                  <View style={styles.visionIconCircle}>
+                    <Ionicons name="leaf-outline" size={24} color="#0B5CAD" />
+                  </View>
+                  <Text style={styles.visionCardTitle}>Support Eco Tourism</Text>
+                  <Text style={styles.visionCardDesc}>
+                    Promoting sustainable practices to preserve Pakistan's pristine wilderness.
+                  </Text>
+                </View>
 
-    {/* Card 2 */}
+                <View style={[styles.visionCardItem, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
+                  <View style={styles.visionIconCircle}>
+                    <Ionicons name="shield-checkmark-outline" size={24} color="#0B5CAD" />
+                  </View>
+                  <Text style={styles.visionCardTitle}>Adventure Safety</Text>
+                  <Text style={styles.visionCardDesc}>
+                    Equipping all expeditions with tested, high-grade safety equipment.
+                  </Text>
+                </View>
 
-    <TouchableOpacity style={styles.tripCard} onPress={() => navigation.navigate("ViewTrip")}>
+                <View style={[styles.visionCardItem, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
+                  <View style={styles.visionIconCircle}>
+                    <Ionicons name="diamond-outline" size={24} color="#0B5CAD" />
+                  </View>
+                  <Text style={styles.visionCardTitle}>Premium Equipment</Text>
+                  <Text style={styles.visionCardDesc}>
+                    Providing explorers with access to world-class mountain gear.
+                  </Text>
+                </View>
 
-      <ImageBackground
-        source={require("./assets/fairy.jpg")}
-        style={styles.tripImage}
-        imageStyle={styles.tripImageRadius}
-      >
-
-        <View style={styles.tripOverlay}>
-
-          <View style={styles.tripBadge}>
-            <Text style={styles.tripBadgeText}>
-              Most Liked
-            </Text>
+                <View style={[styles.visionCardItem, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
+                  <View style={styles.visionIconCircle}>
+                    <Ionicons name="people-outline" size={24} color="#0B5CAD" />
+                  </View>
+                  <Text style={styles.visionCardTitle}>Community Development</Text>
+                  <Text style={styles.visionCardDesc}>
+                    Supporting local guides and mountain communities through fair trade.
+                  </Text>
+                </View>
+              </View>
+            </View>
           </View>
-
-          <Text style={styles.tripName}>
-            Fairy Meadows Trek
-          </Text>
-
-          <Text style={styles.tripDesc}>
-            Journey through scenic trails leading to one of Pakistan's most iconic landscapes.
-          </Text>
-
-          <View style={styles.tripBottom}>
-
-            <Text style={styles.tripPrice}>
-              Starting from{"\n"}40000 Rs
-            </Text>
-
-            <Text style={styles.tripDays}>
-              7 Days
-            </Text>
-
-          </View>
-
         </View>
 
-      </ImageBackground>
-
-    </TouchableOpacity>
-
-    {/* Card 3 */}
-
-    <TouchableOpacity style={styles.tripCard} onPress={() => navigation.navigate("ViewTrip")}>
-
-      <ImageBackground
-        source={require("./assets/skardu.jpg")}
-        style={styles.tripImage}
-        imageStyle={styles.tripImageRadius}
-      >
-
-        <View style={styles.tripOverlay}>
-
-          <View style={styles.tripBadge}>
-            <Text style={styles.tripBadgeText}>
-              Most Visited
+        {/* ================= SPONSORED EXPEDITIONS ================= */}
+        <View style={[styles.tripSectionWrapper, { backgroundColor: "#FFFFFF" }]}>
+          <View
+            style={[
+              styles.tripSection,
+              {
+                maxWidth: contentMaxWidth,
+                width: "100%",
+                alignSelf: "center",
+                paddingHorizontal: paddingHorizontal,
+                paddingVertical: isDesktop ? 80 : 50,
+              },
+            ]}
+          >
+            <Text style={styles.tripSmallTag}>FEATURED EXPEDITIONS</Text>
+            <Text style={styles.tripMainTitle}>Sponsored Expeditions</Text>
+            <Text style={styles.tripDescription}>
+              Explore handpicked expeditions proudly supported by our official brand partners.
             </Text>
+
+            {/* 3 Destination Cards Grid */}
+            <View style={[styles.tripCardsGrid, isDesktop && { flexDirection: "row", justifyContent: "space-between", marginTop: 35 }]}>
+              {sponsoredTrips.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[styles.tripCard, isDesktop && { width: "31.5%", marginBottom: 0 }]}
+                  onPress={() => navigation.navigate("ViewTrip")}
+                >
+                  <ImageBackground source={item.image} style={styles.tripCardBg} imageStyle={{ borderRadius: 20 }}>
+                    <View style={styles.tripOverlay}>
+                      <View style={styles.tripBadge}>
+                        <Text style={styles.tripBadgeText}>{item.badge}</Text>
+                      </View>
+
+                      <View style={styles.tripCardBottom}>
+                        <Text style={styles.tripName}>{item.title}</Text>
+                        <Text style={styles.tripDesc}>{item.description}</Text>
+
+                        <View style={styles.tripBottomRow}>
+                          <View>
+                            <Text style={styles.priceLabelText}>starting from</Text>
+                            <Text style={styles.tripPriceText}>{item.price}</Text>
+                          </View>
+                          <View style={{ alignItems: "flex-end" }}>
+                            <Text style={styles.daysText}>{item.duration}</Text>
+                            <Text style={styles.viewPackageText}>view package ➔</Text>
+                          </View>
+                        </View>
+                      </View>
+                    </View>
+                  </ImageBackground>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-
-          <Text style={styles.tripName}>
-            Skardu Adventure
-          </Text>
-
-          <Text style={styles.tripDesc}>
-            Explore majestic lakes, valleys and unforgettable mountain views.
-          </Text>
-
-          <View style={styles.tripBottom}>
-
-            <Text style={styles.tripPrice}>
-              Starting from{"\n"}70000 Rs
-            </Text>
-
-            <Text style={styles.tripDays}>
-              14 Days
-            </Text>
-
-          </View>
-
         </View>
 
-      </ImageBackground>
+        {/* ================= PARTNERSHIP BENEFITS (6 White Feature Cards Grid) ================= */}
+        <View style={[styles.benefitSectionWrapper, { backgroundColor: "#F7FAFD" }]}>
+          <View
+            style={[
+              styles.benefitSection,
+              {
+                maxWidth: contentMaxWidth,
+                width: "100%",
+                alignSelf: "center",
+                paddingHorizontal: paddingHorizontal,
+                paddingVertical: isDesktop ? 80 : 50,
+              },
+            ]}
+          >
+            <View style={{ alignItems: "center", marginBottom: 40 }}>
+              <Text style={styles.benefitSmallTag}>WHY PARTNER WITH US</Text>
+              <Text style={styles.benefitTitle}>Partnership Benefits</Text>
+            </View>
 
-    </TouchableOpacity>
+            {/* 6 Feature Cards Grid */}
+            <View style={[styles.benefitCardsGrid, isDesktop && { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" }]}>
+              {/* Card 1 */}
+              <View style={[styles.benefitCardItem, isDesktop && { width: "31.5%", marginBottom: 24 }]}>
+                <View style={styles.benefitIconBox}>
+                  <Ionicons name="person-outline" size={24} color="#0B5CAD" />
+                </View>
+                <Text style={styles.benefitCardHeading}>Professional Guides</Text>
+                <Text style={styles.benefitCardText}>
+                  Access to our network of top-tier mountain guides and local field leaders.
+                </Text>
+              </View>
 
-     </View>
+              {/* Card 2 */}
+              <View style={[styles.benefitCardItem, isDesktop && { width: "31.5%", marginBottom: 24 }]}>
+                <View style={styles.benefitIconBox}>
+                  <Ionicons name="bonfire-outline" size={24} color="#0B5CAD" />
+                </View>
+                <Text style={styles.benefitCardHeading}>Camping Equipment</Text>
+                <Text style={styles.benefitCardText}>
+                  All-weather high-altitude tents and sleeping systems for expeditions.
+                </Text>
+              </View>
 
-</View>
-{/* ================= PARTNERSHIP BENEFITS ================= */}
+              {/* Card 3 */}
+              <View style={[styles.benefitCardItem, isDesktop && { width: "31.5%", marginBottom: 24 }]}>
+                <View style={styles.benefitIconBox}>
+                  <Ionicons name="shield-checkmark-outline" size={24} color="#0B5CAD" />
+                </View>
+                <Text style={styles.benefitCardHeading}>Travel Insurance</Text>
+                <Text style={styles.benefitCardText}>
+                  Comprehensive coverage for high-altitude trekking and emergency medical care.
+                </Text>
+              </View>
 
-<View style={styles.benefitSection}>
+              {/* Card 4 */}
+              <View style={[styles.benefitCardItem, isDesktop && { width: "31.5%", marginBottom: 24 }]}>
+                <View style={styles.benefitIconBox}>
+                  <Ionicons name="camera-outline" size={24} color="#0B5CAD" />
+                </View>
+                <Text style={styles.benefitCardHeading}>Photographic Support</Text>
+                <Text style={styles.benefitCardText}>
+                  Professional media coverage to capture your journey in high definition.
+                </Text>
+              </View>
 
-  <Text style={styles.benefitTitle}>
-    Partnership Benefits
-  </Text>
+              {/* Card 5 */}
+              <View style={[styles.benefitCardItem, isDesktop && { width: "31.5%", marginBottom: 24 }]}>
+                <View style={styles.benefitIconBox}>
+                  <Ionicons name="pricetag-outline" size={24} color="#0B5CAD" />
+                </View>
+                <Text style={styles.benefitCardHeading}>Member Discount Rates</Text>
+                <Text style={styles.benefitCardText}>
+                  Special member rates for equipment rental, gear gear, and expedition supplies.
+                </Text>
+              </View>
 
-  <Text style={styles.benefitSubtitle}>
-    Together we create unforgettable experiences
-    while supporting sustainable tourism.
-  </Text>
+              {/* Card 6 */}
+              <View style={[styles.benefitCardItem, isDesktop && { width: "31.5%", marginBottom: 24 }]}>
+                <View style={styles.benefitIconBox}>
+                  <Ionicons name="call-outline" size={24} color="#0B5CAD" />
+                </View>
+                <Text style={styles.benefitCardHeading}>24/7 Field Support</Text>
+                <Text style={styles.benefitCardText}>
+                  Dedicated emergency response team and 24/7 satellite communication.
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
 
-  <View style={styles.benefitGrid}>
+        {/* ================= BECOME AN OFFICIAL ADVENTURE PARTNER (CTA Banner) ================= */}
+        <View style={[styles.ctaSectionWrapper, { backgroundColor: "#FFFFFF", paddingVertical: isDesktop ? 60 : 30 }]}>
+          <View style={{ maxWidth: contentMaxWidth, width: "100%", alignSelf: "center", paddingHorizontal: paddingHorizontal }}>
+            <ImageBackground
+              source={require("./assets/partnerBanner.jpg")}
+              style={styles.ctaBg}
+              imageStyle={{ borderRadius: 28 }}
+            >
+              <View style={styles.ctaOverlay}>
+                <View style={{ alignItems: "center", paddingVertical: isDesktop ? 70 : 45, paddingHorizontal: 24 }}>
+                  <Text style={[styles.ctaTitleWhite, { fontSize: isDesktop ? 44 : 28, textAlign: "center" }]}>
+                    BECOME AN OFFICIAL
+                  </Text>
 
-    <View style={styles.benefitCard}>
-      <Ionicons name="earth-outline" size={26} color="#2F6DE0" />
-      <Text style={styles.benefitCardTitle}>Eco Tourism</Text>
-      <Text style={styles.benefitCardText}>
-        Protecting nature through responsible travel.
-      </Text>
-    </View>
+                  <Text style={[styles.ctaTitleBlue, { fontSize: isDesktop ? 44 : 28, textAlign: "center" }]}>
+                    ADVENTURE PARTNER
+                  </Text>
 
-    <View style={styles.benefitCard}>
-      <Ionicons name="shield-checkmark-outline" size={26} color="#2F6DE0" />
-      <Text style={styles.benefitCardTitle}>Safe Adventures</Text>
-      <Text style={styles.benefitCardText}>
-        Certified guides and professional safety standards.
-      </Text>
-    </View>
+                  <Text style={[styles.ctaDescription, { fontSize: isDesktop ? 16 : 14, textAlign: "center", maxWidth: 680 }]}>
+                    Join our network of industry leaders, brands, and local organizations as we shape the future of outdoor adventure in Pakistan.
+                  </Text>
 
-    <View style={styles.benefitCard}>
-      <Ionicons name="people-outline" size={26} color="#2F6DE0" />
-      <Text style={styles.benefitCardTitle}>Local Communities</Text>
-      <Text style={styles.benefitCardText}>
-        Empowering local businesses and mountain guides.
-      </Text>
-    </View>
+                  <View style={styles.ctaButtonsRow}>
+                    <TouchableOpacity style={styles.ctaSecondaryBtn} onPress={() => navigation.navigate("Contact")}>
+                      <Text style={styles.ctaSecondaryText}>Partner with Us</Text>
+                    </TouchableOpacity>
 
-    <View style={styles.benefitCard}>
-      <Ionicons name="star-outline" size={26} color="#2F6DE0" />
-      <Text style={styles.benefitCardTitle}>Premium Quality</Text>
-      <Text style={styles.benefitCardText}>
-        Luxury adventure experiences with trusted partners.
-      </Text>
-    </View>
+                    <TouchableOpacity style={styles.ctaPrimaryBtn} onPress={() => navigation.navigate("Contact")}>
+                      <Text style={styles.ctaPrimaryText}>Contact Team</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </ImageBackground>
+          </View>
+        </View>
 
-    <View style={styles.benefitCard}>
-      <Ionicons name="leaf-outline" size={26} color="#2F6DE0" />
-      <Text style={styles.benefitCardTitle}>Sustainability</Text>
-      <Text style={styles.benefitCardText}>
-        Every expedition supports environmental conservation.
-      </Text>
-    </View>
-
-    <View style={styles.benefitCard}>
-      <Ionicons name="flag-outline" size={26} color="#2F6DE0" />
-      <Text style={styles.benefitCardTitle}>Trusted Network</Text>
-      <Text style={styles.benefitCardText}>
-        Collaborating with the best outdoor brands.
-      </Text>
-    </View>
-
-  </View>
-
-</View>
-{/* ================= CTA BANNER ================= */}
-
-<ImageBackground
-  source={require("./assets/partnerBanner.jpg")}
-  style={styles.ctaBanner}
-  imageStyle={styles.ctaBannerImage}
->
-
-  <View style={styles.ctaOverlay}>
-
-    <Text style={styles.ctaSmall}>
-      BECOME AN OFFICIAL
-    </Text>
-
-    <Text style={styles.ctaHeading}>
-      ADVENTURE
-      <Text style={styles.ctaWhite}> PARTNER</Text>
-    </Text>
-
-    <Text style={styles.ctaText}>
-      Join our network of trusted adventure brands and
-      inspire unforgettable travel experiences for the
-      world's most discerning explorers.
-    </Text>
-
-    <View style={styles.ctaButtons}>
-
-      <TouchableOpacity style={styles.partnerBtn} onPress={() => navigation.navigate("Home")}>
-
-        <Text style={styles.partnerBtnText}>
-          Partner With Us
-        </Text>
-
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.contactBtn} onPress={() => navigation.navigate("Contact")}>
-
-        <Text style={styles.contactBtnText}>
-          Contact Team
-        </Text>
-
-      </TouchableOpacity>
-
-    </View>
-
-  </View>
-
-</ImageBackground>
-{/* ================= FOOTER ================= */}
-
-<View style={styles.footer}>
-
-  <Image
-    source={require("./assets/logo.png")}
-    style={styles.footerLogo}
-  />
-
-  <Text style={styles.footerTagline}>
-Explore Pakistan Beyond The Horizon
-</Text>
-
-  <Text style={styles.footerTitle}>
-    ACES Adventure Club
-  </Text>
-
-  <Text style={styles.footerDescription}>
-    Creating unforgettable adventures across Pakistan.
-    Discover mountains, forests and breathtaking destinations
-    with our passionate community.
-  </Text>
-
-  {/* Social Icons */}
-
-  <View style={styles.socialRow}>
-
-    <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
-      <Ionicons name="logo-facebook" size={20} color="#FFFFFF" />
-    </TouchableOpacity>
-
-    <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
-      <Ionicons name="logo-instagram" size={20} color="#FFFFFF" />
-    </TouchableOpacity>
-
-    <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
-      <Ionicons name="logo-youtube" size={20} color="#FFFFFF" />
-    </TouchableOpacity>
-
-    <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
-      <Ionicons name="logo-linkedin" size={20} color="#FFFFFF" />
-    </TouchableOpacity>
-
-  </View>
-
-  <View style={styles.footerLine}/>
-
-  <Text style={styles.copyText}>
-    © 2026 ACES Adventure Club
-  </Text>
-
-  <Text style={styles.versionText}>
-    Version 1.0.0
-  </Text>
-
-  </View>
-
+        {/* ================= FOOTER ================= */}
+        <Footer />
       </ScrollView>
-
     </SafeAreaView>
-
   );
 }
 
 const styles = StyleSheet.create({
-
-  container:{
-    flex:1,
-    backgroundColor:"#F8FAFC",
+  container: {
+    flex: 1,
+    backgroundColor: "#F8FAFC",
   },
 
-  hero:{
-    width:"100%",
-    height:height*0.75,
+  hero: {
+    width: "100%",
   },
 
-  overlay:{
-    flex:1,
-    backgroundColor:"rgba(8,20,40,.45)",
-    paddingHorizontal:20,
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.45)",
   },
 
-  heroContent:{
-    flex:1,
-    justifyContent:"center",
-    paddingBottom:30,
+  heroContent: {
+    flex: 1,
+    justifyContent: "center",
+    paddingVertical: 40,
   },
 
-  partnerBadge:{
-    alignSelf:"flex-start",
-
-    paddingHorizontal:14,
-    paddingVertical:6,
-
-    borderRadius:30,
-
-    backgroundColor:"rgba(255,255,255,.18)",
-
-    borderWidth:1,
-    borderColor:"rgba(255,255,255,.25)",
-
-    marginBottom:14,
+  partnerBadge: {
+    backgroundColor: "rgba(255, 255, 255, 0.18)",
+    paddingHorizontal: 18,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+    alignSelf: "flex-start",
+    marginBottom: 16,
   },
 
-  partnerBadgeText:{
-    color:"#FFFFFF",
-    fontSize:9,
-    fontWeight:"700",
-    letterSpacing:1.5,
+  partnerBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 1.5,
   },
 
-  heroTitle:{
-    fontSize:38,
-    fontWeight:"700",
-    color:"#FFFFFF",
-    lineHeight:44,
+  heroTitle: {
+    color: "#FFFFFF",
+    fontWeight: "900",
+    letterSpacing: 0.5,
   },
 
-  heroDescription:{
-    marginTop:14,
-
-    width:"82%",
-
-    color:"#E5E7EB",
-
-    fontSize:14,
-
-    lineHeight:22,
+  heroDescription: {
+    color: "#F1F5F9",
+    marginTop: 14,
+    lineHeight: 24,
   },
 
-  heroButtons:{
-    flexDirection:"row",
-    marginTop:26,
+  heroButtons: {
+    flexDirection: "row",
+    marginTop: 30,
+    gap: 16,
   },
 
-  primaryButton:{
-    width:130,
-    height:42,
-
-    borderRadius:25,
-
-    backgroundColor:"#2F6DE0",
-
-    justifyContent:"center",
-    alignItems:"center",
-
-    marginRight:12,
+  primaryButton: {
+    backgroundColor: "#0088FF",
+    paddingHorizontal: 30,
+    paddingVertical: 14,
+    borderRadius: 28,
+    cursor: "pointer",
+    elevation: 4,
   },
 
-  primaryButtonText:{
-    color:"#FFFFFF",
-    fontWeight:"700",
-    fontSize:12,
+  primaryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "700",
   },
 
-  secondaryButton:{
-    width:140,
-    height:42,
-
-    borderRadius:25,
-
-    borderWidth:1.5,
-    borderColor:"#FFFFFF",
-
-    justifyContent:"center",
-    alignItems:"center",
+  secondaryButton: {
+    borderWidth: 1.5,
+    borderColor: "#FFFFFF",
+    paddingHorizontal: 30,
+    paddingVertical: 14,
+    borderRadius: 28,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    cursor: "pointer",
   },
 
-  secondaryButtonText:{
-    color:"#FFFFFF",
-    fontWeight:"700",
-    fontSize:12,
-  },
-  /* ================= PARTNER PROFILE ================= */
-
-partnerSection:{
-  paddingHorizontal:20,
-  paddingVertical:35,
-},
-
-partnerImage:{
-  width:"100%",
-  height:220,
-  borderRadius:20,
-},
-
-partnerContent:{
-  marginTop:24,
-},
-
-partnerLabel:{
-  color:"#2F6DE0",
-  fontSize:12,
-  fontWeight:"700",
-  letterSpacing:1,
-  marginBottom:8,
-},
-
-partnerName:{
-  fontSize:34,
-  fontWeight:"700",
-  color:"#16233C",
-  lineHeight:40,
-},
-
-partnerDetails:{
-  flexDirection:"row",
-  justifyContent:"space-between",
-  marginTop:22,
-  marginBottom:22,
-},
-
-detailHeading:{
-  fontSize:11,
-  color:"#94A3B8",
-  fontWeight:"700",
-  marginBottom:6,
-},
-
-detailValue:{
-  fontSize:13,
-  color:"#2F6DE0",
-  fontWeight:"700",
-},
-
-partnerDescription:{
-  fontSize:15,
-  lineHeight:27,
-  color:"#64748B",
-},
-/* ================= VISION SHARED ================= */
-
-visionSection:{
-  paddingHorizontal:20,
-  paddingVertical:40,
-  backgroundColor:"#FFFFFF",
-},
-
-visionTitle:{
-  textAlign:"center",
-  fontSize:34,
-  fontWeight:"700",
-  color:"#16233C",
-},
-
-visionSubtitle:{
-  textAlign:"center",
-  marginTop:10,
-  marginBottom:30,
-  color:"#64748B",
-  fontSize:14,
-  lineHeight:24,
-},
-
-visionGrid:{
-  flexDirection:"row",
-  flexWrap:"wrap",
-  justifyContent:"space-between",
-},
-
-visionCard:{
-  width:"48%",
-  backgroundColor:"#171311",
-  borderRadius:18,
-  padding:18,
-  marginBottom:16,
-  minHeight:200,
-},
-
-visionCardTitle:{
-  color:"#FFFFFF",
-  fontSize:15,
-  fontWeight:"700",
-  marginTop:16,
-  marginBottom:10,
-},
-
-visionCardDesc:{
-  color:"#D1D5DB",
-  fontSize:12,
-  lineHeight:20,
-},
-/* ================= SPONSORED EXPEDITIONS ================= */
-
-tripSection:{
-  paddingHorizontal:20,
-  paddingVertical:40,
-},
-
-tripHeader:{
-  marginBottom:25,
-},
-
-tripTitle:{
-  fontSize:32,
-  fontWeight:"700",
-  color:"#2F6DE0",
-},
-
-tripSubTitle:{
-  marginTop:8,
-  fontSize:14,
-  color:"#64748B",
-  lineHeight:22,
-},
-
-viewAll:{
-  marginTop:14,
-  color:"#C89B3C",
-  fontWeight:"700",
-},
-
-tripContainer:{
-  marginTop:25,
-},
-
-tripCard:{
-  width:"100%",
-  height:280,
-  marginBottom:22,
-},
-
-tripImage:{
-  flex:1,
-  justifyContent:"flex-end",
-},
-
-tripImageRadius:{
-  borderRadius:22,
-},
-
-tripOverlay:{
-  flex:1,
-  justifyContent:"flex-end",
-
-  padding:18,
-
-  backgroundColor:"rgba(0,0,0,.28)",
-
-  borderRadius:22,
-},
-
-tripBadge:{
-  position:"absolute",
-  top:16,
-  left:16,
-
-  backgroundColor:"#2F6DE0",
-
-  paddingHorizontal:12,
-  paddingVertical:5,
-
-  borderRadius:20,
-},
-
-tripBadgeText:{
-  color:"#FFFFFF",
-  fontSize:10,
-  fontWeight:"700",
-},
-
-tripName:{
-  color:"#FFFFFF",
-  fontSize:24,
-  fontWeight:"700",
-},
-
-tripDesc:{
-  color:"#FFFFFF",
-  fontSize:13,
-  lineHeight:20,
-  marginTop:8,
-},
-
-tripBottom:{
-  marginTop:18,
-
-  flexDirection:"row",
-
-  justifyContent:"space-between",
-
-  alignItems:"center",
-},
-
-tripPrice:{
-  color:"#4F83FF",
-  fontSize:14,
-  fontWeight:"700",
-},
-
-tripDays:{
-  color:"#FFFFFF",
-  fontSize:13,
-  fontWeight:"700",
-},
-/* ================= BENEFITS ================= */
-
-benefitSection:{
-  paddingHorizontal:20,
-  paddingVertical:40,
-  backgroundColor:"#F8FAFC",
-},
-
-benefitTitle:{
-  fontSize:34,
-  fontWeight:"700",
-  color:"#16233C",
-  textAlign:"center",
-},
-
-benefitSubtitle:{
-  marginTop:10,
-  marginBottom:30,
-  textAlign:"center",
-  color:"#64748B",
-  fontSize:14,
-  lineHeight:22,
-},
-
-benefitGrid:{
-  flexDirection:"row",
-  flexWrap:"wrap",
-  justifyContent:"space-between",
-},
-
-benefitCard:{
-  width:"48%",
-  backgroundColor:"#FFFFFF",
-  borderRadius:18,
-  padding:18,
-  marginBottom:16,
-
-  shadowColor:"#000",
-  shadowOpacity:0.06,
-  shadowRadius:8,
-  shadowOffset:{
-    width:0,
-    height:4,
+  secondaryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "700",
   },
 
-  elevation:3,
-},
+  /* PARTNER PROFILE */
+  partnerSectionWrapper: {},
 
-benefitCardTitle:{
-  marginTop:14,
-  fontSize:15,
-  fontWeight:"700",
-  color:"#16233C",
-},
+  partnerSection: {},
 
-benefitCardText:{
-  marginTop:8,
-  color:"#64748B",
-  fontSize:12,
-  lineHeight:20,
-},
-/* ================= CTA BANNER ================= */
-
-ctaBanner:{
-  width:"100%",
-  height:380,
-
-  marginTop:40,
-
-  justifyContent:"center",
-},
-
-ctaBannerImage:{
-  borderRadius:20,
-},
-
-ctaOverlay:{
-  flex:1,
-
-  backgroundColor:"rgba(0,0,0,.35)",
-
-  borderRadius:20,
-
-  justifyContent:"center",
-  alignItems:"center",
-
-  paddingHorizontal:28,
-},
-
-ctaSmall:{
-  color:"#FFFFFF",
-
-  fontSize:13,
-
-  fontWeight:"700",
-
-  letterSpacing:2,
-},
-
-ctaHeading:{
-  marginTop:8,
-
-  fontSize:40,
-
-  fontWeight:"700",
-
-  color:"#2F6DE0",
-
-  textAlign:"center",
-},
-
-ctaWhite:{
-  color:"#FFFFFF",
-},
-
-ctaText:{
-  marginTop:15,
-
-  color:"#FFFFFF",
-
-  textAlign:"center",
-
-  lineHeight:22,
-
-  fontSize:13,
-
-  width:"90%",
-},
-
-ctaButtons:{
-  flexDirection:"row",
-
-  marginTop:28,
-},
-
-partnerBtn:{
-  width:150,
-  height:46,
-
-  borderWidth:1.5,
-  borderColor:"#FFFFFF",
-
-  borderRadius:30,
-
-  justifyContent:"center",
-  alignItems:"center",
-
-  marginRight:12,
-},
-
-partnerBtnText:{
-  color:"#FFFFFF",
-
-  fontWeight:"700",
-
-  fontSize:13,
-},
-
-contactBtn:{
-  width:150,
-  height:46,
-
-  backgroundColor:"#2F6DE0",
-
-  borderRadius:30,
-
-  justifyContent:"center",
-  alignItems:"center",
-},
-
-contactBtnText:{
-  color:"#FFFFFF",
-
-  fontWeight:"700",
-
-  fontSize:13,
-},
-/* ================= FOOTER ================= */
-
-startButton: {
-  height: 58,
-  borderRadius: 30,
-  backgroundColor: "#1E88E5",
-  justifyContent: "center",
-  alignItems: "center",
-  marginTop: 35,
-
-  shadowColor: "#1E88E5",
-  shadowOpacity: 0.35,
-  shadowRadius: 10,
-  shadowOffset: {
-    width: 0,
-    height: 5,
+  partnerImage: {
+    width: "100%",
+    height: 380,
+    borderRadius: 24,
   },
-  elevation: 8,
-},
 
-startButtonText: {
-  color: "#FFFFFF",
-  fontSize: 18,
-  fontWeight: "700",
-},
+  partnerLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#0B5CAD",
+    letterSpacing: 1.5,
+    marginBottom: 4,
+  },
 
-footer: {
-  marginTop: 45,
-  paddingTop: 35,
-  paddingBottom: 30,
-  paddingHorizontal: 20,
+  partnerName: {
+    fontSize: 36,
+    fontWeight: "800",
+    color: "#0F172A",
+    marginBottom: 12,
+  },
 
-  backgroundColor: "#16233C",
+  partnerTagsRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 16,
+  },
 
-  borderTopLeftRadius: 28,
-  borderTopRightRadius: 28,
+  tagChip: {
+    backgroundColor: "#EFF6FF",
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
 
-  alignItems: "center",
-},
+  tagChipText: {
+    color: "#0B5CAD",
+    fontSize: 12,
+    fontWeight: "700",
+  },
 
-footerLogo: {
-  width: 75,
-  height: 75,
-  resizeMode: "contain",
-},
+  partnerDescription: {
+    fontSize: 15,
+    color: "#64748B",
+    lineHeight: 26,
+  },
 
-footerTitle: {
-  marginTop: 14,
-  fontSize: 24,
-  fontWeight: "700",
-  color: "#FFFFFF",
-},
+  /* A VISION SHARED */
+  visionSectionWrapper: {},
 
-footerDescription: {
-  marginTop: 12,
-  textAlign: "center",
-  color: "#D8E4F5",
-  fontSize: 15,
-  lineHeight: 24,
-  paddingHorizontal: 15,
-},
+  visionDarkCard: {
+    backgroundColor: "#1E293B",
+    borderRadius: 28,
+    padding: 40,
+  },
 
-socialRow: {
-  marginTop: 28,
-  flexDirection: "row",
-},
+  visionSmallTag: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#38BDF8",
+    letterSpacing: 1.5,
+    marginBottom: 6,
+  },
 
-socialIcon: {
-  width: 50,
-  height: 50,
-  borderRadius: 25,
+  visionTitle: {
+    fontSize: 34,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    marginBottom: 8,
+  },
 
-  backgroundColor: "rgba(255,255,255,0.10)",
+  visionSubtitle: {
+    fontSize: 15,
+    color: "#CBD5E1",
+    textAlign: "center",
+    maxWidth: 650,
+  },
 
-  justifyContent: "center",
-  alignItems: "center",
+  visionGrid: {
+    flexDirection: "column",
+  },
 
-  marginHorizontal: 8,
+  visionCardItem: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 16,
+  },
 
-  borderWidth: 1,
-  borderColor: "rgba(255,255,255,0.18)",
-},
+  visionIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#EFF6FF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
 
-footerLine: {
-  width: "100%",
-  height: 1,
+  visionCardTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#0F172A",
+    marginBottom: 8,
+  },
 
-  backgroundColor: "rgba(255,255,255,0.15)",
+  visionCardDesc: {
+    fontSize: 13,
+    color: "#64748B",
+    lineHeight: 20,
+  },
 
-  marginTop: 30,
-  marginBottom: 20,
-},
+  /* SPONSORED EXPEDITIONS */
+  tripSectionWrapper: {},
 
-copyText: {
-  color: "#FFFFFF",
-  fontSize: 14,
-  fontWeight: "600",
-},
+  tripSection: {},
 
-versionText: {
-  marginTop: 6,
-  color: "#9DB4D6",
-  fontSize: 13,
-},
-footerTagline: {
-  marginTop: 6,
-  fontSize: 14,
-  color: "#60A5FA",
-  fontWeight: "600",
-},
+  tripSmallTag: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#0B5CAD",
+    letterSpacing: 1.5,
+    marginBottom: 4,
+  },
 
+  tripMainTitle: {
+    fontSize: 34,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
+
+  tripDescription: {
+    fontSize: 15,
+    color: "#64748B",
+    marginTop: 6,
+  },
+
+  tripCardsGrid: {},
+
+  tripCard: {
+    width: "100%",
+    height: 360,
+    borderRadius: 20,
+    overflow: "hidden",
+    marginBottom: 20,
+    elevation: 6,
+    cursor: "pointer",
+  },
+
+  tripCardBg: {
+    width: "100%",
+    height: "100%",
+  },
+
+  tripOverlay: {
+    flex: 1,
+    justifyContent: "space-between",
+    padding: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+  },
+
+  tripBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#0088FF",
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 18,
+  },
+
+  tripBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+
+  tripCardBottom: {},
+
+  tripName: {
+    color: "#FFFFFF",
+    fontSize: 26,
+    fontWeight: "800",
+  },
+
+  tripDesc: {
+    color: "#CBD5E1",
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 6,
+  },
+
+  tripBottomRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 255, 255, 0.2)",
+  },
+
+  priceLabelText: {
+    color: "#94A3B8",
+    fontSize: 10,
+    fontWeight: "600",
+  },
+
+  tripPriceText: {
+    color: "#38BDF8",
+    fontSize: 15,
+    fontWeight: "800",
+  },
+
+  daysText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+
+  viewPackageText: {
+    color: "#38BDF8",
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: 2,
+  },
+
+  /* PARTNERSHIP BENEFITS */
+  benefitSectionWrapper: {},
+
+  benefitSection: {},
+
+  benefitSmallTag: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#0B5CAD",
+    letterSpacing: 1.5,
+    marginBottom: 6,
+  },
+
+  benefitTitle: {
+    fontSize: 34,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
+
+  benefitCardsGrid: {},
+
+  benefitCardItem: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    marginBottom: 20,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+  },
+
+  benefitIconBox: {
+    width: 50,
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: "#EFF6FF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 18,
+  },
+
+  benefitCardHeading: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#0F172A",
+    marginBottom: 8,
+  },
+
+  benefitCardText: {
+    fontSize: 13,
+    color: "#64748B",
+    lineHeight: 20,
+  },
+
+  /* BECOME AN OFFICIAL ADVENTURE PARTNER CTA BANNER */
+  ctaSectionWrapper: {},
+
+  ctaBg: {
+    width: "100%",
+    overflow: "hidden",
+    borderRadius: 28,
+  },
+
+  ctaOverlay: {
+    backgroundColor: "rgba(15, 23, 42, 0.65)",
+    borderRadius: 28,
+  },
+
+  ctaTitleWhite: {
+    color: "#FFFFFF",
+    fontWeight: "900",
+    letterSpacing: 1,
+  },
+
+  ctaTitleBlue: {
+    color: "#38BDF8",
+    fontWeight: "900",
+    fontStyle: "italic",
+    marginTop: 4,
+  },
+
+  ctaDescription: {
+    color: "#CBD5E1",
+    marginTop: 14,
+    lineHeight: 24,
+  },
+
+  ctaButtonsRow: {
+    flexDirection: "row",
+    marginTop: 30,
+    gap: 16,
+  },
+
+  ctaPrimaryBtn: {
+    backgroundColor: "#0088FF",
+    paddingHorizontal: 30,
+    paddingVertical: 14,
+    borderRadius: 28,
+    cursor: "pointer",
+  },
+
+  ctaPrimaryText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+
+  ctaSecondaryBtn: {
+    borderWidth: 1.5,
+    borderColor: "#FFFFFF",
+    paddingHorizontal: 30,
+    paddingVertical: 14,
+    borderRadius: 28,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    cursor: "pointer",
+  },
+
+  ctaSecondaryText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
 });
