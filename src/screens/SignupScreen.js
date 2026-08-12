@@ -12,9 +12,9 @@ import {
   Dimensions,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import Header from "./Header";
-import Footer from "./Footer";
-import useResponsive from "./useResponsive";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import useResponsive from "../hooks/useResponsive";
 
 const { height, width } = Dimensions.get("window");
 
@@ -26,7 +26,7 @@ export default function SignupScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
       <ScrollView showsVerticalScrollIndicator={false}>
-        <ImageBackground source={require("./assets/hero.jpg")} style={[styles.hero, { minHeight: height }]} resizeMode="cover">
+        <ImageBackground source={require("../../assets/hero.jpg")} style={[styles.hero, { minHeight: height }]} resizeMode="cover">
           <View style={styles.overlay}>
             <Header />
             <View style={styles.heroContent}>
@@ -166,4 +166,3 @@ const styles = StyleSheet.create({
     cursor: "pointer",
   },
 });
-

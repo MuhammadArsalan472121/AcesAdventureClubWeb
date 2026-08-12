@@ -12,9 +12,9 @@ import {
   Dimensions,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import Header from "./Header";
-import Footer from "./Footer";
-import useResponsive from "./useResponsive";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import useResponsive from "../hooks/useResponsive";
 import { Ionicons } from "@expo/vector-icons";
 
 const { height, width } = Dimensions.get("window");
@@ -36,7 +36,7 @@ export default function AboutScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* ================= HERO SECTION ================= */}
         <ImageBackground
-          source={require("./assets/about-bg.jpg")}
+          source={require("../../assets/about-bg.jpg")}
           style={[styles.hero, { height: isDesktop ? 680 : height * 0.85 }]}
           resizeMode="cover"
         >
@@ -144,7 +144,7 @@ export default function AboutScreen() {
           >
             {/* Left Column (Big Featured Image) */}
             <View style={{ flex: isDesktop ? 1 : undefined, width: "100%", maxWidth: isDesktop ? 580 : "100%", marginBottom: isDesktop ? 0 : 35 }}>
-              <Image source={require("./assets/about-big.jpg")} style={styles.missionImage} />
+              <Image source={require("../../assets/about-big.jpg")} style={styles.missionImage} />
             </View>
 
             {/* Right Column (Mission Text Content) */}
@@ -270,7 +270,7 @@ export default function AboutScreen() {
             <View style={[styles.guidesGrid, isDesktop && { flexDirection: "row", justifyContent: "space-between" }]}>
               {/* GUIDE 1 */}
               <View style={[styles.guideCard, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
-                <Image source={require("./assets/guide1.jpg")} style={styles.guideImage} />
+                <Image source={require("../../assets/guide1.jpg")} style={styles.guideImage} />
                 <View style={styles.guideOverlay}>
                   <Text style={styles.guideCategory}>CHIEF EXPEDITION LEAD</Text>
                   <Text style={styles.guideName}>MARCUS THORNE</Text>
@@ -279,7 +279,7 @@ export default function AboutScreen() {
 
               {/* GUIDE 2 */}
               <View style={[styles.guideCard, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
-                <Image source={require("./assets/guide2.jpg")} style={styles.guideImage} />
+                <Image source={require("../../assets/guide2.jpg")} style={styles.guideImage} />
                 <View style={styles.guideOverlay}>
                   <Text style={styles.guideCategory}>ALPINE GUIDE</Text>
                   <Text style={styles.guideName}>ELENA VANCE</Text>
@@ -288,7 +288,7 @@ export default function AboutScreen() {
 
               {/* GUIDE 3 */}
               <View style={[styles.guideCard, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
-                <Image source={require("./assets/guide3.jpg")} style={styles.guideImage} />
+                <Image source={require("../../assets/guide3.jpg")} style={styles.guideImage} />
                 <View style={styles.guideOverlay}>
                   <Text style={styles.guideCategory}>SURVIVAL EXPERT</Text>
                   <Text style={styles.guideName}>JULIAN BECK</Text>
@@ -297,7 +297,7 @@ export default function AboutScreen() {
 
               {/* GUIDE 4 */}
               <View style={[styles.guideCard, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
-                <Image source={require("./assets/guide4.jpg")} style={styles.guideImage} />
+                <Image source={require("../../assets/guide4.jpg")} style={styles.guideImage} />
                 <View style={styles.guideOverlay}>
                   <Text style={styles.guideCategory}>SAFETY OFFICER</Text>
                   <Text style={styles.guideName}>SOFIA RICCI</Text>
@@ -311,7 +311,7 @@ export default function AboutScreen() {
         <View style={[styles.ctaSectionWrapper, { backgroundColor: "#F7FAFD", paddingVertical: isDesktop ? 60 : 30 }]}>
           <View style={{ maxWidth: contentMaxWidth, width: "100%", alignSelf: "center", paddingHorizontal: paddingHorizontal }}>
             <ImageBackground
-              source={require("./assets/adventure-bg.jpg")}
+              source={require("../../assets/adventure-bg.jpg")}
               style={styles.ctaBg}
               imageStyle={{ borderRadius: 28 }}
             >

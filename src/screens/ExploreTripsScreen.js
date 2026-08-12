@@ -14,9 +14,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import Header from "./Header";
-import Footer from "./Footer";
-import useResponsive from "./useResponsive";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import useResponsive from "../hooks/useResponsive";
 
 const { height, width } = Dimensions.get("window");
 
@@ -34,7 +34,7 @@ export default function ExploreTripsScreen() {
   const curatedTrips = [
     {
       id: 1,
-      image: require("./assets/hunza.jpg"),
+      image: require("../../assets/hunza.jpg"),
       badge: "Featured",
       location: "Gilgit, Pakistan",
       title: "Hunza Explorer",
@@ -45,7 +45,7 @@ export default function ExploreTripsScreen() {
     },
     {
       id: 2,
-      image: require("./assets/fairy.jpg"),
+      image: require("../../assets/fairy.jpg"),
       badge: "Popular",
       location: "Diamer, Pakistan",
       title: "Fairy Meadows Trek",
@@ -56,7 +56,7 @@ export default function ExploreTripsScreen() {
     },
     {
       id: 3,
-      image: require("./assets/skardu.jpg"),
+      image: require("../../assets/skardu.jpg"),
       badge: "Recommended",
       location: "Skardu, Pakistan",
       title: "Skardu Adventure",
@@ -67,7 +67,7 @@ export default function ExploreTripsScreen() {
     },
     {
       id: 4,
-      image: require("./assets/naran.jpg"),
+      image: require("../../assets/naran.jpg"),
       badge: "Trending",
       location: "Mansehra, Pakistan",
       title: "Naran Valley Escape",
@@ -78,7 +78,7 @@ export default function ExploreTripsScreen() {
     },
     {
       id: 5,
-      image: require("./assets/hunza.jpg"),
+      image: require("../../assets/hunza.jpg"),
       badge: "Featured",
       location: "Gilgit, Pakistan",
       title: "Hunza Explorer",
@@ -89,7 +89,7 @@ export default function ExploreTripsScreen() {
     },
     {
       id: 6,
-      image: require("./assets/fairy.jpg"),
+      image: require("../../assets/fairy.jpg"),
       badge: "Popular",
       location: "Diamer, Pakistan",
       title: "Fairy Meadows Trek",
@@ -100,7 +100,7 @@ export default function ExploreTripsScreen() {
     },
     {
       id: 7,
-      image: require("./assets/skardu.jpg"),
+      image: require("../../assets/skardu.jpg"),
       badge: "Recommended",
       location: "Skardu, Pakistan",
       title: "Skardu Adventure",
@@ -111,7 +111,7 @@ export default function ExploreTripsScreen() {
     },
     {
       id: 8,
-      image: require("./assets/naran.jpg"),
+      image: require("../../assets/naran.jpg"),
       badge: "Trending",
       location: "Mansehra, Pakistan",
       title: "Naran Valley Escape",
@@ -125,7 +125,7 @@ export default function ExploreTripsScreen() {
   const popularHubs = [
     {
       id: 1,
-      image: require("./assets/hub1.jpg"),
+      image: require("../../assets/hub1.jpg"),
       badge: "Most Popular",
       location: "Gilgit, Pakistan",
       title: "Hunza Valley",
@@ -136,7 +136,7 @@ export default function ExploreTripsScreen() {
     },
     {
       id: 2,
-      image: require("./assets/hub2.jpg"),
+      image: require("../../assets/hub2.jpg"),
       badge: "Most Liked",
       location: "Diamer, Pakistan",
       title: "Fairy Meadows Trek",
@@ -147,7 +147,7 @@ export default function ExploreTripsScreen() {
     },
     {
       id: 3,
-      image: require("./assets/hub3.jpg"),
+      image: require("../../assets/hub3.jpg"),
       badge: "Best View",
       location: "Skardu, Pakistan",
       title: "Skardu Adventure",
@@ -165,7 +165,7 @@ export default function ExploreTripsScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* ================= HERO SECTION ================= */}
         <ImageBackground
-          source={require("./assets/explore-hero.jpg")}
+          source={require("../../assets/explore-hero.jpg")}
           style={[styles.hero, { height: isDesktop ? 650 : height * 0.85 }]}
           resizeMode="cover"
         >
@@ -437,7 +437,7 @@ export default function ExploreTripsScreen() {
         <View style={[styles.newsletterSectionWrapper, { backgroundColor: "#FFFFFF", paddingVertical: isDesktop ? 60 : 30 }]}>
           <View style={{ maxWidth: contentMaxWidth, width: "100%", alignSelf: "center", paddingHorizontal: paddingHorizontal }}>
             <ImageBackground
-              source={require("./assets/adventure-bg.jpg")}
+              source={require("../../assets/adventure-bg.jpg")}
               style={styles.newsletterBg}
               imageStyle={{ borderRadius: 28 }}
             >

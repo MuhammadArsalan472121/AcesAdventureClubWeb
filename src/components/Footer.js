@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import useResponsive from "./useResponsive";
+import useResponsive from "../hooks/useResponsive";
 
 export default function Footer() {
   const navigation = useNavigation();
@@ -19,7 +19,7 @@ export default function Footer() {
         {/* BRAND COLUMN */}
         <View style={styles.brandColumn}>
           <View style={styles.logoRow}>
-            <Image source={require("./assets/logo.png")} style={styles.logo} />
+            <Image source={require("../../assets/logo.png")} style={styles.logo} />
             <Text style={styles.brandTitle}>Aces Adventure Club</Text>
           </View>
           <Text style={styles.brandDescription}>

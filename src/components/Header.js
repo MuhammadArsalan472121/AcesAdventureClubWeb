@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import useResponsive from "./useResponsive";
+import useResponsive from "../hooks/useResponsive";
 
 export default function Header() {
   const navigation = useNavigation();
@@ -36,7 +36,7 @@ export default function Header() {
       <View style={styles.headerContainer}>
         {/* LOGO */}
         <TouchableOpacity style={styles.logoRow} onPress={() => navigateTo("Home")}>
-          <Image source={require("./assets/logo.png")} style={styles.logo} />
+          <Image source={require("../../assets/logo.png")} style={styles.logo} />
         </TouchableOpacity>
 
         {/* DESKTOP NAVBAR LINKS */}

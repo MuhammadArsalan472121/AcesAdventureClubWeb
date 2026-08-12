@@ -14,9 +14,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import Header from "./Header";
-import Footer from "./Footer";
-import useResponsive from "./useResponsive";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import useResponsive from "../hooks/useResponsive";
 
 const { height, width } = Dimensions.get("window");
 
@@ -41,7 +41,7 @@ export default function HomeScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* ================= HERO SECTION ================= */}
         <ImageBackground
-          source={require("./assets/hero.jpg")}
+          source={require("../../assets/hero.jpg")}
           style={[styles.hero, { height: isDesktop ? 800 : height * 0.92 }]}
           resizeMode="cover"
         >
@@ -174,11 +174,11 @@ export default function HomeScreen() {
 
             {/* Right Column (Collage Images) */}
             <View style={{ flex: isDesktop ? 1 : undefined, width: "100%", maxWidth: isDesktop ? 580 : "100%", marginTop: isDesktop ? 0 : 40 }}>
-              <Image source={require("./assets/about-big.jpg")} style={styles.bigImage} />
+              <Image source={require("../../assets/about-big.jpg")} style={styles.bigImage} />
 
               <View style={styles.smallImagesRow}>
-                <Image source={require("./assets/about-small1.jpg")} style={styles.smallImage} />
-                <Image source={require("./assets/about-small2.jpg")} style={styles.smallImage} />
+                <Image source={require("../../assets/about-small1.jpg")} style={styles.smallImage} />
+                <Image source={require("../../assets/about-small2.jpg")} style={styles.smallImage} />
               </View>
             </View>
           </View>
@@ -212,7 +212,7 @@ export default function HomeScreen() {
             <View style={[styles.cardsContainer, isDesktop && { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" }]}>
               {/* Card 1 */}
               <TouchableOpacity style={[styles.adventureCard, isDesktop && { width: "23.5%", marginRight: 0, marginBottom: 20 }]} onPress={() => navigation.navigate("ViewTrip")}>
-                <Image source={require("./assets/hiking.jpg")} style={styles.cardImage} />
+                <Image source={require("../../assets/hiking.jpg")} style={styles.cardImage} />
                 <View style={styles.cardIcon}>
                   <Text style={styles.cardIconText}>🥾</Text>
                 </View>
@@ -226,7 +226,7 @@ export default function HomeScreen() {
 
               {/* Card 2 */}
               <TouchableOpacity style={[styles.adventureCard, isDesktop && { width: "23.5%", marginRight: 0, marginBottom: 20 }]} onPress={() => navigation.navigate("ViewTrip")}>
-                <Image source={require("./assets/camping.jpg")} style={styles.cardImage} />
+                <Image source={require("../../assets/camping.jpg")} style={styles.cardImage} />
                 <View style={styles.cardIcon}>
                   <Text style={styles.cardIconText}>⛺</Text>
                 </View>
@@ -240,7 +240,7 @@ export default function HomeScreen() {
 
               {/* Card 3 */}
               <TouchableOpacity style={[styles.adventureCard, isDesktop && { width: "23.5%", marginRight: 0, marginBottom: 20 }]} onPress={() => navigation.navigate("ViewTrip")}>
-                <Image source={require("./assets/trekking.jpg")} style={styles.cardImage} />
+                <Image source={require("../../assets/trekking.jpg")} style={styles.cardImage} />
                 <View style={styles.cardIcon}>
                   <Text style={styles.cardIconText}>🎒</Text>
                 </View>
@@ -254,7 +254,7 @@ export default function HomeScreen() {
 
               {/* Card 4 */}
               <TouchableOpacity style={[styles.adventureCard, isDesktop && { width: "23.5%", marginRight: 0, marginBottom: 20 }]} onPress={() => navigation.navigate("ViewTrip")}>
-                <Image source={require("./assets/nature.jpg")} style={styles.cardImage} />
+                <Image source={require("../../assets/nature.jpg")} style={styles.cardImage} />
                 <View style={styles.cardIcon}>
                   <Text style={styles.cardIconText}>🌲</Text>
                 </View>
@@ -334,7 +334,7 @@ export default function HomeScreen() {
             <View style={[styles.featuredScrollContainer, isDesktop && { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", marginTop: 35 }]}>
               {/* CARD 1 */}
               <TouchableOpacity style={[styles.featuredCard, isDesktop && { width: "31.5%", marginRight: 0, marginBottom: 24 }]} onPress={() => navigation.navigate("ViewTrip")}>
-                <ImageBackground source={require("./assets/featured1.jpg")} style={styles.featuredCardBg} imageStyle={styles.featuredImage}>
+                <ImageBackground source={require("../../assets/featured1.jpg")} style={styles.featuredCardBg} imageStyle={styles.featuredImage}>
                   <View style={styles.featuredOverlay}>
                     <View style={styles.badgePopular}>
                       <Text style={styles.badgePopularText}>Most Popular</Text>
@@ -361,7 +361,7 @@ export default function HomeScreen() {
 
               {/* CARD 2 */}
               <TouchableOpacity style={[styles.featuredCard, isDesktop && { width: "31.5%", marginRight: 0, marginBottom: 24 }]} onPress={() => navigation.navigate("ViewTrip")}>
-                <ImageBackground source={require("./assets/featured2.jpg")} style={styles.featuredCardBg} imageStyle={styles.featuredImage}>
+                <ImageBackground source={require("../../assets/featured2.jpg")} style={styles.featuredCardBg} imageStyle={styles.featuredImage}>
                   <View style={styles.featuredOverlay}>
                     <View style={styles.badgePopular}>
                       <Text style={styles.badgePopularText}>Most Liked</Text>
@@ -388,7 +388,7 @@ export default function HomeScreen() {
 
               {/* CARD 3 */}
               <TouchableOpacity style={[styles.featuredCard, isDesktop && { width: "31.5%", marginRight: 0, marginBottom: 24 }]} onPress={() => navigation.navigate("ViewTrip")}>
-                <ImageBackground source={require("./assets/featured3.jpg")} style={styles.featuredCardBg} imageStyle={styles.featuredImage}>
+                <ImageBackground source={require("../../assets/featured3.jpg")} style={styles.featuredCardBg} imageStyle={styles.featuredImage}>
                   <View style={styles.featuredOverlay}>
                     <View style={styles.badgePopular}>
                       <Text style={styles.badgePopularText}>Best View</Text>
@@ -531,7 +531,7 @@ export default function HomeScreen() {
         <View style={[styles.newsletterSectionWrapper, { backgroundColor: "#F7FAFD", paddingVertical: isDesktop ? 60 : 30 }]}>
           <View style={{ maxWidth: contentMaxWidth, width: "100%", alignSelf: "center", paddingHorizontal: paddingHorizontal }}>
             <ImageBackground
-              source={require("./assets/adventure-bg.jpg")}
+              source={require("../../assets/adventure-bg.jpg")}
               style={styles.newsletterBg}
               imageStyle={{ borderRadius: 28 }}
             >

@@ -10,9 +10,9 @@ import {
   Animated,
   StatusBar,
 } from "react-native";
-import useResponsive from "./useResponsive";
+import useResponsive from "../hooks/useResponsive";
 
-export default function Onboarding2() {
+export default function Onboarding3() {
   const navigation = useNavigation();
   const { isDesktop } = useResponsive();
 
@@ -37,7 +37,7 @@ export default function Onboarding2() {
 
   return (
     <ImageBackground
-      source={require("./assets/onboarding2.jpg")}
+      source={require("../../assets/onboarding3.jpg")}
       style={styles.background}
       resizeMode="cover"
     >
@@ -49,14 +49,14 @@ export default function Onboarding2() {
         <View style={[styles.topBar, { paddingHorizontal: isDesktop ? 50 : 24, paddingTop: isDesktop ? 30 : 45 }]}>
           <View style={styles.logoContainer}>
             <Image
-              source={require("./assets/logo.png")}
+              source={require("../../assets/logo.png")}
               style={styles.logo}
             />
           </View>
 
           <TouchableOpacity
             style={styles.skipButton}
-            onPress={() => navigation.navigate("Onboarding3")}
+            onPress={() => navigation.replace("Home")}
           >
             <Text style={styles.skipText}>Skip</Text>
           </TouchableOpacity>
@@ -80,19 +80,20 @@ export default function Onboarding2() {
           {/* Text & Indicators (Left) */}
           <View style={[styles.textContent, { maxWidth: isDesktop ? 680 : "100%" }]}>
             <Text style={[styles.headingWhite, isDesktop ? { fontSize: 48, lineHeight: 54 } : { fontSize: 34, lineHeight: 40 }]}>
-              FIND YOUR{"\n"}
-              <Text style={styles.headingBlue}>NEXT ADVENTURE</Text>
+              CREATE MEMORIES{"\n"}
+              <Text style={styles.headingBlue}>FOR LIFE</Text>
             </Text>
 
             <Text style={[styles.paragraph, isDesktop ? { fontSize: 17, lineHeight: 28 } : { fontSize: 15, lineHeight: 24 }]}>
-              Browse hiking, camping and trekking experiences designed for every explorer.
+              Join thousands of explorers and begin unforgettable adventures with
+              ACES Adventure Club. Your next journey starts today.
             </Text>
 
             {/* Indicator Dots */}
             <View style={styles.indicatorRow}>
               <View style={styles.dot} />
-              <View style={styles.activeDot} />
               <View style={styles.dot} />
+              <View style={styles.activeDot} />
             </View>
           </View>
 
@@ -100,9 +101,9 @@ export default function Onboarding2() {
           <View style={[styles.buttonWrapper, !isDesktop && { marginTop: 28, width: "100%" }]}>
             <TouchableOpacity
               style={[styles.nextButton, !isDesktop && { width: "100%", alignItems: "center" }]}
-              onPress={() => navigation.navigate("Onboarding3")}
+              onPress={() => navigation.replace("Home")}
             >
-              <Text style={styles.nextButtonText}>{"Next >"}</Text>
+              <Text style={styles.nextButtonText}>Get Started</Text>
             </TouchableOpacity>
           </View>
         </Animated.View>

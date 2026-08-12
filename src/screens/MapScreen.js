@@ -16,10 +16,10 @@ import {
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
-import Header from "./Header";
-import Footer from "./Footer";
-import useResponsive from "./useResponsive";
-import MapViewComponent from "./MapViewComponent";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import useResponsive from "../hooks/useResponsive";
+import MapViewComponent from "../components/MapViewComponent";
 
 const { height, width } = Dimensions.get("window");
 
@@ -32,7 +32,7 @@ export default function MapScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
       <ScrollView showsVerticalScrollIndicator={false}>
-        <ImageBackground source={require("./assets/mapHero.jpg")} style={styles.hero}>
+        <ImageBackground source={require("../../assets/mapHero.jpg")} style={styles.hero}>
           <View style={styles.overlay}>
             <Header />
             <View style={styles.heroContent}>
@@ -65,7 +65,7 @@ export default function MapScreen() {
         {/* ================= NEWSLETTER SECTION ================= */}
         
         <ImageBackground
-          source={require("./assets/adventure-bg.jpg")}
+          source={require("../../assets/adventure-bg.jpg")}
           style={styles.newsletterBg}
           imageStyle={styles.newsletterImage}
         >
@@ -133,7 +133,7 @@ export default function MapScreen() {
         <View style={styles.footer}>
         
           <Image
-            source={require("./assets/logo.png")}
+            source={require("../../assets/logo.png")}
             style={styles.footerLogo}
           />
         
@@ -536,9 +536,3 @@ footerTagline: {
   fontWeight: "600",
 },
 });
-
-
-
-
-
-

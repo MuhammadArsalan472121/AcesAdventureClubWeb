@@ -14,9 +14,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import Header from "./Header";
-import Footer from "./Footer";
-import useResponsive from "./useResponsive";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import useResponsive from "../hooks/useResponsive";
 
 const { height, width } = Dimensions.get("window");
 
@@ -34,18 +34,18 @@ export default function GalleryScreen() {
   const categories = ["ALL", "MOUNTAINS", "LAKES", "CAMPING", "TREKKING", "NATURE TRAILS"];
 
   const galleryData = [
-    { id: 1, image: require("./assets/gallery1.jpg"), category: "MOUNTAINS", height: 260 },
-    { id: 2, image: require("./assets/gallery2.jpg"), category: "MOUNTAINS", height: 190 },
-    { id: 3, image: require("./assets/gallery3.jpg"), category: "LAKES", height: 290 },
-    { id: 4, image: require("./assets/gallery4.jpg"), category: "CAMPING", height: 260 },
-    { id: 5, image: require("./assets/gallery5.jpg"), category: "TREKKING", height: 330 },
-    { id: 6, image: require("./assets/gallery6.jpg"), category: "NATURE TRAILS", height: 230 },
-    { id: 7, image: require("./assets/hiking.jpg"), category: "TREKKING", height: 270 },
-    { id: 8, image: require("./assets/camping.jpg"), category: "CAMPING", height: 250 },
-    { id: 9, image: require("./assets/fairy.jpg"), category: "MOUNTAINS", height: 280 },
-    { id: 10, image: require("./assets/hub2.jpg"), category: "CAMPING", height: 240 },
-    { id: 11, image: require("./assets/hub3.jpg"), category: "LAKES", height: 300 },
-    { id: 12, image: require("./assets/nature.jpg"), category: "NATURE TRAILS", height: 250 },
+    { id: 1, image: require("../../assets/gallery1.jpg"), category: "MOUNTAINS", height: 260 },
+    { id: 2, image: require("../../assets/gallery2.jpg"), category: "MOUNTAINS", height: 190 },
+    { id: 3, image: require("../../assets/gallery3.jpg"), category: "LAKES", height: 290 },
+    { id: 4, image: require("../../assets/gallery4.jpg"), category: "CAMPING", height: 260 },
+    { id: 5, image: require("../../assets/gallery5.jpg"), category: "TREKKING", height: 330 },
+    { id: 6, image: require("../../assets/gallery6.jpg"), category: "NATURE TRAILS", height: 230 },
+    { id: 7, image: require("../../assets/hiking.jpg"), category: "TREKKING", height: 270 },
+    { id: 8, image: require("../../assets/camping.jpg"), category: "CAMPING", height: 250 },
+    { id: 9, image: require("../../assets/fairy.jpg"), category: "MOUNTAINS", height: 280 },
+    { id: 10, image: require("../../assets/hub2.jpg"), category: "CAMPING", height: 240 },
+    { id: 11, image: require("../../assets/hub3.jpg"), category: "LAKES", height: 300 },
+    { id: 12, image: require("../../assets/nature.jpg"), category: "NATURE TRAILS", height: 250 },
   ];
 
   const filteredGallery =
@@ -61,7 +61,7 @@ export default function GalleryScreen() {
   const signatureDestinations = [
     {
       id: 1,
-      image: require("./assets/hub1.jpg"),
+      image: require("../../assets/hub1.jpg"),
       badge: "Most Popular",
       title: "Hunza Valley",
       description: "Experience the breathtaking beauty of Hunza's mountains and valleys.",
@@ -70,7 +70,7 @@ export default function GalleryScreen() {
     },
     {
       id: 2,
-      image: require("./assets/hub2.jpg"),
+      image: require("../../assets/hub2.jpg"),
       badge: "Most Liked",
       title: "Fairy Meadows Trek",
       description: "Journey through scenic trails leading to Nanga Parbat base camp.",
@@ -79,7 +79,7 @@ export default function GalleryScreen() {
     },
     {
       id: 3,
-      image: require("./assets/hub3.jpg"),
+      image: require("../../assets/hub3.jpg"),
       badge: "Most Visited",
       title: "Skardu Adventure",
       description: "Explore Karakoram peaks, Shangrila lake and Cold Desert.",
@@ -95,7 +95,7 @@ export default function GalleryScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* ================= HERO SECTION ================= */}
         <ImageBackground
-          source={require("./assets/galleryHero.jpg")}
+          source={require("../../assets/galleryHero.jpg")}
           style={[styles.hero, { height: isDesktop ? 640 : height * 0.85 }]}
           resizeMode="cover"
         >
@@ -277,7 +277,7 @@ export default function GalleryScreen() {
         <View style={[styles.newsletterSectionWrapper, { backgroundColor: "#FFFFFF", paddingVertical: isDesktop ? 60 : 30 }]}>
           <View style={{ maxWidth: contentMaxWidth, width: "100%", alignSelf: "center", paddingHorizontal: paddingHorizontal }}>
             <ImageBackground
-              source={require("./assets/adventure-bg.jpg")}
+              source={require("../../assets/adventure-bg.jpg")}
               style={styles.newsletterBg}
               resizeMode="cover"
               imageStyle={{ borderRadius: 28, resizeMode: "cover" }}

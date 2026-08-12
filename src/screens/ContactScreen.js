@@ -14,9 +14,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import Header from "./Header";
-import Footer from "./Footer";
-import useResponsive from "./useResponsive";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import useResponsive from "../hooks/useResponsive";
 
 const { height, width } = Dimensions.get("window");
 
@@ -49,7 +49,7 @@ export default function ContactScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* ================= HERO SECTION ================= */}
         <ImageBackground
-          source={require("./assets/contactHero.jpg")}
+          source={require("../../assets/contactHero.jpg")}
           style={[styles.hero, { height: isDesktop ? 520 : 380 }]}
           resizeMode="cover"
         >
@@ -317,7 +317,7 @@ export default function ContactScreen() {
 
                 {/* Card 3: Featured Compass Image */}
                 <View style={{ marginTop: 20 }}>
-                  <Image source={require("./assets/contactCard.jpg")} style={styles.compassImage} />
+                  <Image source={require("../../assets/contactCard.jpg")} style={styles.compassImage} />
                 </View>
               </View>
             </View>

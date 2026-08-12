@@ -13,9 +13,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import Header from "./Header";
-import Footer from "./Footer";
-import useResponsive from "./useResponsive";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import useResponsive from "../hooks/useResponsive";
 
 const { height, width } = Dimensions.get("window");
 
@@ -32,7 +32,7 @@ export default function PartnerScreen() {
   const sponsoredTrips = [
     {
       id: 1,
-      image: require("./assets/hub1.jpg"),
+      image: require("../../assets/hub1.jpg"),
       badge: "Most Popular",
       title: "Hunza Valley",
       description: "Experience breathtaking beauty of Hunza's mountains and valleys.",
@@ -41,7 +41,7 @@ export default function PartnerScreen() {
     },
     {
       id: 2,
-      image: require("./assets/hub2.jpg"),
+      image: require("../../assets/hub2.jpg"),
       badge: "Most Liked",
       title: "Fairy Meadows Trek",
       description: "Journey through scenic trails leading to Nanga Parbat base camp.",
@@ -50,7 +50,7 @@ export default function PartnerScreen() {
     },
     {
       id: 3,
-      image: require("./assets/hub3.jpg"),
+      image: require("../../assets/hub3.jpg"),
       badge: "Most Visited",
       title: "Skardu Adventure",
       description: "Explore Karakoram peaks, Shangrila lake and Cold Desert.",
@@ -66,7 +66,7 @@ export default function PartnerScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* ================= HERO SECTION ================= */}
         <ImageBackground
-          source={require("./assets/partnerhero.jpg")}
+          source={require("../../assets/partnerhero.jpg")}
           style={[styles.hero, { height: isDesktop ? 650 : height * 0.85 }]}
           resizeMode="cover"
         >
@@ -118,7 +118,7 @@ export default function PartnerScreen() {
           >
             {/* Left Image */}
             <View style={{ flex: isDesktop ? 1 : undefined, width: "100%", maxWidth: isDesktop ? 580 : "100%", marginBottom: isDesktop ? 0 : 35 }}>
-              <Image source={require("./assets/partnerProfile.jpg")} style={styles.partnerImage} resizeMode="cover" />
+              <Image source={require("../../assets/partnerProfile.jpg")} style={styles.partnerImage} resizeMode="cover" />
             </View>
 
             {/* Right Text */}
@@ -351,7 +351,7 @@ export default function PartnerScreen() {
         <View style={[styles.ctaSectionWrapper, { backgroundColor: "#FFFFFF", paddingVertical: isDesktop ? 60 : 30 }]}>
           <View style={{ maxWidth: contentMaxWidth, width: "100%", alignSelf: "center", paddingHorizontal: paddingHorizontal }}>
             <ImageBackground
-              source={require("./assets/partnerBanner.jpg")}
+              source={require("../../assets/partnerBanner.jpg")}
               style={styles.ctaBg}
               imageStyle={{ borderRadius: 28 }}
             >

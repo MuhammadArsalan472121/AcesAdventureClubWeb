@@ -1,42 +1,12 @@
 import "react-native-gesture-handler";
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-
-import HomeScreen from "./Homescreen";
-import AboutScreen from "./AboutScreen";
-import ExploreTripsScreen from "./ExploreTripsScreen";
-import GalleryScreen from "./GalleryScreen";
-import MapScreen from "./MapScreen";
-import PartnerScreen from "./SponseredScreen";
-import ContactScreen from "./ContactScreen";
-import LoginScreen from "./LoginScreen";
-import SignupScreen from "./SignupScreen";
-import Onboarding1 from "./Onboarding1";
-import Onboarding2 from "./Onboarding2";
-import Onboarding3 from "./Onboarding3";
-import ViewTripScreen from "./ViewTripScreen";
-
-const Stack = createNativeStackNavigator();
+import AppNavigator from "./src/navigation/AppNavigator";
 
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Onboarding1" component={Onboarding1} />
-        <Stack.Screen name="Onboarding2" component={Onboarding2} />
-        <Stack.Screen name="Onboarding3" component={Onboarding3} />
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="About" component={AboutScreen} />
-        <Stack.Screen name="BrowseTrips" component={ExploreTripsScreen} />
-        <Stack.Screen name="Gallery" component={GalleryScreen} />
-        <Stack.Screen name="Map" component={MapScreen} />
-        <Stack.Screen name="Sponsors" component={PartnerScreen} />
-        <Stack.Screen name="Contact" component={ContactScreen} />
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Signup" component={SignupScreen} />
-        <Stack.Screen name="ViewTrip" component={ViewTripScreen} />
-      </Stack.Navigator>
+      <AppNavigator />
     </NavigationContainer>
   );
 }

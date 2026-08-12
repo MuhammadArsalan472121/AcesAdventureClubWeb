@@ -13,9 +13,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import Header from "./Header";
-import Footer from "./Footer";
-import useResponsive from "./useResponsive";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import useResponsive from "../hooks/useResponsive";
 
 const { height, width } = Dimensions.get("window");
 
@@ -36,7 +36,7 @@ export default function ViewTripScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* ================= HERO SECTION ================= */}
         <ImageBackground
-          source={require("./assets/tripHero.jpg")}
+          source={require("../../assets/tripHero.jpg")}
           style={[styles.hero, { height: isDesktop ? 680 : height * 0.88 }]}
           resizeMode="cover"
         >
@@ -138,7 +138,7 @@ export default function ViewTripScreen() {
 
             {/* Right Column (Featured Image) */}
             <View style={{ flex: isDesktop ? 1 : undefined, width: "100%", maxWidth: isDesktop ? 580 : "100%", marginTop: isDesktop ? 0 : 35 }}>
-              <Image source={require("./assets/aboutTrip.jpg")} style={styles.aboutImage} />
+              <Image source={require("../../assets/aboutTrip.jpg")} style={styles.aboutImage} />
             </View>
           </View>
         </View>
@@ -234,14 +234,14 @@ export default function ViewTripScreen() {
                 </View>
 
                 <View style={[styles.timelineImageCol, isDesktop && { flex: 1, paddingLeft: 30 }]}>
-                  <Image source={require("./assets/featured1.jpg")} style={styles.timelineImage} />
+                  <Image source={require("../../assets/featured1.jpg")} style={styles.timelineImage} />
                 </View>
               </View>
 
               {/* Day 2 */}
               <View style={[styles.timelineRow, isDesktop && { flexDirection: "row", alignItems: "center", marginBottom: 40 }]}>
                 <View style={[styles.timelineImageCol, isDesktop && { flex: 1, paddingRight: 30 }]}>
-                  <Image source={require("./assets/featured2.jpg")} style={styles.timelineImage} />
+                  <Image source={require("../../assets/featured2.jpg")} style={styles.timelineImage} />
                 </View>
 
                 <View style={styles.timelineNode}>
@@ -272,7 +272,7 @@ export default function ViewTripScreen() {
                 </View>
 
                 <View style={[styles.timelineImageCol, isDesktop && { flex: 1, paddingLeft: 30 }]}>
-                  <Image source={require("./assets/featured3.jpg")} style={styles.timelineImage} />
+                  <Image source={require("../../assets/featured3.jpg")} style={styles.timelineImage} />
                 </View>
               </View>
             </View>
@@ -311,16 +311,16 @@ export default function ViewTripScreen() {
             <View style={[styles.collageGrid, isDesktop && { flexDirection: "row", justifyContent: "space-between" }]}>
               {/* Left Tall Image */}
               <View style={[styles.tallImageWrapper, isDesktop && { width: "48%" }]}>
-                <Image source={require("./assets/hunza.jpg")} style={styles.tallImage} />
+                <Image source={require("../../assets/hunza.jpg")} style={styles.tallImage} />
               </View>
 
               {/* Right 2x2 Image Grid */}
               <View style={[styles.rightImagesCol, isDesktop && { width: "49%" }]}>
                 <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 16 }}>
-                  <Image source={require("./assets/hub2.jpg")} style={styles.gridSquareImage} />
-                  <Image source={require("./assets/hub3.jpg")} style={styles.gridSquareImage} />
+                  <Image source={require("../../assets/hub2.jpg")} style={styles.gridSquareImage} />
+                  <Image source={require("../../assets/hub3.jpg")} style={styles.gridSquareImage} />
                 </View>
-                <Image source={require("./assets/featured3.jpg")} style={styles.gridWideImage} />
+                <Image source={require("../../assets/featured3.jpg")} style={styles.gridWideImage} />
               </View>
             </View>
           </View>
@@ -367,7 +367,7 @@ export default function ViewTripScreen() {
         <View style={[styles.ctaSectionWrapper, { backgroundColor: "#FFFFFF", paddingVertical: isDesktop ? 60 : 30 }]}>
           <View style={{ maxWidth: contentMaxWidth, width: "100%", alignSelf: "center", paddingHorizontal: paddingHorizontal }}>
             <ImageBackground
-              source={require("./assets/adventure-bg.jpg")}
+              source={require("../../assets/adventure-bg.jpg")}
               style={styles.ctaBg}
               imageStyle={{ borderRadius: 28 }}
             >
