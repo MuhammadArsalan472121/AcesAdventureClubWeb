@@ -1,161 +1,286 @@
-import React from "react";
+import React, { useState } from 'react';
 import {
-  SafeAreaView,
-  StatusBar,
-  ScrollView,
   View,
   Text,
   TextInput,
   TouchableOpacity,
+  Image,
   StyleSheet,
-  ImageBackground,
-  Dimensions,
-} from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import useResponsive from "../hooks/useResponsive";
+  ScrollView,
+  useWindowDimensions,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 
-const { height, width } = Dimensions.get("window");
+const heroImage = require('../../assets/hero.jpg');
 
-export default function LoginScreen() {
-  const navigation = useNavigation();
-  const { isDesktop, height } = useResponsive();
+export default function LoginScreen({ navigation }) {
+  const { width } = useWindowDimensions();
+  const isWide = width >= 768;
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+
+  const handleSignIn = () => {
+    // TODO: hook up to your auth logic
+    console.log('Sign in with', email, password, rememberMe);
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <ImageBackground source={require("../../assets/hero.jpg")} style={[styles.hero, { minHeight: height }]} resizeMode="cover">
-          <View style={styles.overlay}>
-            <Header />
-            <View style={styles.heroContent}>
-              <Text style={styles.smallTitle}>WELCOME BACK</Text>
-              <Text style={styles.title}>Login</Text>
-              <Text style={styles.description}>
-                Access your account and continue exploring premium adventures.
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView
+        contentContainerStyle={[
+          styles.page,
+          isWide ? styles.pageRow : styles.pageColumn,
+        ]}
+      >
+        {/* LEFT / TOP - Hero image panel */}
+        <View
+          style={[
+            styles.heroPanel,
+            isWide ? styles.heroPanelWide : styles.heroPanelNarrow,
+          ]}
+        >
+          <Image source={heroImage} style={StyleSheet.absoluteFill} resizeMode="cover" />
+          <View style={styles.heroOverlay} />
+          {isWide && (
+            <View style={styles.heroTextWrap}>
+              <Text style={styles.heroTitle}>The peak of{'\n'}luxury is just{'\n'}ahead.</Text>
+              <Text style={styles.heroSubtitle}>
+                Join an exclusive circle of modern explorers discovering the world's most remote wonders in unparalleled comfort.
               </Text>
+            </View>
+          )}
+        </View>
 
-              <View style={styles.card}>
-                <Text style={styles.label}>Email</Text>
-                <TextInput
-                  placeholder="Enter your email"
-                  placeholderTextColor="#94A3B8"
-                  style={styles.input}
-                />
+        {/* RIGHT / BOTTOM - Form panel */}
+        <View style={[styles.formOuter, isWide ? styles.formOuterWide : styles.formOuterNarrow]}>
+          <View style={styles.card}>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>WELCOME BACK 👋</Text>
+            </View>
 
-                <Text style={styles.label}>Password</Text>
-                <TextInput
-                  placeholder="Enter your password"
-                  placeholderTextColor="#94A3B8"
-                  secureTextEntry
-                  style={styles.input}
-                />
+            <Text style={styles.title}>Continue Your Adventure</Text>
+            <Text style={styles.subtitle}>
+              Sign in to explore destinations, manage your profile, and continue your adventure journey.
+            </Text>
 
-                <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate("Home")}>
-                  <Text style={styles.primaryButtonText}>LOGIN</Text>
-                </TouchableOpacity>
+            <TextInput
+              style={styles.input}
+              placeholder="Email Address"
+              placeholderTextColor="#9fb3c8"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              value={email}
+              onChangeText={setEmail}
+            />
 
-                <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
-                  <Text style={styles.linkText}>Create an account</Text>
-                </TouchableOpacity>
-              </View>
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              placeholderTextColor="#9fb3c8"
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+            />
+
+            <View style={styles.rowBetween}>
+              <TouchableOpacity
+                style={styles.checkboxRow}
+                onPress={() => setRememberMe(!rememberMe)}
+              >
+                <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+                  {rememberMe && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <Text style={styles.checkboxLabel}>Remember Me</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => navigation?.navigate('ForgotPassword')}>
+                <Text style={styles.link}>Forgot Password?</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity style={styles.primaryButton} onPress={handleSignIn}>
+              <Text style={styles.primaryButtonText}>Sign In</Text>
+            </TouchableOpacity>
+
+            <View style={styles.bottomRow}>
+              <Text style={styles.bottomText}>Don't have an account? </Text>
+              <TouchableOpacity onPress={() => navigation?.navigate('Signup')}>
+                <Text style={styles.link}>Sign Up</Text>
+              </TouchableOpacity>
             </View>
           </View>
-        </ImageBackground>
-        <Footer />
+        </View>
       </ScrollView>
-    </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
+const CARD_BG = '#2b4a66';
+const INPUT_BG = '#25405a';
+const GOLD = '#d4af6a';
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F8FBFF",
+  page: {
+    flexGrow: 1,
+    backgroundColor: '#ffffff',
   },
-  hero: {
-    width: "100%",
+  pageRow: {
+    flexDirection: 'row',
+    minHeight: '100%',
   },
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    paddingHorizontal: 22,
-    paddingTop: 20,
-    paddingBottom: 40,
+  pageColumn: {
+    flexDirection: 'column',
   },
-  heroContent: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 30,
+  heroPanel: {
+    overflow: 'hidden',
+    justifyContent: 'flex-end',
   },
-  smallTitle: {
-    color: "#DCEAFE",
-    fontSize: 13,
-    fontWeight: "700",
-    letterSpacing: 2,
-    marginBottom: 10,
+  heroPanelWide: {
+    width: '50%',
+    minHeight: 700,
   },
-  title: {
-    color: "#FFFFFF",
-    fontSize: 38,
-    fontWeight: "800",
-    marginBottom: 8,
+  heroPanelNarrow: {
+    width: '100%',
+    height: 220,
   },
-  description: {
-    color: "#E2E8F0",
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(10,30,20,0.25)',
+  },
+  heroTextWrap: {
+    padding: 40,
+  },
+  heroTitle: {
+    fontSize: 40,
+    fontFamily: Platform.select({ ios: 'Georgia', android: 'serif', default: 'serif' }),
+    color: '#fff',
+    lineHeight: 46,
+    marginBottom: 16,
+  },
+  heroSubtitle: {
     fontSize: 15,
-    textAlign: "center",
-    maxWidth: 500,
-    width: "90%",
-    marginBottom: 24,
+    color: '#eef2f0',
+    maxWidth: 420,
+  },
+  formOuter: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  formOuterWide: {
+    width: '50%',
+  },
+  formOuterNarrow: {
+    width: '100%',
   },
   card: {
-    width: "100%",
-    maxWidth: 460,
-    backgroundColor: "#FFFFFF",
+    width: '100%',
+    maxWidth: 440,
+    backgroundColor: CARD_BG,
     borderRadius: 20,
-    padding: 28,
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 15,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 10,
+    padding: 32,
   },
-  label: {
-    color: "#0F172A",
-    fontWeight: "700",
-    marginBottom: 8,
+  badge: {
+    alignSelf: 'center',
+    borderWidth: 1,
+    borderColor: GOLD,
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    marginBottom: 20,
+  },
+  badgeText: {
+    color: GOLD,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  title: {
+    fontSize: 26,
+    fontFamily: Platform.select({ ios: 'Georgia', android: 'serif', default: 'serif' }),
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 13,
+    color: '#c7d5e0',
+    textAlign: 'center',
+    marginBottom: 28,
+    lineHeight: 19,
   },
   input: {
+    backgroundColor: INPUT_BG,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    color: '#fff',
+    fontSize: 14,
+    marginBottom: 14,
+  },
+  rowBetween: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkbox: {
+    width: 16,
+    height: 16,
+    borderRadius: 3,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 16,
-    color: "#0F172A",
-    fontSize: 15,
+    borderColor: '#c7d5e0',
+    marginRight: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: GOLD,
+    borderColor: GOLD,
+  },
+  checkmark: {
+    fontSize: 11,
+    color: '#1f3347',
+    fontWeight: '700',
+  },
+  checkboxLabel: {
+    color: '#e6edf2',
+    fontSize: 13,
+  },
+  link: {
+    color: GOLD,
+    fontSize: 13,
+    fontWeight: '600',
   },
   primaryButton: {
-    backgroundColor: "#0B5CAD",
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
-    marginTop: 6,
-    cursor: "pointer",
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    paddingVertical: 15,
+    alignItems: 'center',
+    marginBottom: 20,
   },
   primaryButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "700",
-    fontSize: 16,
+    color: '#1f3347',
+    fontWeight: '700',
+    fontSize: 15,
   },
-  linkText: {
-    color: "#0B5CAD",
-    textAlign: "center",
-    marginTop: 16,
-    fontWeight: "700",
-    cursor: "pointer",
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  bottomText: {
+    color: '#c7d5e0',
+    fontSize: 13,
   },
 });
