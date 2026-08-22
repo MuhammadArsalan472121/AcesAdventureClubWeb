@@ -10,6 +10,7 @@ import PartnerScreen from "../screens/SponseredScreen";
 import ContactScreen from "../screens/ContactScreen";
 import LoginScreen from "../screens/LoginScreen";
 import SignupScreen from "../screens/SignupScreen";
+import ForgotPasswordScreen from "../screens/ForgotPasswordScreen";
 import Onboarding1 from "../screens/Onboarding1";
 import Onboarding2 from "../screens/Onboarding2";
 import Onboarding3 from "../screens/Onboarding3";
@@ -34,6 +35,7 @@ export default function AppNavigator() {
       <Stack.Screen name="Contact" component={ContactScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Signup" component={SignupScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="ViewTrip" component={ViewTripScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />

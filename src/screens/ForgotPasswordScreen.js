@@ -14,32 +14,38 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-const heroImage = require("../../assets/hero.jpg");
+const heroImage = require("../../assets/about-bg.jpg");
 const logoImage = require("../../assets/logo.png");
 
-export default function LoginScreen({ navigation }) {
+export default function ForgotPasswordScreen({ navigation }) {
   const { width } = useWindowDimensions();
   const isWide = width >= 860;
 
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSignIn = () => {
+  const handleResetPassword = () => {
     if (!email.trim()) {
       setErrorMessage("Please enter your email address");
       return;
     }
-    if (!password) {
-      setErrorMessage("Please enter your password");
+
+    const emailRegex = /\S+@\S+\.\S+/;
+    if (!emailRegex.test(email)) {
+      setErrorMessage("Please enter a valid email address");
       return;
     }
+
     setErrorMessage("");
-    console.log("Sign in with", email, password, rememberMe);
-    // Navigate to Home or Profile
-    navigation?.navigate("Home");
+    setLoading(true);
+
+    // Simulate sending recovery email
+    setTimeout(() => {
+      setLoading(false);
+      setIsSubmitted(true);
+    }, 800);
   };
 
   return (
@@ -70,7 +76,7 @@ export default function LoginScreen({ navigation }) {
             />
             <View style={styles.heroOverlay} />
 
-            {/* Back to Home / Navigation */}
+            {/* Back Button (Mobile & Desktop) */}
             <TouchableOpacity
               style={styles.backBtn}
               onPress={() => {
@@ -83,10 +89,10 @@ export default function LoginScreen({ navigation }) {
               activeOpacity={0.8}
             >
               <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
-              <Text style={styles.backBtnText}>Home</Text>
+              <Text style={styles.backBtnText}>Back</Text>
             </TouchableOpacity>
 
-            {/* Desktop Hero Content */}
+            {/* Hero content for Desktop */}
             {isWide && (
               <View style={styles.heroContent}>
                 <Image source={logoImage} style={styles.heroLogo} />
@@ -94,19 +100,19 @@ export default function LoginScreen({ navigation }) {
                   <Text style={styles.heroBadgeText}>ACES ADVENTURE CLUB</Text>
                 </View>
                 <Text style={styles.heroTitle}>
-                  The peak of luxury is just ahead.
+                  Never lose your way to adventure.
                 </Text>
                 <Text style={styles.heroSubtitle}>
-                  Join an exclusive circle of modern explorers discovering the world's most remote wonders in unparalleled comfort.
+                  Account security is our priority. Get back to exploring the world's most remote and breathtaking expeditions in minutes.
                 </Text>
               </View>
             )}
 
-            {/* Mobile Header Content */}
+            {/* Compact Header for Mobile */}
             {!isWide && (
               <View style={styles.mobileHeroContent}>
                 <Image source={logoImage} style={styles.mobileHeroLogo} />
-                <Text style={styles.mobileHeroTitle}>ACES Adventure Club</Text>
+                <Text style={styles.mobileHeroTitle}>Password Recovery</Text>
               </View>
             )}
           </View>
@@ -119,123 +125,110 @@ export default function LoginScreen({ navigation }) {
             ]}
           >
             <View style={styles.card}>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>WELCOME BACK 👋</Text>
-              </View>
+              {!isSubmitted ? (
+                <>
+                  <View style={styles.cardBadge}>
+                    <Ionicons name="key-outline" size={14} color="#d4af6a" style={{ marginRight: 6 }} />
+                    <Text style={styles.cardBadgeText}>RESET PASSWORD</Text>
+                  </View>
 
-              <Text style={styles.title}>Continue Your Adventure</Text>
-              <Text style={styles.subtitle}>
-                Sign in to explore destinations, manage your expeditions, and access member-only experiences.
-              </Text>
+                  <Text style={styles.cardTitle}>Forgot Your Password?</Text>
+                  <Text style={styles.cardSubtitle}>
+                    Enter the email address associated with your account and we will send you a verification link to reset your password.
+                  </Text>
 
-              {errorMessage ? (
-                <View style={styles.errorBox}>
-                  <Ionicons name="alert-circle-outline" size={16} color="#FF6B6B" />
-                  <Text style={styles.errorText}>{errorMessage}</Text>
-                </View>
-              ) : null}
+                  {errorMessage ? (
+                    <View style={styles.errorBox}>
+                      <Ionicons name="alert-circle-outline" size={16} color="#FF6B6B" />
+                      <Text style={styles.errorText}>{errorMessage}</Text>
+                    </View>
+                  ) : null}
 
-              {/* Email Field */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>EMAIL ADDRESS</Text>
-                <View style={styles.inputWrapper}>
-                  <Ionicons
-                    name="mail-outline"
-                    size={18}
-                    color="#7f93a6"
-                    style={styles.inputIcon}
-                  />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="explorer@acesadventure.com"
-                    placeholderTextColor="#627d98"
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    value={email}
-                    onChangeText={(t) => {
-                      setEmail(t);
-                      if (errorMessage) setErrorMessage("");
-                    }}
-                  />
-                </View>
-              </View>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>EMAIL ADDRESS</Text>
+                    <View style={styles.inputWrapper}>
+                      <Ionicons
+                        name="mail-outline"
+                        size={18}
+                        color="#7f93a6"
+                        style={styles.inputIcon}
+                      />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="explorer@acesadventure.com"
+                        placeholderTextColor="#627d98"
+                        autoCapitalize="none"
+                        keyboardType="email-address"
+                        value={email}
+                        onChangeText={(txt) => {
+                          setEmail(txt);
+                          if (errorMessage) setErrorMessage("");
+                        }}
+                      />
+                    </View>
+                  </View>
 
-              {/* Password Field */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>PASSWORD</Text>
-                <View style={styles.inputWrapper}>
-                  <Ionicons
-                    name="lock-closed-outline"
-                    size={18}
-                    color="#7f93a6"
-                    style={styles.inputIcon}
-                  />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Enter your password"
-                    placeholderTextColor="#627d98"
-                    secureTextEntry={!showPassword}
-                    value={password}
-                    onChangeText={(t) => {
-                      setPassword(t);
-                      if (errorMessage) setErrorMessage("");
-                    }}
-                  />
                   <TouchableOpacity
-                    onPress={() => setShowPassword(!showPassword)}
-                    style={styles.eyeBtn}
-                    activeOpacity={0.7}
+                    style={[styles.primaryButton, loading && styles.buttonDisabled]}
+                    onPress={handleResetPassword}
+                    activeOpacity={0.85}
+                    disabled={loading}
                   >
-                    <Ionicons
-                      name={showPassword ? "eye-off-outline" : "eye-outline"}
-                      size={18}
-                      color="#7f93a6"
-                    />
+                    <Text style={styles.primaryButtonText}>
+                      {loading ? "Sending..." : "Send Reset Instructions"}
+                    </Text>
+                    {!loading && (
+                      <Ionicons name="paper-plane-outline" size={18} color="#0d1b2a" style={{ marginLeft: 8 }} />
+                    )}
+                  </TouchableOpacity>
+
+                  <View style={styles.footerRow}>
+                    <Text style={styles.footerText}>Remember your password? </Text>
+                    <TouchableOpacity onPress={() => navigation?.navigate("Login")}>
+                      <Text style={styles.linkText}>Sign In</Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              ) : (
+                /* Success Confirmation State */
+                <View style={styles.successWrapper}>
+                  <View style={styles.successIconCircle}>
+                    <Ionicons name="checkmark-done" size={36} color="#d4af6a" />
+                  </View>
+
+                  <Text style={styles.cardTitle}>Check Your Inbox</Text>
+                  <Text style={styles.cardSubtitle}>
+                    We have sent a password reset link to:
+                  </Text>
+                  <View style={styles.emailChip}>
+                    <Ionicons name="mail" size={16} color="#d4af6a" style={{ marginRight: 8 }} />
+                    <Text style={styles.emailChipText}>{email}</Text>
+                  </View>
+                  <Text style={styles.instructionNote}>
+                    Please check your spam or junk folder if you don't receive the email within a few minutes.
+                  </Text>
+
+                  <TouchableOpacity
+                    style={styles.primaryButton}
+                    onPress={() => navigation?.navigate("Login")}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.primaryButtonText}>Return to Sign In</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.secondaryButton}
+                    onPress={() => setIsSubmitted(false)}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="refresh-outline" size={16} color="#c7d5e0" style={{ marginRight: 6 }} />
+                    <Text style={styles.secondaryButtonText}>Try another email</Text>
                   </TouchableOpacity>
                 </View>
-              </View>
-
-              {/* Remember Me & Forgot Password */}
-              <View style={styles.rowBetween}>
-                <TouchableOpacity
-                  style={styles.checkboxRow}
-                  onPress={() => setRememberMe(!rememberMe)}
-                  activeOpacity={0.8}
-                >
-                  <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
-                    {rememberMe && <Ionicons name="checkmark" size={12} color="#0d1b2a" />}
-                  </View>
-                  <Text style={styles.checkboxLabel}>Remember Me</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={() => navigation?.navigate("ForgotPassword")}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.link}>Forgot Password?</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Sign In Button */}
-              <TouchableOpacity
-                style={styles.primaryButton}
-                onPress={handleSignIn}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.primaryButtonText}>Sign In</Text>
-                <Ionicons name="arrow-forward" size={18} color="#0d1b2a" style={{ marginLeft: 8 }} />
-              </TouchableOpacity>
-
-              {/* Sign Up Link */}
-              <View style={styles.bottomRow}>
-                <Text style={styles.bottomText}>Don't have an account? </Text>
-                <TouchableOpacity onPress={() => navigation?.navigate("Signup")}>
-                  <Text style={styles.linkBold}>Create Account</Text>
-                </TouchableOpacity>
-              </View>
+              )}
             </View>
 
-            {/* Return to Home link */}
+            {/* Quick Navigation / Home helper */}
             <TouchableOpacity
               style={styles.homeLinkBtn}
               onPress={() => navigation?.navigate("Home")}
@@ -411,23 +404,25 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
 
-  badge: {
+  cardBadge: {
+    flexDirection: "row",
+    alignItems: "center",
     alignSelf: "center",
     borderWidth: 1,
     borderColor: GOLD,
     borderRadius: 20,
     paddingVertical: 5,
     paddingHorizontal: 14,
-    marginBottom: 18,
+    marginBottom: 16,
     backgroundColor: "rgba(212, 175, 106, 0.1)",
   },
-  badgeText: {
+  cardBadgeText: {
     color: GOLD,
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 1,
   },
-  title: {
+  cardTitle: {
     fontSize: 24,
     fontFamily: Platform.select({ ios: "Georgia", android: "serif", default: "serif" }),
     color: "#FFFFFF",
@@ -435,7 +430,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontWeight: "700",
   },
-  subtitle: {
+  cardSubtitle: {
     fontSize: 13,
     color: "#94a3b8",
     textAlign: "center",
@@ -461,7 +456,7 @@ const styles = StyleSheet.create({
   },
 
   inputGroup: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   inputLabel: {
     color: "#94a3b8",
@@ -488,49 +483,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 14,
   },
-  eyeBtn: {
-    padding: 6,
-  },
-
-  rowBetween: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginVertical: 14,
-  },
-  checkboxRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  checkbox: {
-    width: 18,
-    height: 18,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: "#627d98",
-    marginRight: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: INPUT_BG,
-  },
-  checkboxChecked: {
-    backgroundColor: GOLD,
-    borderColor: GOLD,
-  },
-  checkboxLabel: {
-    color: "#cbd5e1",
-    fontSize: 13,
-  },
-  link: {
-    color: GOLD,
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  linkBold: {
-    color: GOLD,
-    fontSize: 13,
-    fontWeight: "700",
-  },
 
   primaryButton: {
     flexDirection: "row",
@@ -539,13 +491,16 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 10,
+    marginTop: 4,
     marginBottom: 18,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 3,
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
   primaryButtonText: {
     color: "#0d1b2a",
@@ -554,14 +509,70 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 
-  bottomRow: {
+  footerRow: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
+    marginTop: 4,
   },
-  bottomText: {
+  footerText: {
     color: "#94a3b8",
     fontSize: 13,
+  },
+  linkText: {
+    color: GOLD,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+
+  // SUCCESS STATE
+  successWrapper: {
+    alignItems: "center",
+  },
+  successIconCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: "rgba(212, 175, 106, 0.15)",
+    borderWidth: 1.5,
+    borderColor: GOLD,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 18,
+  },
+  emailChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: INPUT_BG,
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "rgba(212, 175, 106, 0.3)",
+    marginBottom: 16,
+  },
+  emailChipText: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+    fontSize: 13,
+  },
+  instructionNote: {
+    color: "#94a3b8",
+    fontSize: 12,
+    textAlign: "center",
+    lineHeight: 18,
+    marginBottom: 24,
+  },
+  secondaryButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+  },
+  secondaryButtonText: {
+    color: "#c7d5e0",
+    fontSize: 13,
+    fontWeight: "600",
   },
 
   homeLinkBtn: {
