@@ -22,6 +22,7 @@ const { height, width } = Dimensions.get("window");
 export default function AboutScreen() {
   const navigation = useNavigation();
   const {
+    isMobile,
     isDesktop,
     isTablet,
     isLargeDesktop,
@@ -59,12 +60,12 @@ export default function AboutScreen() {
                 Founded on the principle of absolute excellence, ACES Adventure Club curates the world's most exclusive nature expeditions. We bridge the gap between raw wilderness and luxury experiences for passionate explorers.
               </Text>
 
-              <View style={styles.buttonRow}>
-                <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate("BrowseTrips")}>
+              <View style={[styles.buttonRow, { flexDirection: isDesktop || isTablet ? "row" : "column", width: isDesktop || isTablet ? "auto" : "100%" }]}>
+                <TouchableOpacity style={[styles.primaryButton, isMobile && { alignItems: "center" }]} onPress={() => navigation.navigate("BrowseTrips")}>
                   <Text style={styles.primaryButtonText}>OUR LEGACY</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate("Contact")}>
+                <TouchableOpacity style={[styles.secondaryButton, isMobile && { alignItems: "center" }]} onPress={() => navigation.navigate("Contact")}>
                   <Text style={styles.secondaryButtonText}>WATCH THE FILM</Text>
                 </TouchableOpacity>
               </View>
@@ -698,6 +699,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     marginTop: 30,
     gap: 16,
+    flexWrap: "wrap",
+    justifyContent: "center",
   },
 
   ctaPrimaryBtn: {

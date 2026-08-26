@@ -25,7 +25,7 @@ const { height, width } = Dimensions.get("window");
 
 export default function MapScreen() {
   const camera = useRef(null);
-  const { isDesktop, isTablet, height } = useResponsive();
+  const { isMobile, isDesktop, isTablet, height, contentMaxWidth, paddingHorizontal } = useResponsive();
 
 
   return (
@@ -37,7 +37,7 @@ export default function MapScreen() {
             <Header />
             <View style={styles.heroContent}>
               <Text style={styles.badge}>ULTIMATE NAVIGATION HUB</Text>
-              <Text style={styles.heroTitle}>Expedition Route Explorer</Text>
+              <Text style={[styles.heroTitle, { fontSize: isDesktop ? 48 : isTablet ? 36 : 26 }]}>Expedition Route Explorer</Text>
               <Text style={styles.heroBlue}>Explorer</Text>
               <Text style={styles.heroDescription}>
                 A meticulously crafted interface for navigating
@@ -62,62 +62,55 @@ export default function MapScreen() {
             </View>
           </View>
         </View>
-        {/* ================= NEWSLETTER SECTION ================= */}
-        
-        <ImageBackground
-          source={require("../../assets/adventure-bg.jpg")}
-          style={styles.newsletterBg}
-          imageStyle={styles.newsletterImage}
-        >
-        
-          <View style={styles.newsletterOverlay}>
-        
-            {/* Next Part yahan se start hoga */}
-              <View>
-        
-          <Text style={styles.stayText}>
-            STAY TUNED
-          </Text>
-        
-          <Text style={styles.newsTitle}>
-            YOUR NEXT{"\n"}
-            ADVENTURE{" "}
-            <Text style={styles.blueText}>AWAITS</Text>
-          </Text>
-        
-          <Text style={styles.newsDescription}>
-            Join our community of explorers and discover breathtaking
-            destinations, unforgettable experiences and adventures that
-            create memories for a lifetime.
-          </Text>
-        
-          {/* Email + Button */}
-        
-          <View style={styles.subscribeContainer}>
-        
-            <TextInput
-              placeholder="Enter your email address"
-              placeholderTextColor="#D1D5DB"
-              style={styles.emailInput}
-            />
-        
-            <TouchableOpacity style={styles.subscribeButton} onPress={() => navigation.navigate("Signup")}>
-              <Text style={styles.subscribeButtonText}>
-                Subscribe Free
-              </Text>
-            </TouchableOpacity>
-        
+        {/* ================= NEWSLETTER CARD SECTION ================= */}
+        <View style={[styles.newsletterSectionWrapper, { paddingVertical: isDesktop ? 60 : 30 }]}>
+          <View style={{ maxWidth: contentMaxWidth, width: "100%", alignSelf: "center", paddingHorizontal: paddingHorizontal }}>
+            <ImageBackground
+              source={require("../../assets/adventure-bg.jpg")}
+              style={styles.newsletterBg}
+              imageStyle={{ borderRadius: 28 }}
+            >
+              <View style={styles.newsletterOverlay}>
+                <View style={{ alignItems: "center", paddingVertical: isDesktop ? 60 : 40, paddingHorizontal: 24 }}>
+                  <View style={styles.stayTunedBadge}>
+                    <Text style={styles.stayTunedBadgeText}>STAY TUNED</Text>
+                  </View>
+
+                  <Text style={[styles.newsTitle, { fontSize: isDesktop ? 44 : 28, textAlign: "center" }]}>
+                    YOUR NEXT ADVENTURE <Text style={styles.blueItalicLight}>AWAITS</Text>
+                  </Text>
+
+                  <Text style={[styles.newsDescription, { fontSize: isDesktop ? 16 : 14, textAlign: "center", maxWidth: 680 }]}>
+                    Join our community of explorers and discover breathtaking destinations, unforgettable experiences and adventures that create memories for a lifetime.
+                  </Text>
+
+                  {/* Form Row */}
+                  <View
+                    style={[
+                      styles.subscribeContainer,
+                      { width: "100%", maxWidth: 540, marginTop: isDesktop ? 30 : 20 },
+                      isMobile && styles.subscribeContainerMobile,
+                    ]}
+                  >
+                    <TextInput
+                      placeholder="Enter your email address"
+                      placeholderTextColor="#94A3B8"
+                      style={[styles.emailInput, isMobile && styles.emailInputMobile]}
+                    />
+                    <TouchableOpacity
+                      style={[styles.subscribeButton, isMobile && styles.subscribeButtonMobile]}
+                      onPress={() => navigation.navigate("Contact")}
+                    >
+                      <Text style={styles.subscribeButtonText}>Subscribe Free</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <Text style={styles.smallText}>No spam ever • Unsubscribe in one click</Text>
+                </View>
+              </View>
+            </ImageBackground>
           </View>
-        
-          <Text style={styles.smallText}>
-            No spam ever • Unsubscribe in one click
-          </Text>
-        
         </View>
-        
-          </View>
-        
-        </ImageBackground>
         {/* ================= START BUTTON ================= */}
         
         <TouchableOpacity style={styles.startButton} onPress={() => navigation.navigate("BrowseTrips")}>
@@ -129,61 +122,6 @@ export default function MapScreen() {
         </TouchableOpacity>
         
         {/* ================= FOOTER ================= */}
-        
-        <View style={styles.footer}>
-        
-          <Image
-            source={require("../../assets/logo.png")}
-            style={styles.footerLogo}
-          />
-        
-          <Text style={styles.footerTagline}>
-        Explore Pakistan Beyond The Horizon
-        </Text>
-        
-          <Text style={styles.footerTitle}>
-            ACES Adventure Club
-          </Text>
-        
-          <Text style={styles.footerDescription}>
-            Creating unforgettable adventures across Pakistan.
-            Discover mountains, forests and breathtaking destinations
-            with our passionate community.
-          </Text>
-        
-          {/* Social Icons */}
-        
-          <View style={styles.socialRow}>
-        
-            <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
-              <Ionicons name="logo-facebook" size={20} color="#FFFFFF" />
-            </TouchableOpacity>
-        
-            <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
-              <Ionicons name="logo-instagram" size={20} color="#FFFFFF" />
-            </TouchableOpacity>
-        
-            <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
-              <Ionicons name="logo-youtube" size={20} color="#FFFFFF" />
-            </TouchableOpacity>
-        
-            <TouchableOpacity style={styles.socialIcon} onPress={() => navigation.navigate("Contact")}>
-              <Ionicons name="logo-linkedin" size={20} color="#FFFFFF" />
-            </TouchableOpacity>
-        
-          </View>
-        
-          <View style={styles.footerLine}/>
-        
-          <Text style={styles.copyText}>
-            © 2026 ACES Adventure Club
-          </Text>
-        
-          <Text style={styles.versionText}>
-            Version 1.0.0
-          </Text>
-        
-          </View>
         <Footer />
       </ScrollView>
     </SafeAreaView>
@@ -331,98 +269,113 @@ const styles = StyleSheet.create({
   },
   /* ================= NEWSLETTER ================= */
 
-newsletterBg: {
-  height: 520,
-  marginHorizontal: 18,
-  marginTop: 40,
-  marginBottom: 30,
-  borderRadius: 28,
-  overflow: "hidden",
-},
+  newsletterSectionWrapper: {},
 
-newsletterImage: {
-  borderRadius: 28,
-},
+  newsletterBg: {
+    width: "100%",
+    overflow: "hidden",
+    borderRadius: 28,
+  },
 
-newsletterOverlay: {
-  flex: 1,
+  newsletterOverlay: {
+    backgroundColor: "rgba(15, 23, 42, 0.65)",
+    borderRadius: 28,
+  },
 
-  backgroundColor: "rgba(7,17,34,0.58)",
+  stayTunedBadge: {
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.25)",
+    marginBottom: 16,
+  },
 
-  paddingHorizontal: 25,
-  paddingTop: 45,
-  paddingBottom: 35,
+  stayTunedBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 1.5,
+  },
 
-  justifyContent: "space-between",
-},
-/* ================= NEWSLETTER CONTENT ================= */
+  newsTitle: {
+    color: "#FFFFFF",
+    fontWeight: "900",
+    lineHeight: 48,
+  },
 
-stayText: {
-  color: "#E5E7EB",
-  fontSize: 12,
-  letterSpacing: 2,
-  alignSelf: "center",
-},
+  blueItalicLight: {
+    color: "#38BDF8",
+    fontStyle: "italic",
+  },
 
-newsTitle: {
-  marginTop: 10,
-  color: "#FFFFFF",
-  fontSize: 34,
-  fontWeight: "700",
-  textAlign: "center",
-  lineHeight: 42,
-},
+  newsDescription: {
+    color: "#CBD5E1",
+    marginTop: 14,
+    lineHeight: 24,
+  },
 
-blueText: {
-  color: "#1E88E5",
-},
+  subscribeContainer: {
+    flexDirection: "row",
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
+    borderRadius: 30,
+    padding: 6,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.25)",
+  },
 
-newsDescription: {
-  marginTop: 16,
-  color: "#E5E7EB",
-  textAlign: "center",
-  fontSize: 15,
-  lineHeight: 24,
-  paddingHorizontal: 8,
-},
+  subscribeContainerMobile: {
+    flexDirection: "column",
+    backgroundColor: "transparent",
+    borderWidth: 0,
+    padding: 0,
+  },
 
-subscribeContainer: {
-  marginTop: 28,
-},
+  emailInput: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    color: "#FFFFFF",
+    fontSize: 15,
+  },
 
-emailInput: {
-  height: 55,
-  borderRadius: 28,
-  borderWidth: 1,
-  borderColor: "rgba(255,255,255,0.5)",
-  color: "#FFFFFF",
-  paddingHorizontal: 20,
-  fontSize: 15,
-  backgroundColor: "rgba(255,255,255,0.12)",
-},
+  emailInputMobile: {
+    width: "100%",
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.25)",
+    height: 52,
+    marginBottom: 12,
+  },
 
-subscribeButton: {
-  marginTop: 14,
-  height: 55,
-  borderRadius: 28,
-  backgroundColor: "#1E88E5",
+  subscribeButton: {
+    backgroundColor: "#0088FF",
+    paddingHorizontal: 28,
+    paddingVertical: 12,
+    borderRadius: 26,
+    justifyContent: "center",
+    alignItems: "center",
+    cursor: "pointer",
+  },
 
-  justifyContent: "center",
-  alignItems: "center",
-},
+  subscribeButtonMobile: {
+    width: "100%",
+    height: 52,
+  },
 
-subscribeButtonText: {
-  color: "#FFFFFF",
-  fontSize: 16,
-  fontWeight: "700",
-},
+  subscribeButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 15,
+  },
 
-smallText: {
-  marginTop: 12,
-  color: "#CBD5E1",
-  textAlign: "center",
-  fontSize: 12,
-},
+  smallText: {
+    color: "#94A3B8",
+    fontSize: 13,
+    marginTop: 14,
+  },
 /* ================= FOOTER ================= */
 
 /* ================= FOOTER ================= */

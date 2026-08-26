@@ -114,8 +114,8 @@ export default function ContactScreen() {
                   {/* Form Grid */}
                   <View style={styles.formGrid}>
                     {/* Row 1 */}
-                    <View style={[styles.inputRow, isDesktop && { flexDirection: "row", gap: 16 }]}>
-                      <View style={[styles.inputCol, isDesktop && { flex: 1 }]}>
+                    <View style={[(isDesktop || isTablet) ? { flexDirection: "row", gap: 16 } : { flexDirection: "column", gap: 12 }]}>
+                      <View style={[(isDesktop || isTablet) && { flex: 1 }]}>
                         <Text style={styles.label}>FIRST NAME</Text>
                         <TextInput
                           value={formData.firstName}
@@ -125,7 +125,7 @@ export default function ContactScreen() {
                         />
                       </View>
 
-                      <View style={[styles.inputCol, isDesktop && { flex: 1 }]}>
+                      <View style={[(isDesktop || isTablet) && { flex: 1 }]}>
                         <Text style={styles.label}>LAST NAME</Text>
                         <TextInput
                           value={formData.lastName}
@@ -137,8 +137,8 @@ export default function ContactScreen() {
                     </View>
 
                     {/* Row 2 */}
-                    <View style={[styles.inputRow, isDesktop && { flexDirection: "row", gap: 16, marginTop: 16 }]}>
-                      <View style={[styles.inputCol, isDesktop && { flex: 1 }]}>
+                    <View style={[(isDesktop || isTablet) ? { flexDirection: "row", gap: 16, marginTop: 16 } : { flexDirection: "column", gap: 12, marginTop: 12 }]}>
+                      <View style={[(isDesktop || isTablet) && { flex: 1 }]}>
                         <Text style={styles.label}>EMAIL ADDRESS</Text>
                         <TextInput
                           value={formData.email}
@@ -149,7 +149,7 @@ export default function ContactScreen() {
                         />
                       </View>
 
-                      <View style={[styles.inputCol, isDesktop && { flex: 1 }]}>
+                      <View style={[(isDesktop || isTablet) && { flex: 1 }]}>
                         <Text style={styles.label}>PHONE NUMBER</Text>
                         <TextInput
                           value={formData.phone}
@@ -162,8 +162,8 @@ export default function ContactScreen() {
                     </View>
 
                     {/* Row 3 */}
-                    <View style={[styles.inputRow, isDesktop && { flexDirection: "row", gap: 16, marginTop: 16 }]}>
-                      <View style={[styles.inputCol, isDesktop && { flex: 1 }]}>
+                    <View style={[(isDesktop || isTablet) ? { flexDirection: "row", gap: 16, marginTop: 16 } : { flexDirection: "column", gap: 12, marginTop: 12 }]}>
+                      <View style={[(isDesktop || isTablet) && { flex: 1 }]}>
                         <Text style={styles.label}>PREFERRED DESTINATION</Text>
                         <View style={styles.dropdownInputWrapper}>
                           <TextInput
@@ -176,7 +176,7 @@ export default function ContactScreen() {
                         </View>
                       </View>
 
-                      <View style={[styles.inputCol, isDesktop && { flex: 1 }]}>
+                      <View style={[(isDesktop || isTablet) && { flex: 1 }]}>
                         <Text style={styles.label}>TRAVEL DATE</Text>
                         <TextInput
                           value={formData.travelDate}
@@ -188,8 +188,8 @@ export default function ContactScreen() {
                     </View>
 
                     {/* Row 4 */}
-                    <View style={[styles.inputRow, isDesktop && { flexDirection: "row", gap: 16, marginTop: 16 }]}>
-                      <View style={[styles.inputCol, isDesktop && { flex: 1 }]}>
+                    <View style={[(isDesktop || isTablet) ? { flexDirection: "row", gap: 16, marginTop: 16 } : { flexDirection: "column", gap: 12, marginTop: 12 }]}>
+                      <View style={[(isDesktop || isTablet) && { flex: 1 }]}>
                         <Text style={styles.label}>TRAVELERS</Text>
                         <View style={styles.dropdownInputWrapper}>
                           <TextInput
@@ -202,7 +202,7 @@ export default function ContactScreen() {
                         </View>
                       </View>
 
-                      <View style={[styles.inputCol, isDesktop && { flex: 1 }]}>
+                      <View style={[(isDesktop || isTablet) && { flex: 1 }]}>
                         <Text style={styles.label}>ADVENTURE TYPE</Text>
                         <View style={styles.dropdownInputWrapper}>
                           <TextInput
