@@ -68,7 +68,7 @@ export default function Onboarding3() {
             styles.bottomContainer,
             {
               paddingHorizontal: isDesktop ? 50 : 24,
-              paddingBottom: isDesktop ? 50 : 40,
+              paddingBottom: isDesktop ? 50 : 65,
               flexDirection: isDesktop ? "row" : "column",
               justifyContent: "space-between",
               alignItems: isDesktop ? "flex-end" : "flex-start",
@@ -79,12 +79,12 @@ export default function Onboarding3() {
         >
           {/* Text & Indicators (Left) */}
           <View style={[styles.textContent, { maxWidth: isDesktop ? 680 : "100%" }]}>
-            <Text style={[styles.headingWhite, isDesktop ? { fontSize: 48, lineHeight: 54 } : { fontSize: 34, lineHeight: 40 }]}>
+            <Text style={[styles.headingWhite, isDesktop ? { fontSize: 48, lineHeight: 54 } : { fontSize: 28, lineHeight: 34 }]}>
               CREATE MEMORIES{"\n"}
               <Text style={styles.headingBlue}>FOR LIFE</Text>
             </Text>
 
-            <Text style={[styles.paragraph, isDesktop ? { fontSize: 17, lineHeight: 28 } : { fontSize: 15, lineHeight: 24 }]}>
+            <Text style={[styles.paragraph, isDesktop ? { fontSize: 17, lineHeight: 28 } : { fontSize: 14, lineHeight: 22 }]}>
               Join thousands of explorers and begin unforgettable adventures with
               ACES Adventure Club. Your next journey starts today.
             </Text>
@@ -98,7 +98,7 @@ export default function Onboarding3() {
           </View>
 
           {/* Button (Right on desktop, stacked on mobile) */}
-          <View style={[styles.buttonWrapper, !isDesktop && { marginTop: 28, width: "100%" }]}>
+          <View style={[styles.buttonWrapper, !isDesktop && { marginTop: 20, width: "100%", marginBottom: 10 }]}>
             <TouchableOpacity
               style={[styles.nextButton, !isDesktop && { width: "100%", alignItems: "center" }]}
               onPress={() => navigation.replace("Home")}
