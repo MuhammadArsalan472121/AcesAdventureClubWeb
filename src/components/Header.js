@@ -67,8 +67,37 @@ export default function Header() {
               })}
             </View>
 
-            {/* AUTH BUTTONS */}
+            {/* AUTH & PROFILE BUTTONS */}
             <View style={styles.desktopAuthRow}>
+              {/* Profile Avatar Quick Button */}
+              <TouchableOpacity
+                style={[
+                  styles.desktopAvatarBtn,
+                  (route.name === "Profile" || route.name === "Settings") && styles.desktopAvatarBtnActive,
+                ]}
+                onPress={() => {
+                  if (route.name === "Profile") {
+                    navigateTo("Settings");
+                  } else {
+                    navigateTo("Profile");
+                  }
+                }}
+                activeOpacity={0.8}
+              >
+                <Image
+                  source={require("../../assets/partnerProfile.jpg")}
+                  style={styles.desktopAvatarImg}
+                />
+                <Text style={styles.desktopAvatarText}>
+                  {route.name === "Profile" ? "Settings" : "Profile"}
+                </Text>
+                <Ionicons
+                  name={route.name === "Profile" ? "settings-outline" : "chevron-forward"}
+                  size={14}
+                  color="#FFFFFF"
+                />
+              </TouchableOpacity>
+
               <TouchableOpacity style={styles.desktopLoginBtn} onPress={() => navigateTo("Login")}>
                 <Text style={styles.desktopLoginText}>Login</Text>
               </TouchableOpacity>
@@ -112,6 +141,23 @@ export default function Header() {
               <Text style={styles.menuItem}>{item.label}</Text>
             </TouchableOpacity>
           ))}
+
+          {/* Profile & Settings in Mobile Menu */}
+          <TouchableOpacity
+            style={styles.menuRow}
+            onPress={() => navigateTo("Profile")}
+          >
+            <Ionicons name="person-outline" size={20} color="#0B5CAD" />
+            <Text style={styles.menuItem}>My Profile</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuRow}
+            onPress={() => navigateTo("Settings")}
+          >
+            <Ionicons name="settings-outline" size={20} color="#0B5CAD" />
+            <Text style={styles.menuItem}>Account Settings</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity style={styles.loginButton} onPress={() => navigateTo("Login")}>
             <Text style={styles.loginButtonText}>Login</Text>
@@ -191,6 +237,39 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+  },
+
+  desktopAvatarBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingLeft: 4,
+    paddingRight: 14,
+    paddingVertical: 4,
+    borderRadius: 24,
+    backgroundColor: "rgba(11, 92, 173, 0.4)",
+    borderWidth: 1.5,
+    borderColor: "rgba(56, 189, 248, 0.5)",
+    cursor: "pointer",
+  },
+
+  desktopAvatarBtnActive: {
+    backgroundColor: "#0B5CAD",
+    borderColor: "#38BDF8",
+  },
+
+  desktopAvatarImg: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: "#FFFFFF",
+  },
+
+  desktopAvatarText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
   },
 
   desktopLoginBtn: {

@@ -23,6 +23,7 @@ const { height, width } = Dimensions.get("window");
 export default function HomeScreen() {
   const navigation = useNavigation();
   const {
+    isMobile,
     isDesktop,
     isTablet,
     isLargeDesktop,
@@ -550,13 +551,22 @@ export default function HomeScreen() {
                   </Text>
 
                   {/* Form Row */}
-                  <View style={[styles.subscribeContainer, isDesktop && { maxWidth: 540, width: "100%", marginTop: 30 }]}>
+                  <View
+                    style={[
+                      styles.subscribeContainer,
+                      { width: "100%", maxWidth: 540, marginTop: isDesktop ? 30 : 20 },
+                      isMobile && styles.subscribeContainerMobile,
+                    ]}
+                  >
                     <TextInput
                       placeholder="Enter your email address"
                       placeholderTextColor="#94A3B8"
-                      style={styles.emailInput}
+                      style={[styles.emailInput, isMobile && styles.emailInputMobile]}
                     />
-                    <TouchableOpacity style={styles.subscribeButton} onPress={() => navigation.navigate("Contact")}>
+                    <TouchableOpacity
+                      style={[styles.subscribeButton, isMobile && styles.subscribeButtonMobile]}
+                      onPress={() => navigation.navigate("Contact")}
+                    >
                       <Text style={styles.subscribeButtonText}>Subscribe Free</Text>
                     </TouchableOpacity>
                   </View>
@@ -1152,11 +1162,29 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255, 255, 255, 0.25)",
   },
 
+  subscribeContainerMobile: {
+    flexDirection: "column",
+    backgroundColor: "transparent",
+    borderWidth: 0,
+    padding: 0,
+  },
+
   emailInput: {
     flex: 1,
     paddingHorizontal: 20,
+    paddingVertical: 12,
     color: "#FFFFFF",
     fontSize: 15,
+  },
+
+  emailInputMobile: {
+    width: "100%",
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.25)",
+    height: 52,
+    marginBottom: 12,
   },
 
   subscribeButton: {
@@ -1164,7 +1192,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     paddingVertical: 12,
     borderRadius: 26,
+    justifyContent: "center",
+    alignItems: "center",
     cursor: "pointer",
+  },
+
+  subscribeButtonMobile: {
+    width: "100%",
+    height: 52,
   },
 
   subscribeButtonText: {

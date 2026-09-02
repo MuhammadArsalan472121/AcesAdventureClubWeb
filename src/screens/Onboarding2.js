@@ -68,7 +68,7 @@ export default function Onboarding2() {
             styles.bottomContainer,
             {
               paddingHorizontal: isDesktop ? 50 : 24,
-              paddingBottom: isDesktop ? 50 : 40,
+              paddingBottom: isDesktop ? 50 : 65,
               flexDirection: isDesktop ? "row" : "column",
               justifyContent: "space-between",
               alignItems: isDesktop ? "flex-end" : "flex-start",
@@ -79,12 +79,12 @@ export default function Onboarding2() {
         >
           {/* Text & Indicators (Left) */}
           <View style={[styles.textContent, { maxWidth: isDesktop ? 680 : "100%" }]}>
-            <Text style={[styles.headingWhite, isDesktop ? { fontSize: 48, lineHeight: 54 } : { fontSize: 34, lineHeight: 40 }]}>
+            <Text style={[styles.headingWhite, isDesktop ? { fontSize: 48, lineHeight: 54 } : { fontSize: 28, lineHeight: 34 }]}>
               FIND YOUR{"\n"}
               <Text style={styles.headingBlue}>NEXT ADVENTURE</Text>
             </Text>
 
-            <Text style={[styles.paragraph, isDesktop ? { fontSize: 17, lineHeight: 28 } : { fontSize: 15, lineHeight: 24 }]}>
+            <Text style={[styles.paragraph, isDesktop ? { fontSize: 17, lineHeight: 28 } : { fontSize: 14, lineHeight: 22 }]}>
               Browse hiking, camping and trekking experiences designed for every explorer.
             </Text>
 
@@ -97,7 +97,7 @@ export default function Onboarding2() {
           </View>
 
           {/* Button (Right on desktop, stacked on mobile) */}
-          <View style={[styles.buttonWrapper, !isDesktop && { marginTop: 28, width: "100%" }]}>
+          <View style={[styles.buttonWrapper, !isDesktop && { marginTop: 20, width: "100%", marginBottom: 10 }]}>
             <TouchableOpacity
               style={[styles.nextButton, !isDesktop && { width: "100%", alignItems: "center" }]}
               onPress={() => navigation.navigate("Onboarding3")}

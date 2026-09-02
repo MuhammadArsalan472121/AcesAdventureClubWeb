@@ -57,8 +57,8 @@ export default function ViewTripScreen() {
               </Text>
 
               {/* 4 Translucent Info Cards Row */}
-              <View style={[styles.infoRow, isDesktop && { flexDirection: "row", gap: 16, marginTop: 24 }]}>
-                <View style={styles.infoCard}>
+              <View style={[styles.infoRow, isDesktop ? { flexDirection: "row", gap: 16, marginTop: 24 } : { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 20 }]}>
+                <View style={[styles.infoCard, isDesktop ? { flex: 1 } : { width: isTablet ? "48%" : "100%" }]}>
                   <Ionicons name="time-outline" size={18} color="#38BDF8" />
                   <View style={{ marginLeft: 10 }}>
                     <Text style={styles.infoLabel}>DURATION</Text>
@@ -66,7 +66,7 @@ export default function ViewTripScreen() {
                   </View>
                 </View>
 
-                <View style={styles.infoCard}>
+                <View style={[styles.infoCard, isDesktop ? { flex: 1 } : { width: isTablet ? "48%" : "100%" }]}>
                   <Ionicons name="speedometer-outline" size={18} color="#38BDF8" />
                   <View style={{ marginLeft: 10 }}>
                     <Text style={styles.infoLabel}>DIFFICULTY</Text>
@@ -74,7 +74,7 @@ export default function ViewTripScreen() {
                   </View>
                 </View>
 
-                <View style={styles.infoCard}>
+                <View style={[styles.infoCard, isDesktop ? { flex: 1 } : { width: isTablet ? "48%" : "100%" }]}>
                   <Ionicons name="location-outline" size={18} color="#38BDF8" />
                   <View style={{ marginLeft: 10 }}>
                     <Text style={styles.infoLabel}>LOCATION</Text>
@@ -82,7 +82,7 @@ export default function ViewTripScreen() {
                   </View>
                 </View>
 
-                <View style={styles.infoCard}>
+                <View style={[styles.infoCard, isDesktop ? { flex: 1 } : { width: isTablet ? "48%" : "100%" }]}>
                   <Ionicons name="pricetag-outline" size={18} color="#38BDF8" />
                   <View style={{ marginLeft: 10 }}>
                     <Text style={styles.infoLabel}>PRICE</Text>
@@ -92,8 +92,8 @@ export default function ViewTripScreen() {
               </View>
 
               {/* Action Button */}
-              <View style={{ marginTop: 30 }}>
-                <TouchableOpacity style={styles.bookNowBtn} onPress={() => navigation.navigate("Contact")}>
+              <View style={{ marginTop: 30, alignItems: isDesktop || isTablet ? "flex-start" : "stretch" }}>
+                <TouchableOpacity style={[styles.bookNowBtn, !isDesktop && !isTablet && { width: "100%", alignItems: "center" }]} onPress={() => navigation.navigate("Contact")}>
                   <Text style={styles.bookNowBtnText}>BOOK NOW ➔</Text>
                 </TouchableOpacity>
               </View>

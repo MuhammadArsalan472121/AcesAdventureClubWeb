@@ -155,8 +155,8 @@ export default function PartnerScreen() {
               </View>
 
               {/* 4 Dark Feature Cards Grid */}
-              <View style={[styles.visionGrid, isDesktop && { flexDirection: "row", justifyContent: "space-between" }]}>
-                <View style={[styles.visionCardItem, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
+              <View style={[styles.visionGrid, { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", gap: 16 }]}>
+                <View style={[styles.visionCardItem, { width: isDesktop ? "23.5%" : isTablet ? "48%" : "100%", marginBottom: isDesktop ? 0 : 16 }]}>
                   <View style={styles.visionIconCircle}>
                     <Ionicons name="leaf-outline" size={24} color="#0B5CAD" />
                   </View>
@@ -166,7 +166,7 @@ export default function PartnerScreen() {
                   </Text>
                 </View>
 
-                <View style={[styles.visionCardItem, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
+                <View style={[styles.visionCardItem, { width: isDesktop ? "23.5%" : isTablet ? "48%" : "100%", marginBottom: isDesktop ? 0 : 16 }]}>
                   <View style={styles.visionIconCircle}>
                     <Ionicons name="shield-checkmark-outline" size={24} color="#0B5CAD" />
                   </View>
@@ -176,23 +176,23 @@ export default function PartnerScreen() {
                   </Text>
                 </View>
 
-                <View style={[styles.visionCardItem, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
-                  <View style={styles.visionIconCircle}>
-                    <Ionicons name="diamond-outline" size={24} color="#0B5CAD" />
-                  </View>
-                  <Text style={styles.visionCardTitle}>Premium Equipment</Text>
-                  <Text style={styles.visionCardDesc}>
-                    Providing explorers with access to world-class mountain gear.
-                  </Text>
-                </View>
-
-                <View style={[styles.visionCardItem, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
+                <View style={[styles.visionCardItem, { width: isDesktop ? "23.5%" : isTablet ? "48%" : "100%", marginBottom: isDesktop ? 0 : 16 }]}>
                   <View style={styles.visionIconCircle}>
                     <Ionicons name="people-outline" size={24} color="#0B5CAD" />
                   </View>
-                  <Text style={styles.visionCardTitle}>Community Development</Text>
+                  <Text style={styles.visionCardTitle}>Local Empowerment</Text>
                   <Text style={styles.visionCardDesc}>
-                    Supporting local guides and mountain communities through fair trade.
+                    Creating opportunities and sustainable growth for mountain communities.
+                  </Text>
+                </View>
+
+                <View style={[styles.visionCardItem, { width: isDesktop ? "23.5%" : isTablet ? "48%" : "100%", marginBottom: isDesktop ? 0 : 16 }]}>
+                  <View style={styles.visionIconCircle}>
+                    <Ionicons name="sparkles-outline" size={24} color="#0B5CAD" />
+                  </View>
+                  <Text style={styles.visionCardTitle}>Wilderness Access</Text>
+                  <Text style={styles.visionCardDesc}>
+                    Opening doors to remote trails with responsible exploration standards.
                   </Text>
                 </View>
               </View>
