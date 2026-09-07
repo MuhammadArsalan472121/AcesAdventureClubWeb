@@ -1,7 +1,10 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 export default function TopBar() {
+  const navigation = useNavigation<any>();
+
   return (
     <View style={styles.container}>
       <View style={styles.searchBox}>
@@ -10,33 +13,49 @@ export default function TopBar() {
       </View>
 
       <View style={styles.navigation}>
-        <Pressable style={[styles.navItem, styles.activeNavItem]}>
+        <Pressable
+          style={[styles.navItem, styles.activeNavItem]}
+          onPress={() => navigation.navigate('AdminDashboard')}
+        >
           <Text style={styles.activeNavText}>Overview</Text>
         </Pressable>
 
-        <Pressable style={styles.navItem}>
+        <Pressable
+          style={styles.navItem}
+          onPress={() => navigation.navigate('AdminTrips')}
+        >
           <Text style={styles.navText}>Trips</Text>
         </Pressable>
 
-        <Pressable style={styles.navItem}>
+        <Pressable
+          style={styles.navItem}
+          onPress={() => navigation.navigate('AdminUsers')}
+        >
           <Text style={styles.navText}>Users</Text>
         </Pressable>
       </View>
 
       <View style={styles.profileSection}>
-        <Text style={styles.icon}>♧</Text>
-        <Text style={styles.icon}>☾</Text>
+        <Pressable
+          style={styles.websiteBtn}
+          onPress={() => navigation.navigate('Home')}
+        >
+          <Text style={styles.websiteBtnText}>🌐 Website</Text>
+        </Pressable>
 
         <View style={styles.divider} />
 
-        <View>
+        <Pressable onPress={() => navigation.navigate('AdminSettings')}>
           <Text style={styles.name}>Alex Mercer</Text>
           <Text style={styles.role}>Super Admin</Text>
-        </View>
+        </Pressable>
 
-        <View style={styles.avatar}>
+        <Pressable
+          style={styles.avatar}
+          onPress={() => navigation.navigate('AdminSettings')}
+        >
           <Text style={styles.avatarText}>AM</Text>
-        </View>
+        </Pressable>
       </View>
     </View>
   );
@@ -146,5 +165,20 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 9,
     fontWeight: '700',
+  },
+
+  websiteBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+
+  websiteBtnText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#0B5CAD',
   },
 });

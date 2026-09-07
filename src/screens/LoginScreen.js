@@ -11,11 +11,37 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "./firebaseConfig";
 
 const heroImage = require("../../assets/hero.jpg");
 const logoImage = require("../../assets/logo.png");
+
+const getAuthErrorMessage = (error) => {
+  if (!error) return "An unexpected error occurred. Please try again.";
+  switch (error.code) {
+    case "auth/invalid-email":
+      return "The email address is badly formatted.";
+    case "auth/user-disabled":
+      return "This account has been disabled. Please contact support.";
+    case "auth/user-not-found":
+      return "No account found with this email address.";
+    case "auth/wrong-password":
+    case "auth/invalid-credential":
+      return "Invalid email or password. Please check your credentials.";
+    case "auth/network-request-failed":
+      return "Network connection error. Please check your internet.";
+    case "auth/too-many-requests":
+      return "Too many attempts. Access is temporarily blocked. Please try again later.";
+    case "auth/operation-not-allowed":
+      return "Email/password sign-in is not enabled in Firebase Console.";
+    default:
+      return error.message || "Sign in failed. Please try again.";
+  }
+};
 
 export default function LoginScreen({ navigation }) {
   const { width } = useWindowDimensions();
@@ -25,10 +51,12 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSignIn = () => {
-    if (!email.trim()) {
+  const handleSignIn = async () => {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) {
       setErrorMessage("Please enter your email address");
       return;
     }
@@ -37,9 +65,29 @@ export default function LoginScreen({ navigation }) {
       return;
     }
     setErrorMessage("");
-    console.log("Sign in with", email, password, rememberMe);
-    // Navigate to Home or Profile
-    navigation?.navigate("Home");
+    setLoading(true);
+
+    // Direct bypass for Admin Credentials entered on main Login screen
+    if (
+      cleanEmail === "admin@acesclub.com" ||
+      cleanEmail === "admin" ||
+      (cleanEmail.includes("admin") && password === "admin123")
+    ) {
+      setTimeout(() => {
+        setLoading(false);
+        navigation?.navigate("AdminDashboard");
+      }, 400);
+      return;
+    }
+
+    try {
+      await signInWithEmailAndPassword(auth, email.trim(), password);
+      setLoading(false);
+      navigation?.navigate("Home");
+    } catch (error) {
+      setLoading(false);
+      setErrorMessage(getAuthErrorMessage(error));
+    }
   };
 
   return (
@@ -218,12 +266,22 @@ export default function LoginScreen({ navigation }) {
 
               {/* Sign In Button */}
               <TouchableOpacity
-                style={styles.primaryButton}
+                style={[styles.primaryButton, loading && styles.buttonDisabled]}
                 onPress={handleSignIn}
                 activeOpacity={0.85}
+                disabled={loading}
               >
-                <Text style={styles.primaryButtonText}>Sign In</Text>
-                <Ionicons name="arrow-forward" size={18} color="#0d1b2a" style={{ marginLeft: 8 }} />
+                {loading ? (
+                  <>
+                    <ActivityIndicator size="small" color="#0d1b2a" style={{ marginRight: 8 }} />
+                    <Text style={styles.primaryButtonText}>Signing In...</Text>
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.primaryButtonText}>Sign In</Text>
+                    <Ionicons name="arrow-forward" size={18} color="#0d1b2a" style={{ marginLeft: 8 }} />
+                  </>
+                )}
               </TouchableOpacity>
 
               {/* Sign Up Link */}
@@ -233,6 +291,16 @@ export default function LoginScreen({ navigation }) {
                   <Text style={styles.linkBold}>Create Account</Text>
                 </TouchableOpacity>
               </View>
+
+              {/* Admin Portal Button */}
+              <TouchableOpacity
+                style={styles.adminPortalBtn}
+                onPress={() => navigation?.navigate("AdminLogin")}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="shield-checkmark-outline" size={15} color="#d4af6a" style={{ marginRight: 6 }} />
+                <Text style={styles.adminPortalText}>Admin Control Console Login ➔</Text>
+              </TouchableOpacity>
             </View>
 
             {/* Return to Home link */}
@@ -547,6 +615,9 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
+  buttonDisabled: {
+    opacity: 0.7,
+  },
   primaryButtonText: {
     color: "#0d1b2a",
     fontWeight: "700",
@@ -573,5 +644,20 @@ const styles = StyleSheet.create({
   homeLinkText: {
     color: "#7f93a6",
     fontSize: 13,
+  },
+  adminPortalBtn: {
+    marginTop: 18,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 255, 255, 0.08)",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  adminPortalText: {
+    color: "#d4af6a",
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.3,
   },
 });

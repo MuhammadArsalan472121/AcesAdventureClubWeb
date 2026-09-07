@@ -12,12 +12,14 @@ import {
   StyleSheet,
   Alert,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import useResponsive from "../hooks/useResponsive";
+import { useAuth } from "../context/AuthContext";
 
 export default function SettingsScreen() {
   const navigation = useNavigation();
@@ -29,6 +31,7 @@ export default function SettingsScreen() {
   } = useResponsive();
 
   const isWide = isDesktop || isTablet;
+  const { user, userProfile, updateUserPassword, logout } = useAuth();
 
   // Active tab in sidebar
   const [activeTab, setActiveTab] = useState("General"); // 'General' | 'Profile' | 'Security'
@@ -44,6 +47,7 @@ export default function SettingsScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [twoFactorAuth, setTwoFactorAuth] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [updatingPassword, setUpdatingPassword] = useState(false);
 
   // Notification Settings State
   const [emailExpeditions, setEmailExpeditions] = useState(true);
@@ -64,16 +68,24 @@ export default function SettingsScreen() {
     }, 4000);
   };
 
-  const handleUpdatePassword = () => {
-    if (!currentPassword) {
+  const handleUpdatePassword = async () => {
+    if (!newPassword) {
       if (Platform.OS === "web") {
-        alert("Please enter your current password.");
+        alert("Please enter a new password.");
       } else {
-        Alert.alert("Validation Error", "Please enter your current password.");
+        Alert.alert("Validation Error", "Please enter a new password.");
       }
       return;
     }
-    if (newPassword && newPassword !== confirmPassword) {
+    if (newPassword.length < 6) {
+      if (Platform.OS === "web") {
+        alert("New password must be at least 6 characters.");
+      } else {
+        Alert.alert("Error", "New password must be at least 6 characters.");
+      }
+      return;
+    }
+    if (newPassword !== confirmPassword) {
       if (Platform.OS === "web") {
         alert("New password and confirm password do not match.");
       } else {
@@ -81,24 +93,46 @@ export default function SettingsScreen() {
       }
       return;
     }
-    setPasswordSuccess(true);
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-    setTimeout(() => {
-      setPasswordSuccess(false);
-    }, 4000);
+
+    setUpdatingPassword(true);
+    try {
+      await updateUserPassword(newPassword);
+      setPasswordSuccess(true);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setTimeout(() => {
+        setPasswordSuccess(false);
+      }, 4000);
+    } catch (err) {
+      console.error(err);
+      if (Platform.OS === "web") {
+        alert("Failed to update password: " + (err.message || "Please re-authenticate before changing password."));
+      } else {
+        Alert.alert("Error", err.message || "Failed to update password");
+      }
+    } finally {
+      setUpdatingPassword(false);
+    }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (Platform.OS === "web") {
       if (window.confirm("Are you sure you want to log out from Aces Adventure Club?")) {
-        navigation.navigate("Login");
+        await logout();
+        navigation.navigate("Home");
       }
     } else {
       Alert.alert("Logout", "Are you sure you want to log out?", [
         { text: "Cancel", style: "cancel" },
-        { text: "Logout", style: "destructive", onPress: () => navigation.navigate("Login") },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            await logout();
+            navigation.navigate("Home");
+          },
+        },
       ]);
     }
   };
@@ -201,8 +235,12 @@ export default function SettingsScreen() {
                       <Ionicons name="person" size={24} color="#0B5CAD" />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.miniUserName}>Muhammad Arsalan</Text>
-                      <Text style={styles.miniUserTier}>Aces Gold Member</Text>
+                      <Text style={styles.miniUserName}>
+                        {userProfile?.fullName || user?.displayName || (user ? "Adventurer" : "Guest Explorer")}
+                      </Text>
+                      <Text style={styles.miniUserTier}>
+                        {user ? (userProfile?.membershipTier || "Aces Gold Member") : "Not Logged In"}
+                      </Text>
                     </View>
                   </View>
 
@@ -481,12 +519,19 @@ export default function SettingsScreen() {
                     {/* Update Password Action Button */}
                     <View style={styles.securityActionRow}>
                       <TouchableOpacity
-                        style={styles.updatePasswordBtn}
+                        style={[styles.updatePasswordBtn, updatingPassword && { opacity: 0.7 }]}
                         activeOpacity={0.85}
                         onPress={handleUpdatePassword}
+                        disabled={updatingPassword}
                       >
-                        <Ionicons name="key" size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
-                        <Text style={styles.updatePasswordBtnText}>UPDATE PASSWORD</Text>
+                        {updatingPassword ? (
+                          <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 8 }} />
+                        ) : (
+                          <Ionicons name="key" size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
+                        )}
+                        <Text style={styles.updatePasswordBtnText}>
+                          {updatingPassword ? "UPDATING PASSWORD..." : "UPDATE PASSWORD"}
+                        </Text>
                       </TouchableOpacity>
                     </View>
 

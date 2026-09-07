@@ -9,6 +9,7 @@ import {
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import useResponsive from "../hooks/useResponsive";
+import { useAuth } from "../context/AuthContext";
 
 export default function Header() {
   const navigation = useNavigation();
@@ -16,10 +17,17 @@ export default function Header() {
   const [menuVisible, setMenuVisible] = useState(false);
   const { isDesktop, isTablet } = useResponsive();
   const isWideScreen = isDesktop || isTablet;
+  const { user, userProfile, logout } = useAuth();
 
   const navigateTo = (screenName) => {
     setMenuVisible(false);
     navigation.navigate(screenName);
+  };
+
+  const handleLogout = async () => {
+    setMenuVisible(false);
+    await logout();
+    navigation.navigate("Home");
   };
 
   const navItems = [
@@ -30,6 +38,12 @@ export default function Header() {
     { label: "Sponsored", screen: "Sponsors" },
     { label: "Contact", screen: "Contact" },
   ];
+
+  const displayName = userProfile?.fullName
+    ? userProfile.fullName.split(" ")[0]
+    : user?.displayName
+    ? user.displayName.split(" ")[0]
+    : "Profile";
 
   return (
     <View style={styles.headerWrapper}>
@@ -69,41 +83,54 @@ export default function Header() {
 
             {/* AUTH & PROFILE BUTTONS */}
             <View style={styles.desktopAuthRow}>
-              {/* Profile Avatar Quick Button */}
-              <TouchableOpacity
-                style={[
-                  styles.desktopAvatarBtn,
-                  (route.name === "Profile" || route.name === "Settings") && styles.desktopAvatarBtnActive,
-                ]}
-                onPress={() => {
-                  if (route.name === "Profile") {
-                    navigateTo("Settings");
-                  } else {
-                    navigateTo("Profile");
-                  }
-                }}
-                activeOpacity={0.8}
-              >
-                <Image
-                  source={require("../../assets/partnerProfile.jpg")}
-                  style={styles.desktopAvatarImg}
-                />
-                <Text style={styles.desktopAvatarText}>
-                  {route.name === "Profile" ? "Settings" : "Profile"}
-                </Text>
-                <Ionicons
-                  name={route.name === "Profile" ? "settings-outline" : "chevron-forward"}
-                  size={14}
-                  color="#FFFFFF"
-                />
-              </TouchableOpacity>
+              {user ? (
+                <>
+                  {/* Profile Avatar Quick Button */}
+                  <TouchableOpacity
+                    style={[
+                      styles.desktopAvatarBtn,
+                      (route.name === "Profile" || route.name === "Settings") &&
+                        styles.desktopAvatarBtnActive,
+                    ]}
+                    onPress={() => navigateTo("Profile")}
+                    activeOpacity={0.8}
+                  >
+                    <Image
+                      source={require("../../assets/partnerProfile.jpg")}
+                      style={styles.desktopAvatarImg}
+                    />
+                    <Text style={styles.desktopAvatarText}>{displayName}</Text>
+                    <Ionicons
+                      name="person-circle-outline"
+                      size={16}
+                      color="#FFFFFF"
+                    />
+                  </TouchableOpacity>
 
-              <TouchableOpacity style={styles.desktopLoginBtn} onPress={() => navigateTo("Login")}>
-                <Text style={styles.desktopLoginText}>Login</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.desktopSignupBtn} onPress={() => navigateTo("Signup")}>
-                <Text style={styles.desktopSignupText}>Sign up</Text>
-              </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.desktopLogoutBtn}
+                    onPress={handleLogout}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="log-out-outline" size={16} color="#FFFFFF" />
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <TouchableOpacity
+                    style={styles.desktopLoginBtn}
+                    onPress={() => navigateTo("Login")}
+                  >
+                    <Text style={styles.desktopLoginText}>Login</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.desktopSignupBtn}
+                    onPress={() => navigateTo("Signup")}
+                  >
+                    <Text style={styles.desktopSignupText}>Sign up</Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           </View>
         ) : (
@@ -129,11 +156,17 @@ export default function Header() {
             >
               <Ionicons
                 name={
-                  item.screen === "Home" ? "home-outline" :
-                  item.screen === "About" ? "information-circle-outline" :
-                  item.screen === "BrowseTrips" ? "compass-outline" :
-                  item.screen === "Gallery" ? "images-outline" :
-                  item.screen === "Sponsors" ? "newspaper-outline" : "call-outline"
+                  item.screen === "Home"
+                    ? "home-outline"
+                    : item.screen === "About"
+                    ? "information-circle-outline"
+                    : item.screen === "BrowseTrips"
+                    ? "compass-outline"
+                    : item.screen === "Gallery"
+                    ? "images-outline"
+                    : item.screen === "Sponsors"
+                    ? "newspaper-outline"
+                    : "call-outline"
                 }
                 size={20}
                 color="#0B5CAD"
@@ -142,30 +175,44 @@ export default function Header() {
             </TouchableOpacity>
           ))}
 
-          {/* Profile & Settings in Mobile Menu */}
-          <TouchableOpacity
-            style={styles.menuRow}
-            onPress={() => navigateTo("Profile")}
-          >
-            <Ionicons name="person-outline" size={20} color="#0B5CAD" />
-            <Text style={styles.menuItem}>My Profile</Text>
-          </TouchableOpacity>
+          {user ? (
+            <>
+              {/* Profile & Settings in Mobile Menu */}
+              <TouchableOpacity
+                style={styles.menuRow}
+                onPress={() => navigateTo("Profile")}
+              >
+                <Ionicons name="person-outline" size={20} color="#0B5CAD" />
+                <Text style={styles.menuItem}>My Profile ({displayName})</Text>
+              </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.menuRow}
-            onPress={() => navigateTo("Settings")}
-          >
-            <Ionicons name="settings-outline" size={20} color="#0B5CAD" />
-            <Text style={styles.menuItem}>Account Settings</Text>
-          </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.menuRow}
+                onPress={() => navigateTo("Settings")}
+              >
+                <Ionicons name="settings-outline" size={20} color="#0B5CAD" />
+                <Text style={styles.menuItem}>Account Settings</Text>
+              </TouchableOpacity>
 
-          <TouchableOpacity style={styles.loginButton} onPress={() => navigateTo("Login")}>
-            <Text style={styles.loginButtonText}>Login</Text>
-          </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.logoutButtonMobile}
+                onPress={handleLogout}
+              >
+                <Ionicons name="log-out-outline" size={18} color="#DC2626" style={{ marginRight: 6 }} />
+                <Text style={styles.logoutButtonTextMobile}>Log Out</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <TouchableOpacity style={styles.loginButton} onPress={() => navigateTo("Login")}>
+                <Text style={styles.loginButtonText}>Login</Text>
+              </TouchableOpacity>
 
-          <TouchableOpacity style={styles.signupButton} onPress={() => navigateTo("Signup")}>
-            <Text style={styles.signupButtonText}>Sign up</Text>
-          </TouchableOpacity>
+              <TouchableOpacity style={styles.signupButton} onPress={() => navigateTo("Signup")}>
+                <Text style={styles.signupButtonText}>Sign up</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       )}
     </View>
@@ -362,6 +409,34 @@ const styles = StyleSheet.create({
 
   signupButtonText: {
     color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 15,
+  },
+
+  desktopLogoutBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 24,
+    backgroundColor: "rgba(220, 38, 38, 0.2)",
+    borderWidth: 1,
+    borderColor: "rgba(239, 68, 68, 0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+  },
+
+  logoutButtonMobile: {
+    marginTop: 14,
+    flexDirection: "row",
+    backgroundColor: "#FEE2E2",
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  logoutButtonTextMobile: {
+    color: "#DC2626",
     fontWeight: "700",
     fontSize: 15,
   },

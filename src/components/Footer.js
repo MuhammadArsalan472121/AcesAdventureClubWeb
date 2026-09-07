@@ -81,6 +81,10 @@ export default function Footer() {
             <Ionicons name="chevron-forward" size={14} color="#0B5CAD" />
             <Text style={styles.linkText}>Member Login</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.linkRow} onPress={() => navigateTo("AdminLogin")}>
+            <Ionicons name="shield-checkmark" size={14} color="#38BDF8" />
+            <Text style={[styles.linkText, { color: "#38BDF8", fontWeight: "700" }]}>Admin Console</Text>
+          </TouchableOpacity>
         </View>
 
         {/* CONTACT INFO */}

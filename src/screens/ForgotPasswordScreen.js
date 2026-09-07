@@ -11,11 +11,30 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "./firebaseConfig";
 
 const heroImage = require("../../assets/about-bg.jpg");
 const logoImage = require("../../assets/logo.png");
+
+const getAuthErrorMessage = (error) => {
+  if (!error) return "An unexpected error occurred. Please try again.";
+  switch (error.code) {
+    case "auth/invalid-email":
+      return "The email address is badly formatted.";
+    case "auth/user-not-found":
+      return "No account found with this email address.";
+    case "auth/network-request-failed":
+      return "Network connection error. Please check your internet.";
+    case "auth/too-many-requests":
+      return "Too many requests. Please try again later.";
+    default:
+      return error.message || "Failed to send reset email. Please try again.";
+  }
+};
 
 export default function ForgotPasswordScreen({ navigation }) {
   const { width } = useWindowDimensions();
@@ -26,7 +45,7 @@ export default function ForgotPasswordScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleResetPassword = () => {
+  const handleResetPassword = async () => {
     if (!email.trim()) {
       setErrorMessage("Please enter your email address");
       return;
@@ -41,11 +60,14 @@ export default function ForgotPasswordScreen({ navigation }) {
     setErrorMessage("");
     setLoading(true);
 
-    // Simulate sending recovery email
-    setTimeout(() => {
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
       setLoading(false);
       setIsSubmitted(true);
-    }, 800);
+    } catch (error) {
+      setLoading(false);
+      setErrorMessage(getAuthErrorMessage(error));
+    }
   };
 
   return (
@@ -174,11 +196,16 @@ export default function ForgotPasswordScreen({ navigation }) {
                     activeOpacity={0.85}
                     disabled={loading}
                   >
-                    <Text style={styles.primaryButtonText}>
-                      {loading ? "Sending..." : "Send Reset Instructions"}
-                    </Text>
-                    {!loading && (
-                      <Ionicons name="paper-plane-outline" size={18} color="#0d1b2a" style={{ marginLeft: 8 }} />
+                    {loading ? (
+                      <>
+                        <ActivityIndicator size="small" color="#0d1b2a" style={{ marginRight: 8 }} />
+                        <Text style={styles.primaryButtonText}>Sending Instructions...</Text>
+                      </>
+                    ) : (
+                      <>
+                        <Text style={styles.primaryButtonText}>Send Reset Instructions</Text>
+                        <Ionicons name="paper-plane-outline" size={18} color="#0d1b2a" style={{ marginLeft: 8 }} />
+                      </>
                     )}
                   </TouchableOpacity>
 

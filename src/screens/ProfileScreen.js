@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   SafeAreaView,
   ScrollView,
@@ -12,12 +12,14 @@ import {
   StyleSheet,
   Alert,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import useResponsive from "../hooks/useResponsive";
+import { useAuth } from "../context/AuthContext";
 
 export default function ProfileScreen() {
   const navigation = useNavigation();
@@ -29,26 +31,72 @@ export default function ProfileScreen() {
   } = useResponsive();
 
   const isWide = isDesktop || isTablet;
+  const { user, userProfile, updateUserProfile, loading } = useAuth();
 
   // Form State
-  const [fullName, setFullName] = useState("Muhammad Arsalan");
-  const [email, setEmail] = useState("arsalan.adventure@acesclub.com");
-  const [phone, setPhone] = useState("+92 300 9876543");
-  const [location, setLocation] = useState("Islamabad, Pakistan");
-  const [aboutMe, setAboutMe] = useState(
-    "High-altitude trekking enthusiast, landscape photographer, and passionate mountain explorer. Traveled through Karakoram and Himalayas with Aces Adventure Club."
-  );
-
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [location, setLocation] = useState("");
+  const [aboutMe, setAboutMe] = useState("");
+  const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  const handleSave = () => {
-    setSavedSuccess(true);
-    if (Platform.OS !== "web") {
-      Alert.alert("Success", "Your profile details have been saved successfully!");
+  useEffect(() => {
+    if (userProfile) {
+      setFullName(userProfile.fullName || user?.displayName || "");
+      setEmail(user?.email || userProfile.email || "");
+      setPhone(userProfile.phone || "");
+      setLocation(userProfile.location || "");
+      setAboutMe(userProfile.aboutMe || "");
     }
-    setTimeout(() => {
-      setSavedSuccess(false);
-    }, 4000);
+  }, [userProfile, user]);
+
+  const handleSave = async () => {
+    if (!fullName.trim()) {
+      if (Platform.OS === "web") {
+        alert("Please enter your full name.");
+      } else {
+        Alert.alert("Validation Error", "Please enter your full name.");
+      }
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await updateUserProfile({
+        fullName: fullName.trim(),
+        phone: phone.trim(),
+        location: location.trim(),
+        aboutMe: aboutMe.trim(),
+      });
+      setSavedSuccess(true);
+      if (Platform.OS !== "web") {
+        Alert.alert("Success", "Your profile details have been saved successfully!");
+      }
+      setTimeout(() => {
+        setSavedSuccess(false);
+      }, 4000);
+    } catch (err) {
+      console.error(err);
+      if (Platform.OS === "web") {
+        alert("Failed to update profile: " + (err.message || "Unknown error"));
+      } else {
+        Alert.alert("Error", err.message || "Failed to update profile");
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleReset = () => {
+    if (userProfile) {
+      setFullName(userProfile.fullName || user?.displayName || "");
+      setEmail(user?.email || userProfile.email || "");
+      setPhone(userProfile.phone || "");
+      setLocation(userProfile.location || "");
+      setAboutMe(userProfile.aboutMe || "");
+    }
   };
 
   const favoriteDestinations = [
@@ -103,200 +151,228 @@ export default function ProfileScreen() {
               },
             ]}
           >
-            {/* AVATAR FLOATING BAR */}
-            <View style={styles.avatarCard}>
-              <View style={styles.avatarRow}>
-                <View style={styles.avatarContainer}>
-                  <Image
-                    source={require("../../assets/partnerProfile.jpg")}
-                    style={styles.avatarImage}
-                  />
+            {!user ? (
+              <View style={styles.notLoggedInCard}>
+                <Ionicons name="lock-closed" size={48} color="#0B5CAD" style={{ marginBottom: 16 }} />
+                <Text style={styles.notLoggedInTitle}>Account Authentication Required</Text>
+                <Text style={styles.notLoggedInSubtitle}>
+                  Please sign in to your Aces Adventure Club account to view and manage your expedition profile, preferences, and club membership benefits.
+                </Text>
+                <View style={styles.notLoggedInBtnRow}>
                   <TouchableOpacity
-                    style={styles.avatarEditBadge}
-                    activeOpacity={0.8}
-                    onPress={() => alert("Photo upload feature opened.")}
+                    style={styles.notLoggedInLoginBtn}
+                    onPress={() => navigation.navigate("Login")}
+                    activeOpacity={0.85}
                   >
-                    <Ionicons name="camera" size={16} color="#FFFFFF" />
+                    <Ionicons name="log-in-outline" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
+                    <Text style={styles.notLoggedInLoginText}>Sign In</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.notLoggedInSignupBtn}
+                    onPress={() => navigation.navigate("Signup")}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.notLoggedInSignupText}>Create New Account</Text>
                   </TouchableOpacity>
                 </View>
-
-                <View style={styles.avatarInfo}>
-                  <View style={styles.nameHeaderRow}>
-                    <Text style={styles.profileName}>{fullName || "Explorer"}</Text>
-                    <View style={styles.vipBadge}>
-                      <Ionicons name="sparkles" size={12} color="#F59E0B" />
-                      <Text style={styles.vipBadgeText}>ELITE GOLD</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.profileRole}>Expedition Explorer • Aces Club Member</Text>
-                  <View style={styles.metaRow}>
-                    <View style={styles.metaItem}>
-                      <Ionicons name="location-outline" size={14} color="#64748B" />
-                      <Text style={styles.metaText}>{location}</Text>
-                    </View>
-                    <View style={styles.metaItem}>
-                      <Ionicons name="calendar-outline" size={14} color="#64748B" />
-                      <Text style={styles.metaText}>Joined March 2023</Text>
-                    </View>
-                  </View>
-                </View>
-
-                {/* Direct quick link to Settings */}
-                <TouchableOpacity
-                  style={styles.settingsQuickBtn}
-                  onPress={() => navigation.navigate("Settings")}
-                >
-                  <Ionicons name="settings-outline" size={18} color="#0B5CAD" />
-                  {isDesktop && <Text style={styles.settingsQuickText}>Account Settings</Text>}
-                </TouchableOpacity>
               </View>
-            </View>
-
-            {/* SUCCESS BANNER */}
-            {savedSuccess && (
-              <View style={styles.successBanner}>
-                <Ionicons name="checkmark-circle" size={22} color="#059669" style={{ marginRight: 10 }} />
-                <Text style={styles.successBannerText}>
-                  Your profile changes have been saved successfully!
-                </Text>
-              </View>
-            )}
-
-            {/* TWO-COLUMN LAYOUT (DESKTOP) / STACK (MOBILE) */}
-            <View style={[styles.gridRow, { flexDirection: isDesktop ? "row" : "column" }]}>
-              {/* ================= LEFT COLUMN: EDITABLE FORM ================= */}
-              <View style={[styles.leftFormColumn, { flex: isDesktop ? 1.6 : 1 }]}>
-                <View style={styles.formCard}>
-                  <View style={styles.cardHeader}>
-                    <View style={styles.cardIconBox}>
-                      <Ionicons name="person" size={20} color="#0B5CAD" />
-                    </View>
-                    <View>
-                      <Text style={styles.cardTitle}>Personal Information</Text>
-                      <Text style={styles.cardSubtitle}>
-                        Update your personal and contact details for bookings
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.divider} />
-
-                  <View style={styles.formFields}>
-                    {/* Full Name */}
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>
-                        Full Name <Text style={styles.requiredStar}>*</Text>
-                      </Text>
-                      <View style={styles.inputWrapper}>
-                        <Ionicons name="person-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
-                        <TextInput
-                          style={styles.textInput}
-                          value={fullName}
-                          onChangeText={setFullName}
-                          placeholder="Enter your full name"
-                          placeholderTextColor="#94A3B8"
-                        />
-                      </View>
-                    </View>
-
-                    {/* Email & Phone in a row on wide screen */}
-                    <View style={[styles.inputRow, { flexDirection: isWide ? "row" : "column", gap: 16 }]}>
-                      <View style={[styles.inputGroup, { flex: 1 }]}>
-                        <Text style={styles.inputLabel}>
-                          Email Address <Text style={styles.requiredStar}>*</Text>
-                        </Text>
-                        <View style={styles.inputWrapper}>
-                          <Ionicons name="mail-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
-                          <TextInput
-                            style={styles.textInput}
-                            value={email}
-                            onChangeText={setEmail}
-                            placeholder="Enter your email"
-                            placeholderTextColor="#94A3B8"
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                          />
-                        </View>
-                      </View>
-
-                      <View style={[styles.inputGroup, { flex: 1 }]}>
-                        <Text style={styles.inputLabel}>Phone Number</Text>
-                        <View style={styles.inputWrapper}>
-                          <Ionicons name="call-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
-                          <TextInput
-                            style={styles.textInput}
-                            value={phone}
-                            onChangeText={setPhone}
-                            placeholder="+92 300 0000000"
-                            placeholderTextColor="#94A3B8"
-                            keyboardType="phone-pad"
-                          />
-                        </View>
-                      </View>
-                    </View>
-
-                    {/* Location */}
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>Location / City</Text>
-                      <View style={styles.inputWrapper}>
-                        <Ionicons name="location-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
-                        <TextInput
-                          style={styles.textInput}
-                          value={location}
-                          onChangeText={setLocation}
-                          placeholder="City, Country"
-                          placeholderTextColor="#94A3B8"
-                        />
-                      </View>
-                    </View>
-
-                    {/* About Me */}
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>About Me & Adventure Bio</Text>
-                      <View style={[styles.inputWrapper, styles.textAreaWrapper]}>
-                        <TextInput
-                          style={[styles.textInput, styles.textAreaInput]}
-                          value={aboutMe}
-                          onChangeText={setAboutMe}
-                          placeholder="Tell fellow adventurers about your travel interests, trekking experience, and passion for the wild..."
-                          placeholderTextColor="#94A3B8"
-                          multiline
-                          numberOfLines={4}
-                          textAlignVertical="top"
-                        />
-                      </View>
-                    </View>
-
-                    {/* Action Buttons */}
-                    <View style={styles.buttonRow}>
+            ) : (
+              <>
+                {/* AVATAR FLOATING BAR */}
+                <View style={styles.avatarCard}>
+                  <View style={styles.avatarRow}>
+                    <View style={styles.avatarContainer}>
+                      <Image
+                        source={require("../../assets/partnerProfile.jpg")}
+                        style={styles.avatarImage}
+                      />
                       <TouchableOpacity
-                        style={styles.saveButton}
-                        activeOpacity={0.85}
-                        onPress={handleSave}
-                      >
-                        <Ionicons name="save-outline" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
-                        <Text style={styles.saveButtonText}>SAVE CHANGES</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        style={styles.cancelButton}
+                        style={styles.avatarEditBadge}
                         activeOpacity={0.8}
                         onPress={() => {
-                          setFullName("Muhammad Arsalan");
-                          setEmail("arsalan.adventure@acesclub.com");
-                          setPhone("+92 300 9876543");
-                          setLocation("Islamabad, Pakistan");
-                          setAboutMe(
-                            "High-altitude trekking enthusiast, landscape photographer, and passionate mountain explorer."
-                          );
+                          if (Platform.OS === "web") {
+                            alert("Profile photo update opened. You can choose a new avatar image.");
+                          } else {
+                            Alert.alert("Photo Upload", "Photo upload feature opened.");
+                          }
                         }}
                       >
-                        <Text style={styles.cancelButtonText}>Reset Form</Text>
+                        <Ionicons name="camera" size={16} color="#FFFFFF" />
                       </TouchableOpacity>
                     </View>
+
+                    <View style={styles.avatarInfo}>
+                      <View style={styles.nameHeaderRow}>
+                        <Text style={styles.profileName}>{fullName || user?.displayName || "Explorer"}</Text>
+                        <View style={styles.vipBadge}>
+                          <Ionicons name="sparkles" size={12} color="#F59E0B" />
+                          <Text style={styles.vipBadgeText}>{userProfile?.membershipTier || "ELITE GOLD"}</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.profileRole}>{userProfile?.role || "Expedition Explorer • Aces Club Member"}</Text>
+                      <View style={styles.metaRow}>
+                        <View style={styles.metaItem}>
+                          <Ionicons name="location-outline" size={14} color="#64748B" />
+                          <Text style={styles.metaText}>{location || "Islamabad, Pakistan"}</Text>
+                        </View>
+                        <View style={styles.metaItem}>
+                          <Ionicons name="calendar-outline" size={14} color="#64748B" />
+                          <Text style={styles.metaText}>{userProfile?.joinedDate || "Member"}</Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* Direct quick link to Settings */}
+                    <TouchableOpacity
+                      style={styles.settingsQuickBtn}
+                      onPress={() => navigation.navigate("Settings")}
+                    >
+                      <Ionicons name="settings-outline" size={18} color="#0B5CAD" />
+                      {isDesktop && <Text style={styles.settingsQuickText}>Account Settings</Text>}
+                    </TouchableOpacity>
                   </View>
                 </View>
-              </View>
+
+                {/* SUCCESS BANNER */}
+                {savedSuccess && (
+                  <View style={styles.successBanner}>
+                    <Ionicons name="checkmark-circle" size={22} color="#059669" style={{ marginRight: 10 }} />
+                    <Text style={styles.successBannerText}>
+                      Your profile changes have been saved successfully!
+                    </Text>
+                  </View>
+                )}
+
+                {/* TWO-COLUMN LAYOUT (DESKTOP) / STACK (MOBILE) */}
+                <View style={[styles.gridRow, { flexDirection: isDesktop ? "row" : "column" }]}>
+                  {/* ================= LEFT COLUMN: EDITABLE FORM ================= */}
+                  <View style={[styles.leftFormColumn, { flex: isDesktop ? 1.6 : 1 }]}>
+                    <View style={styles.formCard}>
+                      <View style={styles.cardHeader}>
+                        <View style={styles.cardIconBox}>
+                          <Ionicons name="person" size={20} color="#0B5CAD" />
+                        </View>
+                        <View>
+                          <Text style={styles.cardTitle}>Personal Information</Text>
+                          <Text style={styles.cardSubtitle}>
+                            Update your personal and contact details for bookings
+                          </Text>
+                        </View>
+                      </View>
+
+                      <View style={styles.divider} />
+
+                      <View style={styles.formFields}>
+                        {/* Full Name */}
+                        <View style={styles.inputGroup}>
+                          <Text style={styles.inputLabel}>
+                            Full Name <Text style={styles.requiredStar}>*</Text>
+                          </Text>
+                          <View style={styles.inputWrapper}>
+                            <Ionicons name="person-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
+                            <TextInput
+                              style={styles.textInput}
+                              value={fullName}
+                              onChangeText={setFullName}
+                              placeholder="Enter your full name"
+                              placeholderTextColor="#94A3B8"
+                            />
+                          </View>
+                        </View>
+
+                        {/* Email & Phone in a row on wide screen */}
+                        <View style={[styles.inputRow, { flexDirection: isWide ? "row" : "column", gap: 16 }]}>
+                          <View style={[styles.inputGroup, { flex: 1 }]}>
+                            <Text style={styles.inputLabel}>
+                              Email Address (Account)
+                            </Text>
+                            <View style={[styles.inputWrapper, { backgroundColor: "#F8FAFC" }]}>
+                              <Ionicons name="mail-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
+                              <TextInput
+                                style={[styles.textInput, { color: "#64748B" }]}
+                                value={email}
+                                editable={false}
+                                placeholder="Email address"
+                                placeholderTextColor="#94A3B8"
+                              />
+                            </View>
+                          </View>
+
+                          <View style={[styles.inputGroup, { flex: 1 }]}>
+                            <Text style={styles.inputLabel}>Phone Number</Text>
+                            <View style={styles.inputWrapper}>
+                              <Ionicons name="call-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
+                              <TextInput
+                                style={styles.textInput}
+                                value={phone}
+                                onChangeText={setPhone}
+                                placeholder="+92 300 0000000"
+                                placeholderTextColor="#94A3B8"
+                                keyboardType="phone-pad"
+                              />
+                            </View>
+                          </View>
+                        </View>
+
+                        {/* Location */}
+                        <View style={styles.inputGroup}>
+                          <Text style={styles.inputLabel}>Location / City</Text>
+                          <View style={styles.inputWrapper}>
+                            <Ionicons name="location-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
+                            <TextInput
+                              style={styles.textInput}
+                              value={location}
+                              onChangeText={setLocation}
+                              placeholder="City, Country"
+                              placeholderTextColor="#94A3B8"
+                            />
+                          </View>
+                        </View>
+
+                        {/* About Me */}
+                        <View style={styles.inputGroup}>
+                          <Text style={styles.inputLabel}>About Me & Adventure Bio</Text>
+                          <View style={[styles.inputWrapper, styles.textAreaWrapper]}>
+                            <TextInput
+                              style={[styles.textInput, styles.textAreaInput]}
+                              value={aboutMe}
+                              onChangeText={setAboutMe}
+                              placeholder="Tell fellow adventurers about your travel interests, trekking experience, and passion for the wild..."
+                              placeholderTextColor="#94A3B8"
+                              multiline
+                              numberOfLines={4}
+                              textAlignVertical="top"
+                            />
+                          </View>
+                        </View>
+
+                        {/* Action Buttons */}
+                        <View style={styles.buttonRow}>
+                          <TouchableOpacity
+                            style={[styles.saveButton, saving && { opacity: 0.7 }]}
+                            activeOpacity={0.85}
+                            onPress={handleSave}
+                            disabled={saving}
+                          >
+                            {saving ? (
+                              <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 8 }} />
+                            ) : (
+                              <Ionicons name="save-outline" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
+                            )}
+                            <Text style={styles.saveButtonText}>{saving ? "SAVING..." : "SAVE CHANGES"}</Text>
+                          </TouchableOpacity>
+
+                          <TouchableOpacity
+                            style={styles.cancelButton}
+                            activeOpacity={0.8}
+                            onPress={handleReset}
+                          >
+                            <Text style={styles.cancelButtonText}>Reset Form</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </View>
+                  </View>
 
               {/* ================= RIGHT COLUMN: STATISTIC CARDS ================= */}
               <View style={[styles.rightStatsColumn, { flex: isDesktop ? 1 : 1 }]}>
@@ -415,6 +491,8 @@ export default function ProfileScreen() {
                 </View>
               </View>
             </View>
+            </>
+            )}
           </View>
         </View>
 
@@ -495,6 +573,73 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E2E8F0",
     marginBottom: 24,
+  },
+  notLoggedInCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#0F172A",
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    marginBottom: 30,
+    textAlign: "center",
+  },
+  notLoggedInTitle: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#0F172A",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  notLoggedInSubtitle: {
+    fontSize: 15,
+    color: "#64748B",
+    textAlign: "center",
+    maxWidth: 520,
+    lineHeight: 22,
+    marginBottom: 28,
+  },
+  notLoggedInBtnRow: {
+    flexDirection: "row",
+    gap: 14,
+    flexWrap: "wrap",
+    justifyContent: "center",
+  },
+  notLoggedInLoginBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#0B5CAD",
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    borderRadius: 14,
+    shadowColor: "#0B5CAD",
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  notLoggedInLoginText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  notLoggedInSignupBtn: {
+    backgroundColor: "#F1F5F9",
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+  },
+  notLoggedInSignupText: {
+    color: "#0F172A",
+    fontSize: 15,
+    fontWeight: "700",
   },
   avatarRow: {
     flexDirection: "row",

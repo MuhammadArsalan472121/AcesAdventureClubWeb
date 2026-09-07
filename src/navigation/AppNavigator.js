@@ -17,6 +17,13 @@ import Onboarding3 from "../screens/Onboarding3";
 import ViewTripScreen from "../screens/ViewTripScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import SettingsScreen from "../screens/SettingsScreen";
+import AdminLoginScreen from "../screens/AdminLoginScreen";
+import AdminDashboardScreen from "../screens/AdminDashboardScreen";
+import UserManagementScreen from "../screens/UserManagementScreen";
+import ManageTripsScreen from "../screens/ManageTripsScreen";
+import SponsorsManagementScreen from "../screens/SponsorsManagementScreen";
+import GalleryManagementScreen from "../screens/GalleryManagementScreen";
+import ConsoleSettingsScreen from "../screens/ConsoleSettingsScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -39,6 +46,14 @@ export default function AppNavigator() {
       <Stack.Screen name="ViewTrip" component={ViewTripScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
+      {/* Admin Panel Screens */}
+      <Stack.Screen name="AdminLogin" component={AdminLoginScreen} />
+      <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} />
+      <Stack.Screen name="AdminUsers" component={UserManagementScreen} />
+      <Stack.Screen name="AdminTrips" component={ManageTripsScreen} />
+      <Stack.Screen name="AdminSponsors" component={SponsorsManagementScreen} />
+      <Stack.Screen name="AdminGallery" component={GalleryManagementScreen} />
+      <Stack.Screen name="AdminSettings" component={ConsoleSettingsScreen} />
     </Stack.Navigator>
   );
 }

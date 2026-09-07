@@ -11,11 +11,34 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { auth } from "./firebaseConfig";
 
 const heroImage = require("../../assets/tripHero.jpg");
 const logoImage = require("../../assets/logo.png");
+
+const getAuthErrorMessage = (error) => {
+  if (!error) return "An unexpected error occurred. Please try again.";
+  switch (error.code) {
+    case "auth/email-already-in-use":
+      return "An account with this email already exists. Please sign in instead.";
+    case "auth/invalid-email":
+      return "The email address is badly formatted.";
+    case "auth/operation-not-allowed":
+      return "Email/password registration is not enabled in Firebase Console.";
+    case "auth/weak-password":
+      return "Password is too weak. Please use at least 6 characters.";
+    case "auth/network-request-failed":
+      return "Network connection error. Please check your internet.";
+    case "auth/too-many-requests":
+      return "Too many attempts. Access is temporarily blocked. Please try again later.";
+    default:
+      return error.message || "Registration failed. Please try again.";
+  }
+};
 
 export default function SignupScreen({ navigation }) {
   const { width } = useWindowDimensions();
@@ -28,9 +51,10 @@ export default function SignupScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleCreateAccount = () => {
+  const handleCreateAccount = async () => {
     if (!fullName.trim()) {
       setErrorMessage("Please enter your full name");
       return;
@@ -62,8 +86,44 @@ export default function SignupScreen({ navigation }) {
     }
 
     setErrorMessage("");
-    console.log("Create account", { fullName, email, password });
-    navigation?.navigate("Home");
+    setLoading(true);
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email.trim(),
+        password
+      );
+      if (fullName.trim()) {
+        try {
+          await updateProfile(userCredential.user, {
+            displayName: fullName.trim(),
+          });
+          if (Platform.OS === "web" && typeof window !== "undefined" && window.localStorage) {
+            window.localStorage.setItem(
+              `aces_club_user_profile_${userCredential.user.uid}`,
+              JSON.stringify({
+                fullName: fullName.trim(),
+                email: email.trim(),
+                phone: "+92 300 9876543",
+                location: "Islamabad, Pakistan",
+                aboutMe: "High-altitude trekking enthusiast, landscape photographer, and passionate mountain explorer.",
+                membershipTier: "Aces Elite Gold",
+                role: "Expedition Explorer • Aces Club Member",
+                joinedDate: new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+              })
+            );
+          }
+        } catch (profileErr) {
+          console.warn("Could not update displayName", profileErr);
+        }
+      }
+      setLoading(false);
+      navigation?.navigate("Home");
+    } catch (error) {
+      setLoading(false);
+      setErrorMessage(getAuthErrorMessage(error));
+    }
   };
 
   return (
@@ -275,12 +335,22 @@ export default function SignupScreen({ navigation }) {
 
               {/* Submit Button */}
               <TouchableOpacity
-                style={styles.primaryButton}
+                style={[styles.primaryButton, loading && styles.buttonDisabled]}
                 onPress={handleCreateAccount}
                 activeOpacity={0.85}
+                disabled={loading}
               >
-                <Text style={styles.primaryButtonText}>Create Account</Text>
-                <Ionicons name="arrow-forward" size={18} color="#0d1b2a" style={{ marginLeft: 8 }} />
+                {loading ? (
+                  <>
+                    <ActivityIndicator size="small" color="#0d1b2a" style={{ marginRight: 8 }} />
+                    <Text style={styles.primaryButtonText}>Creating Account...</Text>
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.primaryButtonText}>Create Account</Text>
+                    <Ionicons name="arrow-forward" size={18} color="#0d1b2a" style={{ marginLeft: 8 }} />
+                  </>
+                )}
               </TouchableOpacity>
 
               {/* Sign In Link */}
@@ -611,6 +681,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 3,
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
   primaryButtonText: {
     color: "#0d1b2a",

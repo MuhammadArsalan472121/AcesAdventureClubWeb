@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 
 type SidebarProps = {
   activeScreen?: string;
@@ -9,59 +9,38 @@ type SidebarProps = {
 export default function Sidebar({
   activeScreen = 'Dashboard',
 }: SidebarProps) {
+  const navigation = useNavigation<any>();
+
   const menuItems = [
-    { label: 'Dashboard', icon: '▦' },
-    { label: 'Users', icon: '♙' },
-    { label: 'Trips', icon: '◉' },
-    { label: 'Sponsors', icon: '◇' },
-    { label: 'Gallery', icon: '▣' },
-    { label: 'Settings', icon: '⚙' },
+    { label: 'Dashboard', icon: '▦', screen: 'AdminDashboard' },
+    { label: 'Users', icon: '♙', screen: 'AdminUsers' },
+    { label: 'Trips', icon: '◉', screen: 'AdminTrips' },
+    { label: 'Sponsors', icon: '◇', screen: 'AdminSponsors' },
+    { label: 'Gallery', icon: '▣', screen: 'AdminGallery' },
+    { label: 'Settings', icon: '⚙', screen: 'AdminSettings' },
   ];
 
-  const handleNavigation = (screen: string) => {
-    switch (screen) {
-      case 'Dashboard':
-        router.push('/');
-        break;
+  const handleNavigation = (screenName: string) => {
+    navigation.navigate(screenName);
+  };
 
-      case 'Users':
-        router.push('/users');
-        break;
-
-      case 'Trips':
-        router.push('/trips');
-        break;
-
-      case 'Sponsors':
-        router.push('/sponsors');
-        break;
-
-      case 'Gallery':
-        router.push('/gallery');
-        break;
-
-      case 'Settings':
-        router.push('/settings');
-        break;
-
-      default:
-        break;
-    }
+  const handleLogout = () => {
+    navigation.navigate('Home');
   };
 
   return (
     <View style={styles.sidebar}>
       <View>
-        <View style={styles.logoContainer}>
+        <Pressable style={styles.logoContainer} onPress={() => navigation.navigate('Home')}>
           <View style={styles.logoCircle}>
             <Text style={styles.logoIcon}>◆</Text>
           </View>
 
           <View>
             <Text style={styles.logoTitle}>ACES ADVENTURE</Text>
-            <Text style={styles.logoSubtitle}>ADMIN CONSOLE</Text>
+            <Text style={styles.logoSubtitle}>ADMIN CONSOLE ➔ WEB</Text>
           </View>
-        </View>
+        </Pressable>
 
         <View style={styles.menu}>
           {menuItems.map((item) => {
@@ -70,7 +49,7 @@ export default function Sidebar({
             return (
               <Pressable
                 key={item.label}
-                onPress={() => handleNavigation(item.label)}
+                onPress={() => handleNavigation(item.screen)}
                 style={[
                   styles.menuItem,
                   active && styles.activeMenuItem,
@@ -102,11 +81,14 @@ export default function Sidebar({
       <View>
         <Text style={styles.support}>♧ SUPPORT</Text>
 
-        <Pressable style={styles.help}>
-          <Text style={styles.helpText}>? HELP</Text>
+        <Pressable
+          style={styles.help}
+          onPress={() => navigation.navigate('Home')}
+        >
+          <Text style={styles.helpText}>← MAIN WEBSITE</Text>
         </Pressable>
 
-        <Pressable style={styles.logout}>
+        <Pressable style={styles.logout} onPress={handleLogout}>
           <Text style={styles.logoutText}>LOGOUT</Text>
         </Pressable>
       </View>
