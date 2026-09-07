@@ -16,11 +16,13 @@ import { useNavigation } from "@react-navigation/native";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import useResponsive from "../hooks/useResponsive";
+import { useData, resolveAsset } from "../context/DataContext";
 
 const { height, width } = Dimensions.get("window");
 
 export default function PartnerScreen() {
   const navigation = useNavigation();
+  const { officialPartner, partnerBenefits, trips } = useData();
   const {
     isDesktop,
     isTablet,
@@ -29,35 +31,7 @@ export default function PartnerScreen() {
     paddingHorizontal,
   } = useResponsive();
 
-  const sponsoredTrips = [
-    {
-      id: 1,
-      image: require("../../assets/hub1.jpg"),
-      badge: "Most Popular",
-      title: "Hunza Valley",
-      description: "Experience breathtaking beauty of Hunza's mountains and valleys.",
-      duration: "3 Days",
-      price: "PKR 40,000",
-    },
-    {
-      id: 2,
-      image: require("../../assets/hub2.jpg"),
-      badge: "Most Liked",
-      title: "Fairy Meadows Trek",
-      description: "Journey through scenic trails leading to Nanga Parbat base camp.",
-      duration: "5 Days",
-      price: "PKR 55,000",
-    },
-    {
-      id: 3,
-      image: require("../../assets/hub3.jpg"),
-      badge: "Most Visited",
-      title: "Skardu Adventure",
-      description: "Explore Karakoram peaks, Shangrila lake and Cold Desert.",
-      duration: "7 Days",
-      price: "PKR 65,000",
-    },
-  ];
+  const sponsoredTrips = trips.slice(0, 3);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -118,25 +92,29 @@ export default function PartnerScreen() {
           >
             {/* Left Image */}
             <View style={{ flex: isDesktop ? 1 : undefined, width: "100%", maxWidth: isDesktop ? 580 : "100%", marginBottom: isDesktop ? 0 : 35 }}>
-              <Image source={require("../../assets/partnerProfile.jpg")} style={styles.partnerImage} resizeMode="cover" />
+              <Image source={resolveAsset(officialPartner?.imageKey, "partnerProfile.jpg")} style={styles.partnerImage} resizeMode="cover" />
             </View>
 
             {/* Right Text */}
             <View style={{ flex: isDesktop ? 1.1 : undefined, maxWidth: isDesktop ? 640 : "100%", marginLeft: isDesktop ? 45 : 0 }}>
               <Text style={styles.partnerLabel}>OFFICIAL PARTNER</Text>
-              <Text style={styles.partnerName}>Mountain Gear Pakistan</Text>
+              <Text style={styles.partnerName}>{officialPartner?.name || "Mountain Gear Pakistan"}</Text>
 
               <View style={styles.partnerTagsRow}>
-                <View style={styles.tagChip}>
-                  <Text style={styles.tagChipText}>Outdoor Equipment</Text>
-                </View>
-                <View style={styles.tagChip}>
-                  <Text style={styles.tagChipText}>Expedition Supplier</Text>
-                </View>
+                {officialPartner?.tag1 ? (
+                  <View style={styles.tagChip}>
+                    <Text style={styles.tagChipText}>{officialPartner.tag1}</Text>
+                  </View>
+                ) : null}
+                {officialPartner?.tag2 ? (
+                  <View style={styles.tagChip}>
+                    <Text style={styles.tagChipText}>{officialPartner.tag2}</Text>
+                  </View>
+                ) : null}
               </View>
 
               <Text style={styles.partnerDescription}>
-                Mountain Gear Pakistan is a premier outdoor equipment company dedicated to supporting outdoor tourism and adventure seekers. By providing state-of-the-art gear and expert equipment logistics, they ensure every trek into the heart of the Karakoram is backed by safety, reliability, and world-class equipment.
+                {officialPartner?.description}
               </Text>
             </View>
           </View>
@@ -226,17 +204,19 @@ export default function PartnerScreen() {
                 <TouchableOpacity
                   key={item.id}
                   style={[styles.tripCard, isDesktop && { width: "31.5%", marginBottom: 0 }]}
-                  onPress={() => navigation.navigate("ViewTrip")}
+                  onPress={() => navigation.navigate("ViewTrip", { tripId: item.id })}
                 >
-                  <ImageBackground source={item.image} style={styles.tripCardBg} imageStyle={{ borderRadius: 20 }}>
+                  <ImageBackground source={resolveAsset(item.imageKey, "hub1.jpg")} style={styles.tripCardBg} imageStyle={{ borderRadius: 20 }}>
                     <View style={styles.tripOverlay}>
-                      <View style={styles.tripBadge}>
-                        <Text style={styles.tripBadgeText}>{item.badge}</Text>
-                      </View>
+                      {item.badge ? (
+                        <View style={styles.tripBadge}>
+                          <Text style={styles.tripBadgeText}>{item.badge}</Text>
+                        </View>
+                      ) : null}
 
                       <View style={styles.tripCardBottom}>
                         <Text style={styles.tripName}>{item.title}</Text>
-                        <Text style={styles.tripDesc}>{item.description}</Text>
+                        <Text style={styles.tripDesc} numberOfLines={2}>{item.description}</Text>
 
                         <View style={styles.tripBottomRow}>
                           <View>

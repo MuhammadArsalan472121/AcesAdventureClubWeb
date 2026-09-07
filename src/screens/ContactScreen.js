@@ -17,11 +17,13 @@ import { useNavigation } from "@react-navigation/native";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import useResponsive from "../hooks/useResponsive";
+import { useData } from "../context/DataContext";
 
 const { height, width } = Dimensions.get("window");
 
 export default function ContactScreen() {
   const navigation = useNavigation();
+  const { contactContent, addInquiry } = useData();
   const {
     isDesktop,
     isTablet,
@@ -36,11 +38,31 @@ export default function ContactScreen() {
     email: "aiden.v@luxury.com",
     phone: "+92 300 1234567",
     destination: "Northern Areas, Pakistan",
-    travelDate: "mm/dd/yyyy",
+    travelDate: "10/15/2026",
     travelers: "1 - 2 Person",
     adventureType: "Hiking",
     message: "I am looking for a secluded trekking experience with luxury camping amenities...",
   });
+
+  const handleSubmit = () => {
+    if (!formData.firstName || !formData.email) {
+      alert("Please fill in your name and email.");
+      return;
+    }
+
+    addInquiry({
+      name: `${formData.firstName} ${formData.lastName}`.trim(),
+      email: formData.email,
+      phone: formData.phone,
+      destination: formData.destination,
+      travelDate: formData.travelDate,
+      travelers: formData.travelers,
+      adventureType: formData.adventureType,
+      message: formData.message,
+    });
+
+    alert("Thank you! Your adventure inquiry has been received by our expedition specialists.");
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -231,7 +253,7 @@ export default function ContactScreen() {
                     </View>
 
                     {/* Submit Button */}
-                    <TouchableOpacity style={styles.submitBtn} onPress={() => alert("Adventure Request Sent!")}>
+                    <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
                       <Text style={styles.submitBtnText}>SEND ADVENTURE REQUEST</Text>
                     </TouchableOpacity>
 
@@ -255,8 +277,8 @@ export default function ContactScreen() {
                     </View>
                     <View style={{ marginLeft: 14 }}>
                       <Text style={styles.infoTagText}>CALL US</Text>
-                      <Text style={styles.infoMainText}>+92 312 5556789</Text>
-                      <Text style={styles.infoSubText}>Mon–Fri, 9am - 6pm PKT</Text>
+                      <Text style={styles.infoMainText}>{contactContent.phone || "+92 312 5556789"}</Text>
+                      <Text style={styles.infoSubText}>{contactContent.phoneHours || "Mon–Fri, 9am - 6pm PKT"}</Text>
                     </View>
                   </View>
 
@@ -267,8 +289,8 @@ export default function ContactScreen() {
                     </View>
                     <View style={{ marginLeft: 14 }}>
                       <Text style={styles.infoTagText}>EMAIL US</Text>
-                      <Text style={styles.infoMainText}>hello@acesadventure.com</Text>
-                      <Text style={styles.infoSubText}>Inquiry & Support</Text>
+                      <Text style={styles.infoMainText}>{contactContent.email || "hello@acesadventure.com"}</Text>
+                      <Text style={styles.infoSubText}>{contactContent.emailSubtitle || "Inquiry & Support"}</Text>
                     </View>
                   </View>
 
@@ -279,8 +301,8 @@ export default function ContactScreen() {
                     </View>
                     <View style={{ marginLeft: 14 }}>
                       <Text style={styles.infoTagText}>LOCATION</Text>
-                      <Text style={styles.infoMainText}>Attock, Punjab, Pakistan</Text>
-                      <Text style={styles.infoSubText}>The Gateway to the North</Text>
+                      <Text style={styles.infoMainText}>{contactContent.location || "Attock, Punjab, Pakistan"}</Text>
+                      <Text style={styles.infoSubText}>{contactContent.locationSubtitle || "The Gateway to the North"}</Text>
                     </View>
                   </View>
                 </View>

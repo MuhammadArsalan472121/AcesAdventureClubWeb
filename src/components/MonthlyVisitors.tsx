@@ -9,14 +9,14 @@ export default function MonthlyVisitors() {
     <View style={styles.card}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>Monthly Visitors</Text>
+          <Text style={styles.title}>Monthly Visitors & Explorers</Text>
           <Text style={styles.subtitle}>
-            Club activity overview for 2024
+            Platform analytics & member expedition bookings for 2026
           </Text>
         </View>
 
         <View style={styles.dropdown}>
-          <Text style={styles.dropdownText}>Last 6 Months⌄</Text>
+          <Text style={styles.dropdownText}>Last 6 Months ▾</Text>
         </View>
       </View>
 
@@ -29,7 +29,7 @@ export default function MonthlyVisitors() {
                 {
                   height: value,
                   backgroundColor:
-                    index === values.length - 1 ? '#78A8C8' : '#2D466E',
+                    index === values.length - 1 ? '#0B5CAD' : '#93C5FD',
                 },
               ]}
             />
@@ -46,42 +46,48 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     minWidth: 450,
-    height: 300,
+    height: 330,
     borderWidth: 1,
-    borderColor: '#EEE4D7',
-    borderRadius: 15,
-    padding: 20,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    padding: 24,
     backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
   },
 
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
 
   title: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#17253A',
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#0F172A',
   },
 
   subtitle: {
-    fontSize: 8,
-    color: '#555555',
+    fontSize: 13,
+    color: '#64748B',
     marginTop: 4,
   },
 
   dropdown: {
     borderWidth: 1,
-    borderColor: '#BBBBBB',
-    borderRadius: 5,
-    paddingHorizontal: 9,
+    borderColor: '#CBD5E1',
+    borderRadius: 8,
+    paddingHorizontal: 12,
     paddingVertical: 6,
-    height: 27,
+    backgroundColor: '#F8FAFC',
   },
 
   dropdownText: {
-    fontSize: 7,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#475569',
   },
 
   chart: {
@@ -89,26 +95,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-around',
-    marginTop: 18,
+    marginTop: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
+    borderBottomColor: '#F1F5F9',
+    paddingBottom: 4,
   },
 
   barColumn: {
-    height: 210,
+    height: 200,
     justifyContent: 'flex-end',
     alignItems: 'center',
   },
 
   bar: {
-    width: 40,
-    borderRadius: 5,
+    width: 44,
+    borderRadius: 8,
   },
 
   month: {
-    fontSize: 7,
-    marginTop: 8,
-    marginBottom: 5,
-    color: '#333333',
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 10,
+    marginBottom: 4,
+    color: '#475569',
   },
 });

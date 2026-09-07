@@ -11,10 +11,17 @@ import {
   StatusBar,
 } from "react-native";
 import useResponsive from "../hooks/useResponsive";
+import { useData } from "../context/DataContext";
 
 export default function Onboarding1() {
   const navigation = useNavigation();
+  const { onboardingContent } = useData();
   const { isDesktop } = useResponsive();
+  const slideData = onboardingContent?.slide1 || {
+    headingWhite: "DISCOVER ADVENTURE\n",
+    headingBlue: "BEYOND LIMITS",
+    paragraph: "Explore breathtaking destinations, hiking trails and unforgettable experiences crafted for passionate explorers.",
+  };
 
   const fade = useRef(new Animated.Value(0)).current;
   const slide = useRef(new Animated.Value(40)).current;
@@ -80,13 +87,12 @@ export default function Onboarding1() {
           {/* Text & Indicators (Left) */}
           <View style={[styles.textContent, { maxWidth: isDesktop ? 680 : "100%" }]}>
             <Text style={[styles.headingWhite, isDesktop ? { fontSize: 48, lineHeight: 54 } : { fontSize: 28, lineHeight: 34 }]}>
-              DISCOVER ADVENTURE{"\n"}
-              <Text style={styles.headingBlue}>BEYOND LIMITS</Text>
+              {slideData.headingWhite}
+              <Text style={styles.headingBlue}>{slideData.headingBlue}</Text>
             </Text>
 
             <Text style={[styles.paragraph, isDesktop ? { fontSize: 17, lineHeight: 28 } : { fontSize: 14, lineHeight: 22 }]}>
-              Explore breathtaking destinations, hiking trails and unforgettable
-              experiences crafted for passionate explorers.
+              {slideData.paragraph}
             </Text>
 
             {/* Indicator Dots */}

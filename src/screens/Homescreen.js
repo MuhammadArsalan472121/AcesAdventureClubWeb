@@ -17,11 +17,13 @@ import { useNavigation } from "@react-navigation/native";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import useResponsive from "../hooks/useResponsive";
+import { useData, resolveAsset } from "../context/DataContext";
 
 const { height, width } = Dimensions.get("window");
 
 export default function HomeScreen() {
   const navigation = useNavigation();
+  const { homeContent, trips } = useData();
   const {
     isMobile,
     isDesktop,
@@ -55,20 +57,20 @@ export default function HomeScreen() {
             <View style={[styles.content, { maxWidth: contentMaxWidth, width: "100%", alignSelf: "center", alignItems: "center" }]}>
               {/* Badge */}
               <View style={styles.badge}>
-                <Text style={styles.badgeText}>• Premium Adventure Club •</Text>
+                <Text style={styles.badgeText}>{homeContent.heroBadge || "• Premium Adventure Club •"}</Text>
               </View>
 
               {/* Heading */}
               <Text style={[styles.headingWhite, { fontSize: isDesktop ? 58 : 36, lineHeight: isDesktop ? 66 : 42, textAlign: "center" }]}>
-                EXPLORE THE WILD
+                {homeContent.heroHeadingWhite || "EXPLORE THE WILD"}
               </Text>
               <Text style={[styles.headingBlue, { fontSize: isDesktop ? 58 : 36, lineHeight: isDesktop ? 66 : 42, textAlign: "center" }]}>
-                <Text style={styles.italicBlue}>CREATE </Text>MEMORIES
+                {homeContent.heroHeadingBlue || "CREATE MEMORIES"}
               </Text>
 
               {/* Paragraph */}
               <Text style={[styles.paragraph, { fontSize: isDesktop ? 18 : 15, lineHeight: isDesktop ? 28 : 24, textAlign: "center", maxWidth: 750 }]}>
-                Embark on a journey to the most remote corners of Pakistan. Experience the beauty of nature through curated expeditions.
+                {homeContent.heroParagraph}
               </Text>
 
               {/* Buttons */}
@@ -114,19 +116,19 @@ export default function HomeScreen() {
           >
             {/* Left Column (Text & Bullet Points) */}
             <View style={{ flex: isDesktop ? 1 : undefined, maxWidth: isDesktop ? 620 : "100%", marginRight: isDesktop ? 40 : 0 }}>
-              <Text style={styles.aboutSmallTitle}>WHO WE ARE</Text>
+              <Text style={styles.aboutSmallTitle}>{homeContent.aboutSmallTitle || "WHO WE ARE"}</Text>
 
               <Text style={styles.aboutTitle}>
-                More Than a Destination{"\n"}
-                We Create <Text style={styles.blueText}>Experiences.</Text>
+                {homeContent.aboutTitleWhite || "More Than a Destination\n"}
+                <Text style={styles.blueText}>{homeContent.aboutTitleBlue || "Experiences."}</Text>
               </Text>
 
               <Text style={styles.aboutParagraph}>
-                At Aces Adventure Club, we believe travel is not just about reaching a destination. It's about discovering your passion, overcoming challenges, and creating unforgettable memories.
+                {homeContent.aboutP1}
               </Text>
 
               <Text style={styles.aboutParagraph}>
-                We bring together outdoor enthusiasts, solo travelers, and adventure seekers through carefully curated hiking, camping, and trekking experiences.
+                {homeContent.aboutP2}
               </Text>
 
               {/* Feature 1 */}
@@ -286,23 +288,23 @@ export default function HomeScreen() {
           >
             <View style={[styles.statsRowContainer, isDesktop && { flexDirection: "row", justifyContent: "space-between", alignItems: "center" }]}>
               <View style={[styles.statItem, isDesktop && { width: "23%" }]}>
-                <Text style={styles.statNumber}>100+</Text>
-                <Text style={styles.statLabel}>TRIPS COMPLETED</Text>
+                <Text style={styles.statNumber}>{homeContent.statTrips || "100+"}</Text>
+                <Text style={styles.statLabel}>{homeContent.statTripsLabel || "TRIPS COMPLETED"}</Text>
               </View>
 
               <View style={[styles.statItem, isDesktop && { width: "23%" }]}>
-                <Text style={styles.statNumber}>500+</Text>
-                <Text style={styles.statLabel}>ELITE EXPLORERS</Text>
+                <Text style={styles.statNumber}>{homeContent.statExplorers || "500+"}</Text>
+                <Text style={styles.statLabel}>{homeContent.statExplorersLabel || "ELITE EXPLORERS"}</Text>
               </View>
 
               <View style={[styles.statItem, isDesktop && { width: "23%" }]}>
-                <Text style={styles.statNumber}>50+</Text>
-                <Text style={styles.statLabel}>GLOBAL DESTINATIONS</Text>
+                <Text style={styles.statNumber}>{homeContent.statDestinations || "50+"}</Text>
+                <Text style={styles.statLabel}>{homeContent.statDestinationsLabel || "GLOBAL DESTINATIONS"}</Text>
               </View>
 
               <View style={[styles.statItem, isDesktop && { width: "23%" }]}>
-                <Text style={styles.statNumber}>20+</Text>
-                <Text style={styles.statLabel}>EXPERT GUIDES</Text>
+                <Text style={styles.statNumber}>{homeContent.statGuides || "20+"}</Text>
+                <Text style={styles.statLabel}>{homeContent.statGuidesLabel || "EXPERT GUIDES"}</Text>
               </View>
             </View>
           </View>
@@ -333,86 +335,39 @@ export default function HomeScreen() {
 
             {/* Featured Cards Container */}
             <View style={[styles.featuredScrollContainer, isDesktop && { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", marginTop: 35 }]}>
-              {/* CARD 1 */}
-              <TouchableOpacity style={[styles.featuredCard, isDesktop && { width: "31.5%", marginRight: 0, marginBottom: 24 }]} onPress={() => navigation.navigate("ViewTrip")}>
-                <ImageBackground source={require("../../assets/featured1.jpg")} style={styles.featuredCardBg} imageStyle={styles.featuredImage}>
-                  <View style={styles.featuredOverlay}>
-                    <View style={styles.badgePopular}>
-                      <Text style={styles.badgePopularText}>Most Popular</Text>
-                    </View>
-                    <Text style={styles.locationText}>Gilgit, Pakistan</Text>
-                    <Text style={styles.placeName}>Hunza Valley</Text>
-                    <Text style={styles.placeDescription}>
-                      Experience the breathtaking beauty of Hunza's mountains and valleys.
-                    </Text>
-                    <View style={styles.cardFooter}>
-                      <View style={styles.footerItem}>
-                        <Text style={styles.footerIcon}>🕒</Text>
-                        <Text style={styles.footerText}>3 Days</Text>
+              {trips.slice(0, 3).map((trip) => (
+                <TouchableOpacity
+                  key={trip.id}
+                  style={[styles.featuredCard, isDesktop && { width: "31.5%", marginRight: 0, marginBottom: 24 }]}
+                  onPress={() => navigation.navigate("ViewTrip", { tripId: trip.id })}
+                >
+                  <ImageBackground source={resolveAsset(trip.imageKey, "featured1.jpg")} style={styles.featuredCardBg} imageStyle={styles.featuredImage}>
+                    <View style={styles.featuredOverlay}>
+                      {trip.badge ? (
+                        <View style={styles.badgePopular}>
+                          <Text style={styles.badgePopularText}>{trip.badge}</Text>
+                        </View>
+                      ) : null}
+                      <Text style={styles.locationText}>{trip.location}</Text>
+                      <Text style={styles.placeName}>{trip.title}</Text>
+                      <Text style={styles.placeDescription} numberOfLines={2}>
+                        {trip.description}
+                      </Text>
+                      <View style={styles.cardFooter}>
+                        <View style={styles.footerItem}>
+                          <Text style={styles.footerIcon}>🕒</Text>
+                          <Text style={styles.footerText}>{trip.duration}</Text>
+                        </View>
+                        <View style={styles.footerItem}>
+                          <Text style={styles.footerIcon}>⛰️</Text>
+                          <Text style={styles.footerText}>{trip.difficulty}</Text>
+                        </View>
+                        <Text style={styles.priceText}>{trip.price}</Text>
                       </View>
-                      <View style={styles.footerItem}>
-                        <Text style={styles.footerIcon}>⛰️</Text>
-                        <Text style={styles.footerText}>Easy</Text>
-                      </View>
-                      <Text style={styles.priceText}>PKR 40,000</Text>
                     </View>
-                  </View>
-                </ImageBackground>
-              </TouchableOpacity>
-
-              {/* CARD 2 */}
-              <TouchableOpacity style={[styles.featuredCard, isDesktop && { width: "31.5%", marginRight: 0, marginBottom: 24 }]} onPress={() => navigation.navigate("ViewTrip")}>
-                <ImageBackground source={require("../../assets/featured2.jpg")} style={styles.featuredCardBg} imageStyle={styles.featuredImage}>
-                  <View style={styles.featuredOverlay}>
-                    <View style={styles.badgePopular}>
-                      <Text style={styles.badgePopularText}>Most Liked</Text>
-                    </View>
-                    <Text style={styles.locationText}>Skardu, Pakistan</Text>
-                    <Text style={styles.placeName}>Skardu Adventure</Text>
-                    <Text style={styles.placeDescription}>
-                      Explore Karakoram peaks, Shangrila lake and Cold Desert.
-                    </Text>
-                    <View style={styles.cardFooter}>
-                      <View style={styles.footerItem}>
-                        <Text style={styles.footerIcon}>🕒</Text>
-                        <Text style={styles.footerText}>7 Days</Text>
-                      </View>
-                      <View style={styles.footerItem}>
-                        <Text style={styles.footerIcon}>⛰️</Text>
-                        <Text style={styles.footerText}>Moderate</Text>
-                      </View>
-                      <Text style={styles.priceText}>PKR 65,000</Text>
-                    </View>
-                  </View>
-                </ImageBackground>
-              </TouchableOpacity>
-
-              {/* CARD 3 */}
-              <TouchableOpacity style={[styles.featuredCard, isDesktop && { width: "31.5%", marginRight: 0, marginBottom: 24 }]} onPress={() => navigation.navigate("ViewTrip")}>
-                <ImageBackground source={require("../../assets/featured3.jpg")} style={styles.featuredCardBg} imageStyle={styles.featuredImage}>
-                  <View style={styles.featuredOverlay}>
-                    <View style={styles.badgePopular}>
-                      <Text style={styles.badgePopularText}>Best View</Text>
-                    </View>
-                    <Text style={styles.locationText}>Diamer, Pakistan</Text>
-                    <Text style={styles.placeName}>Fairy Meadows Trek</Text>
-                    <Text style={styles.placeDescription}>
-                      Journey through scenic trails leading to Nanga Parbat base camp.
-                    </Text>
-                    <View style={styles.cardFooter}>
-                      <View style={styles.footerItem}>
-                        <Text style={styles.footerIcon}>🕒</Text>
-                        <Text style={styles.footerText}>5 Days</Text>
-                      </View>
-                      <View style={styles.footerItem}>
-                        <Text style={styles.footerIcon}>⛰️</Text>
-                        <Text style={styles.footerText}>Hard</Text>
-                      </View>
-                      <Text style={styles.priceText}>PKR 55,000</Text>
-                    </View>
-                  </View>
-                </ImageBackground>
-              </TouchableOpacity>
+                  </ImageBackground>
+                </TouchableOpacity>
+              ))}
             </View>
 
             {/* Explore More Center Button */}

@@ -11,10 +11,17 @@ import {
   StatusBar,
 } from "react-native";
 import useResponsive from "../hooks/useResponsive";
+import { useData } from "../context/DataContext";
 
 export default function Onboarding3() {
   const navigation = useNavigation();
+  const { onboardingContent } = useData();
   const { isDesktop } = useResponsive();
+  const slideData = onboardingContent?.slide3 || {
+    headingWhite: "CREATE MEMORIES\n",
+    headingBlue: "FOR LIFE",
+    paragraph: "Join thousands of explorers and begin unforgettable adventures with ACES Adventure Club. Your next journey starts today.",
+  };
 
   const fade = useRef(new Animated.Value(0)).current;
   const slide = useRef(new Animated.Value(40)).current;
@@ -80,13 +87,12 @@ export default function Onboarding3() {
           {/* Text & Indicators (Left) */}
           <View style={[styles.textContent, { maxWidth: isDesktop ? 680 : "100%" }]}>
             <Text style={[styles.headingWhite, isDesktop ? { fontSize: 48, lineHeight: 54 } : { fontSize: 28, lineHeight: 34 }]}>
-              CREATE MEMORIES{"\n"}
-              <Text style={styles.headingBlue}>FOR LIFE</Text>
+              {slideData.headingWhite}
+              <Text style={styles.headingBlue}>{slideData.headingBlue}</Text>
             </Text>
 
             <Text style={[styles.paragraph, isDesktop ? { fontSize: 17, lineHeight: 28 } : { fontSize: 14, lineHeight: 22 }]}>
-              Join thousands of explorers and begin unforgettable adventures with
-              ACES Adventure Club. Your next journey starts today.
+              {slideData.paragraph}
             </Text>
 
             {/* Indicator Dots */}

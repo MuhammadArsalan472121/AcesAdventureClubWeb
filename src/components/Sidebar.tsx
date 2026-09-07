@@ -13,11 +13,11 @@ export default function Sidebar({
 
   const menuItems = [
     { label: 'Dashboard', icon: '▦', screen: 'AdminDashboard' },
-    { label: 'Users', icon: '♙', screen: 'AdminUsers' },
-    { label: 'Trips', icon: '◉', screen: 'AdminTrips' },
-    { label: 'Sponsors', icon: '◇', screen: 'AdminSponsors' },
-    { label: 'Gallery', icon: '▣', screen: 'AdminGallery' },
-    { label: 'Settings', icon: '⚙', screen: 'AdminSettings' },
+    { label: 'Users', icon: '👥', screen: 'AdminUsers' },
+    { label: 'Trips', icon: '🏔️', screen: 'AdminTrips' },
+    { label: 'Sponsors', icon: '🤝', screen: 'AdminSponsors' },
+    { label: 'Gallery', icon: '📸', screen: 'AdminGallery' },
+    { label: 'Settings', icon: '⚙️', screen: 'AdminSettings' },
   ];
 
   const handleNavigation = (screenName: string) => {
@@ -38,7 +38,7 @@ export default function Sidebar({
 
           <View>
             <Text style={styles.logoTitle}>ACES ADVENTURE</Text>
-            <Text style={styles.logoSubtitle}>ADMIN CONSOLE ➔ WEB</Text>
+            <Text style={styles.logoSubtitle}>ADMIN CONSOLE</Text>
           </View>
         </Pressable>
 
@@ -78,18 +78,16 @@ export default function Sidebar({
         </View>
       </View>
 
-      <View>
-        <Text style={styles.support}>♧ SUPPORT</Text>
-
+      <View style={styles.footerSection}>
         <Pressable
-          style={styles.help}
+          style={styles.websiteLink}
           onPress={() => navigation.navigate('Home')}
         >
-          <Text style={styles.helpText}>← MAIN WEBSITE</Text>
+          <Text style={styles.websiteLinkText}>← Public Website</Text>
         </Pressable>
 
-        <Pressable style={styles.logout} onPress={handleLogout}>
-          <Text style={styles.logoutText}>LOGOUT</Text>
+        <Pressable style={styles.logoutBtn} onPress={handleLogout}>
+          <Text style={styles.logoutBtnText}>Exit & Logout</Text>
         </Pressable>
       </View>
     </View>
@@ -98,109 +96,124 @@ export default function Sidebar({
 
 const styles = StyleSheet.create({
   sidebar: {
-    width: 170,
-    flex: 1,
-    backgroundColor: '#1D304F',
-    paddingHorizontal: 12,
-    paddingVertical: 20,
+    width: 220,
+    minHeight: '100%',
+    backgroundColor: '#0F1E36',
+    paddingHorizontal: 16,
+    paddingVertical: 24,
     justifyContent: 'space-between',
+    borderRightWidth: 1,
+    borderRightColor: 'rgba(255, 255, 255, 0.08)',
   },
 
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 42,
+    marginBottom: 36,
+    paddingHorizontal: 4,
   },
 
   logoCircle: {
-    width: 27,
-    height: 27,
-    borderRadius: 20,
-    backgroundColor: '#78A8C8',
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#38BDF8',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 7,
+    marginRight: 10,
   },
 
   logoIcon: {
-    color: '#1D304F',
-    fontSize: 10,
+    color: '#0F1E36',
+    fontSize: 18,
+    fontWeight: '800',
   },
 
   logoTitle: {
     color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.4,
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.6,
   },
 
   logoSubtitle: {
-    color: '#B7C4D5',
-    fontSize: 6,
-    letterSpacing: 1,
+    color: '#38BDF8',
+    fontSize: 10,
+    letterSpacing: 1.2,
+    fontWeight: '700',
     marginTop: 2,
   },
 
   menu: {
-    gap: 10,
+    gap: 8,
   },
 
   menuItem: {
-    height: 34,
-    borderRadius: 6,
+    height: 44,
+    borderRadius: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 5,
+    paddingHorizontal: 12,
+    backgroundColor: 'transparent',
   },
 
   activeMenuItem: {
-    backgroundColor: '#243D61',
+    backgroundColor: '#1E3A5F',
+    borderLeftWidth: 4,
+    borderLeftColor: '#38BDF8',
   },
 
   icon: {
-    width: 27,
-    color: '#B7C4D5',
-    fontSize: 13,
-    textAlign: 'center',
+    width: 28,
+    fontSize: 16,
+    marginRight: 10,
   },
 
   menuText: {
-    color: '#B7C4D5',
-    fontSize: 10,
-  },
-
-  activeText: {
-    color: '#78A8C8',
+    color: '#94A3B8',
+    fontSize: 14,
     fontWeight: '600',
   },
 
-  support: {
+  activeText: {
     color: '#FFFFFF',
-    fontSize: 7,
-    marginBottom: 13,
+    fontWeight: '700',
   },
 
-  help: {
-    marginBottom: 12,
+  footerSection: {
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+    gap: 10,
   },
 
-  helpText: {
-    color: '#FFFFFF',
-    fontSize: 8,
+  websiteLink: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    alignItems: 'center',
   },
 
-  logout: {
-    height: 27,
-    borderRadius: 6,
-    backgroundColor: '#78A8C8',
+  websiteLinkText: {
+    color: '#94A3B8',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+
+  logoutBtn: {
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
   },
 
-  logoutText: {
-    color: '#14263F',
-    fontSize: 7,
+  logoutBtnText: {
+    color: '#F87171',
+    fontSize: 13,
     fontWeight: '700',
-    letterSpacing: 1,
   },
 });

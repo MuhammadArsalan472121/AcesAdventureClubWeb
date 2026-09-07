@@ -8,8 +8,8 @@ export default function TopBar() {
   return (
     <View style={styles.container}>
       <View style={styles.searchBox}>
-        <Text style={styles.searchIcon}>⌕</Text>
-        <Text style={styles.searchText}>Search operations...</Text>
+        <Text style={styles.searchIcon}>🔍</Text>
+        <Text style={styles.searchText}>Search club console...</Text>
       </View>
 
       <View style={styles.navigation}>
@@ -33,6 +33,13 @@ export default function TopBar() {
         >
           <Text style={styles.navText}>Users</Text>
         </Pressable>
+
+        <Pressable
+          style={styles.navItem}
+          onPress={() => navigation.navigate('AdminGallery')}
+        >
+          <Text style={styles.navText}>Gallery</Text>
+        </Pressable>
       </View>
 
       <View style={styles.profileSection}>
@@ -40,12 +47,12 @@ export default function TopBar() {
           style={styles.websiteBtn}
           onPress={() => navigation.navigate('Home')}
         >
-          <Text style={styles.websiteBtnText}>🌐 Website</Text>
+          <Text style={styles.websiteBtnText}>🌐 View Live Website</Text>
         </Pressable>
 
         <View style={styles.divider} />
 
-        <Pressable onPress={() => navigation.navigate('AdminSettings')}>
+        <Pressable onPress={() => navigation.navigate('AdminSettings')} style={{ alignItems: 'flex-end' }}>
           <Text style={styles.name}>Alex Mercer</Text>
           <Text style={styles.role}>Super Admin</Text>
         </Pressable>
@@ -63,40 +70,44 @@ export default function TopBar() {
 
 const styles = StyleSheet.create({
   container: {
-    height: 60,
+    height: 68,
     borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
+    borderBottomColor: '#E2E8F0',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 30,
+    paddingHorizontal: 32,
     backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
   },
 
   searchBox: {
-    width: 180,
-    height: 32,
+    width: 240,
+    height: 40,
     borderWidth: 1,
-    borderColor: '#DDDDDD',
-    borderRadius: 18,
+    borderColor: '#CBD5E1',
+    borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
+    paddingHorizontal: 14,
+    backgroundColor: '#F8FAFC',
   },
 
   searchIcon: {
-    fontSize: 18,
-    marginRight: 6,
+    fontSize: 14,
+    marginRight: 8,
   },
 
   searchText: {
-    color: '#777777',
-    fontSize: 10,
+    color: '#64748B',
+    fontSize: 13,
   },
 
   navigation: {
     flexDirection: 'row',
-    marginLeft: 25,
-    gap: 22,
+    marginLeft: 32,
+    gap: 24,
     height: '100%',
     alignItems: 'center',
   },
@@ -104,21 +115,23 @@ const styles = StyleSheet.create({
   navItem: {
     height: '100%',
     justifyContent: 'center',
+    paddingHorizontal: 4,
   },
 
   activeNavItem: {
-    borderBottomWidth: 2,
-    borderBottomColor: '#1D304F',
+    borderBottomWidth: 3,
+    borderBottomColor: '#0B5CAD',
   },
 
   navText: {
-    color: '#555555',
-    fontSize: 10,
+    color: '#64748B',
+    fontSize: 14,
+    fontWeight: '500',
   },
 
   activeNavText: {
-    color: '#1D304F',
-    fontSize: 10,
+    color: '#0B5CAD',
+    fontSize: 14,
     fontWeight: '700',
   },
 
@@ -126,59 +139,56 @@ const styles = StyleSheet.create({
     marginLeft: 'auto',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-  },
-
-  icon: {
-    fontSize: 17,
+    gap: 16,
   },
 
   divider: {
     width: 1,
-    height: 28,
-    backgroundColor: '#DDDDDD',
+    height: 32,
+    backgroundColor: '#E2E8F0',
   },
 
   name: {
-    fontSize: 9,
+    fontSize: 14,
     fontWeight: '700',
+    color: '#0F172A',
     textAlign: 'right',
   },
 
   role: {
-    fontSize: 7,
-    color: '#777777',
+    fontSize: 12,
+    color: '#64748B',
     textAlign: 'right',
     marginTop: 2,
   },
 
   avatar: {
-    width: 30,
-    height: 30,
-    borderRadius: 20,
-    backgroundColor: '#273A59',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#0F1E36',
     justifyContent: 'center',
     alignItems: 'center',
   },
 
   avatarText: {
-    color: '#FFFFFF',
-    fontSize: 9,
+    color: '#38BDF8',
+    fontSize: 14,
     fontWeight: '700',
   },
 
   websiteBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: '#EFF6FF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#BFDBFE',
   },
 
   websiteBtnText: {
-    fontSize: 9,
+    fontSize: 13,
     fontWeight: '700',
-    color: '#0B5CAD',
+    color: '#1D4ED8',
   },
 });

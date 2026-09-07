@@ -17,11 +17,13 @@ import { useNavigation } from "@react-navigation/native";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import useResponsive from "../hooks/useResponsive";
+import { useData, resolveAsset } from "../context/DataContext";
 
 const { height, width } = Dimensions.get("window");
 
 export default function GalleryScreen() {
   const navigation = useNavigation();
+  const { gallery, trips } = useData();
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const {
     isMobile,
@@ -34,60 +36,17 @@ export default function GalleryScreen() {
 
   const categories = ["ALL", "MOUNTAINS", "LAKES", "CAMPING", "TREKKING", "NATURE TRAILS"];
 
-  const galleryData = [
-    { id: 1, image: require("../../assets/gallery1.jpg"), category: "MOUNTAINS", height: 260 },
-    { id: 2, image: require("../../assets/gallery2.jpg"), category: "MOUNTAINS", height: 190 },
-    { id: 3, image: require("../../assets/gallery3.jpg"), category: "LAKES", height: 290 },
-    { id: 4, image: require("../../assets/gallery4.jpg"), category: "CAMPING", height: 260 },
-    { id: 5, image: require("../../assets/gallery5.jpg"), category: "TREKKING", height: 330 },
-    { id: 6, image: require("../../assets/gallery6.jpg"), category: "NATURE TRAILS", height: 230 },
-    { id: 7, image: require("../../assets/hiking.jpg"), category: "TREKKING", height: 270 },
-    { id: 8, image: require("../../assets/camping.jpg"), category: "CAMPING", height: 250 },
-    { id: 9, image: require("../../assets/fairy.jpg"), category: "MOUNTAINS", height: 280 },
-    { id: 10, image: require("../../assets/hub2.jpg"), category: "CAMPING", height: 240 },
-    { id: 11, image: require("../../assets/hub3.jpg"), category: "LAKES", height: 300 },
-    { id: 12, image: require("../../assets/nature.jpg"), category: "NATURE TRAILS", height: 250 },
-  ];
-
   const filteredGallery =
     selectedCategory === "ALL"
-      ? galleryData
-      : galleryData.filter((item) => item.category === selectedCategory);
+      ? gallery
+      : gallery.filter((item) => item.category === selectedCategory);
 
   // Distribute items across 3 columns for desktop masonry
   const col1 = filteredGallery.filter((_, idx) => idx % 3 === 0);
   const col2 = filteredGallery.filter((_, idx) => idx % 3 === 1);
   const col3 = filteredGallery.filter((_, idx) => idx % 3 === 2);
 
-  const signatureDestinations = [
-    {
-      id: 1,
-      image: require("../../assets/hub1.jpg"),
-      badge: "Most Popular",
-      title: "Hunza Valley",
-      description: "Experience the breathtaking beauty of Hunza's mountains and valleys.",
-      duration: "3 Days",
-      price: "PKR 40,000",
-    },
-    {
-      id: 2,
-      image: require("../../assets/hub2.jpg"),
-      badge: "Most Liked",
-      title: "Fairy Meadows Trek",
-      description: "Journey through scenic trails leading to Nanga Parbat base camp.",
-      duration: "5 Days",
-      price: "PKR 55,000",
-    },
-    {
-      id: 3,
-      image: require("../../assets/hub3.jpg"),
-      badge: "Most Visited",
-      title: "Skardu Adventure",
-      description: "Explore Karakoram peaks, Shangrila lake and Cold Desert.",
-      duration: "7 Days",
-      price: "PKR 65,000",
-    },
-  ];
+  const signatureDestinations = trips.slice(0, 3);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -167,7 +126,7 @@ export default function GalleryScreen() {
                 <View style={[styles.masonryColumn, { width: "32%" }]}>
                   {col1.map((item) => (
                     <View key={item.id} style={styles.imageCardContainer}>
-                      <Image source={item.image} style={[styles.galleryImage, { height: item.height }]} />
+                      <Image source={resolveAsset(item.imageKey, "gallery1.jpg")} style={[styles.galleryImage, { height: item.height || 260 }]} />
                       <View style={styles.imageTagOverlay}>
                         <Text style={styles.imageTagText}>{item.category}</Text>
                       </View>
@@ -179,7 +138,7 @@ export default function GalleryScreen() {
                 <View style={[styles.masonryColumn, { width: "32%" }]}>
                   {col2.map((item) => (
                     <View key={item.id} style={styles.imageCardContainer}>
-                      <Image source={item.image} style={[styles.galleryImage, { height: item.height }]} />
+                      <Image source={resolveAsset(item.imageKey, "gallery2.jpg")} style={[styles.galleryImage, { height: item.height || 220 }]} />
                       <View style={styles.imageTagOverlay}>
                         <Text style={styles.imageTagText}>{item.category}</Text>
                       </View>
@@ -191,7 +150,7 @@ export default function GalleryScreen() {
                 <View style={[styles.masonryColumn, { width: "32%" }]}>
                   {col3.map((item) => (
                     <View key={item.id} style={styles.imageCardContainer}>
-                      <Image source={item.image} style={[styles.galleryImage, { height: item.height }]} />
+                      <Image source={resolveAsset(item.imageKey, "gallery3.jpg")} style={[styles.galleryImage, { height: item.height || 280 }]} />
                       <View style={styles.imageTagOverlay}>
                         <Text style={styles.imageTagText}>{item.category}</Text>
                       </View>
@@ -203,7 +162,7 @@ export default function GalleryScreen() {
               <View style={styles.mobileGridContainer}>
                 {filteredGallery.map((item) => (
                   <View key={item.id} style={styles.mobileImageCard}>
-                    <Image source={item.image} style={styles.mobileGalleryImage} />
+                    <Image source={resolveAsset(item.imageKey, "gallery1.jpg")} style={styles.mobileGalleryImage} />
                     <View style={styles.imageTagOverlay}>
                       <Text style={styles.imageTagText}>{item.category}</Text>
                     </View>
@@ -243,17 +202,19 @@ export default function GalleryScreen() {
                 <TouchableOpacity
                   key={item.id}
                   style={[styles.destinationCard, isDesktop && { width: "31.5%", marginBottom: 0 }]}
-                  onPress={() => navigation.navigate("ViewTrip")}
+                  onPress={() => navigation.navigate("ViewTrip", { tripId: item.id })}
                 >
-                  <ImageBackground source={item.image} style={styles.destinationCardBg} imageStyle={{ borderRadius: 20 }}>
+                  <ImageBackground source={resolveAsset(item.imageKey, "hub1.jpg")} style={styles.destinationCardBg} imageStyle={{ borderRadius: 20 }}>
                     <View style={styles.destinationOverlay}>
-                      <View style={styles.destinationBadge}>
-                        <Text style={styles.destinationBadgeText}>{item.badge}</Text>
-                      </View>
+                      {item.badge ? (
+                        <View style={styles.destinationBadge}>
+                          <Text style={styles.destinationBadgeText}>{item.badge}</Text>
+                        </View>
+                      ) : null}
 
                       <View style={styles.destinationCardBottom}>
                         <Text style={styles.destinationName}>{item.title}</Text>
-                        <Text style={styles.destinationText}>{item.description}</Text>
+                        <Text style={styles.destinationText} numberOfLines={2}>{item.description}</Text>
 
                         <View style={styles.destinationBottomRow}>
                           <View>

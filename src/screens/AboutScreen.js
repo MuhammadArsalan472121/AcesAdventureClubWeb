@@ -16,11 +16,13 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import useResponsive from "../hooks/useResponsive";
 import { Ionicons } from "@expo/vector-icons";
+import { useData, resolveAsset } from "../context/DataContext";
 
 const { height, width } = Dimensions.get("window");
 
 export default function AboutScreen() {
   const navigation = useNavigation();
+  const { aboutContent } = useData();
   const {
     isMobile,
     isDesktop,
@@ -48,7 +50,7 @@ export default function AboutScreen() {
             {/* Hero Content */}
             <View style={[styles.heroContent, { maxWidth: contentMaxWidth, width: "100%", alignSelf: "center", alignItems: "center" }]}>
               <View style={styles.heroBadge}>
-                <Text style={styles.heroBadgeText}>• PASSION & ADVENTURE •</Text>
+                <Text style={styles.heroBadgeText}>{aboutContent.heroBadge || "• PASSION & ADVENTURE •"}</Text>
               </View>
 
               <Text style={[styles.heroTitle, { fontSize: isDesktop ? 54 : 36, lineHeight: isDesktop ? 62 : 42, textAlign: "center" }]}>
@@ -57,7 +59,7 @@ export default function AboutScreen() {
               </Text>
 
               <Text style={[styles.heroDescription, { fontSize: isDesktop ? 17 : 15, lineHeight: isDesktop ? 28 : 24, textAlign: "center", maxWidth: 780 }]}>
-                Founded on the principle of absolute excellence, ACES Adventure Club curates the world's most exclusive nature expeditions. We bridge the gap between raw wilderness and luxury experiences for passionate explorers.
+                {aboutContent.heroDescription}
               </Text>
 
               <View style={[styles.buttonRow, { flexDirection: isDesktop || isTablet ? "row" : "column", width: isDesktop || isTablet ? "auto" : "100%" }]}>
@@ -150,20 +152,20 @@ export default function AboutScreen() {
 
             {/* Right Column (Mission Text Content) */}
             <View style={{ flex: isDesktop ? 1.1 : undefined, maxWidth: isDesktop ? 650 : "100%", marginLeft: isDesktop ? 50 : 0 }}>
-              <Text style={styles.missionTitle}>OUR MISSION</Text>
+              <Text style={styles.missionTitle}>{aboutContent.missionTitle || "OUR MISSION"}</Text>
 
               <Text style={styles.missionDescription}>
-                We exist to redefine the parameters of discovery. At Aces Adventure Club, our mission is to provide more than just a path through the wilderness; we aim to foster an inner journey, one that challenges the spirit and expands the mind.
+                {aboutContent.missionP1}
               </Text>
 
               <Text style={styles.missionDescription}>
-                We believe true luxury is found in the silence of a canyon, the clarity of a mountain stream, and the warmth shared between fellow travelers under a canopy of stars. Our service remains rigorous, ensuring every destination meets our high standards for safety, authenticity, and wonder.
+                {aboutContent.missionP2}
               </Text>
 
               <View style={styles.quoteBox}>
                 <Ionicons name="leaf-outline" size={22} color="#0B5CAD" />
                 <Text style={styles.quoteText}>
-                  "IN EVERY WALK WITH NATURE, ONE RECEIVES FAR MORE THAN HE SEEKS."
+                  {aboutContent.quote}
                 </Text>
               </View>
             </View>
@@ -267,43 +269,17 @@ export default function AboutScreen() {
               )}
             </View>
 
-            {/* 4 Guide Cards Grid */}
+            {/* Guides Grid */}
             <View style={[styles.guidesGrid, isDesktop && { flexDirection: "row", justifyContent: "space-between" }]}>
-              {/* GUIDE 1 */}
-              <View style={[styles.guideCard, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
-                <Image source={require("../../assets/guide1.jpg")} style={styles.guideImage} />
-                <View style={styles.guideOverlay}>
-                  <Text style={styles.guideCategory}>CHIEF EXPEDITION LEAD</Text>
-                  <Text style={styles.guideName}>MARCUS THORNE</Text>
+              {(aboutContent.guides || []).map((guide) => (
+                <View style={[styles.guideCard, isDesktop && { width: "23.5%", marginBottom: 0 }]} key={guide.id}>
+                  <Image source={resolveAsset(guide.imageKey, "guide1.jpg")} style={styles.guideImage} />
+                  <View style={styles.guideOverlay}>
+                    <Text style={styles.guideCategory}>{guide.category}</Text>
+                    <Text style={styles.guideName}>{guide.name}</Text>
+                  </View>
                 </View>
-              </View>
-
-              {/* GUIDE 2 */}
-              <View style={[styles.guideCard, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
-                <Image source={require("../../assets/guide2.jpg")} style={styles.guideImage} />
-                <View style={styles.guideOverlay}>
-                  <Text style={styles.guideCategory}>ALPINE GUIDE</Text>
-                  <Text style={styles.guideName}>ELENA VANCE</Text>
-                </View>
-              </View>
-
-              {/* GUIDE 3 */}
-              <View style={[styles.guideCard, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
-                <Image source={require("../../assets/guide3.jpg")} style={styles.guideImage} />
-                <View style={styles.guideOverlay}>
-                  <Text style={styles.guideCategory}>SURVIVAL EXPERT</Text>
-                  <Text style={styles.guideName}>JULIAN BECK</Text>
-                </View>
-              </View>
-
-              {/* GUIDE 4 */}
-              <View style={[styles.guideCard, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
-                <Image source={require("../../assets/guide4.jpg")} style={styles.guideImage} />
-                <View style={styles.guideOverlay}>
-                  <Text style={styles.guideCategory}>SAFETY OFFICER</Text>
-                  <Text style={styles.guideName}>SOFIA RICCI</Text>
-                </View>
-              </View>
+              ))}
             </View>
           </View>
         </View>

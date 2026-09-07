@@ -3,112 +3,139 @@ import { StyleSheet, Text, View } from 'react-native';
 
 const activities = [
   {
-    title: 'New User Registered',
-    description: 'Marcus Thorne joined the club.',
-    time: '2 MINUTES AGO',
+    title: 'New Member Registered',
+    description: 'Sophia Miller joined Elite Voyager club.',
+    time: '2 MINS AGO',
+    icon: '👤',
   },
   {
-    title: 'Sponsor Added',
-    description: 'Mountain Gear Pakistan onboarded.',
+    title: 'Sponsor Updated',
+    description: 'Mountain Gear Pakistan verified as partner.',
     time: '1 HOUR AGO',
+    icon: '🤝',
   },
   {
-    title: 'Trip Updated',
-    description: 'Hunza Valley expedition details refined.',
-    time: '5 HOURS AGO',
+    title: 'Expedition Added',
+    description: 'Hunza Explorer details updated.',
+    time: '3 HOURS AGO',
+    icon: '🏔️',
   },
   {
-    title: 'System Backup',
-    description: 'Cloud synchronization successful.',
-    time: 'YESTERDAY',
+    title: 'Inquiry Received',
+    description: 'Aiden Vance requested luxury camping info.',
+    time: 'TODAY',
+    icon: '📩',
   },
 ];
 
 export default function RecentActivities() {
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Recent Activities</Text>
+      <Text style={styles.title}>Live Club Operations</Text>
+      <Text style={styles.subtitle}>Recent operational events & alerts</Text>
 
-      {activities.map((activity, index) => (
-        <View style={styles.activity} key={index}>
-          <View style={styles.activityIcon}>
-            <Text style={styles.dot}>•</Text>
+      <View style={styles.list}>
+        {activities.map((activity, index) => (
+          <View style={styles.activity} key={index}>
+            <View style={styles.activityIcon}>
+              <Text style={styles.iconText}>{activity.icon}</Text>
+            </View>
+
+            <View style={styles.activityContent}>
+              <View style={styles.topRow}>
+                <Text style={styles.activityTitle}>{activity.title}</Text>
+                <Text style={styles.time}>{activity.time}</Text>
+              </View>
+
+              <Text style={styles.description}>
+                {activity.description}
+              </Text>
+            </View>
           </View>
-
-          <View style={styles.activityContent}>
-            <Text style={styles.activityTitle}>{activity.title}</Text>
-
-            <Text style={styles.description}>
-              {activity.description}
-            </Text>
-
-            <Text style={styles.time}>{activity.time}</Text>
-          </View>
-        </View>
-      ))}
+        ))}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    width: 300,
-    height: 300,
+    width: 340,
+    height: 330,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
-    borderRadius: 15,
-    padding: 20,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    padding: 24,
     backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
   },
 
   title: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#17253A',
-    marginBottom: 8,
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+
+  subtitle: {
+    fontSize: 13,
+    color: '#64748B',
+    marginTop: 2,
+    marginBottom: 14,
+  },
+
+  list: {
+    gap: 12,
   },
 
   activity: {
     flexDirection: 'row',
-    marginTop: 15,
+    alignItems: 'flex-start',
   },
 
   activityIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 20,
-    backgroundColor: '#E8EDF1',
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 9,
+    marginRight: 12,
+    marginTop: 2,
   },
 
-  dot: {
-    color: '#78A8C8',
-    fontSize: 16,
-    lineHeight: 17,
+  iconText: {
+    fontSize: 14,
   },
 
   activityContent: {
     flex: 1,
   },
 
-  activityTitle: {
-    fontSize: 8,
-    fontWeight: '700',
-    color: '#17253A',
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
 
-  description: {
-    fontSize: 7,
-    color: '#555555',
-    marginTop: 2,
-    lineHeight: 10,
+  activityTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
   },
 
   time: {
-    fontSize: 6,
-    color: '#888888',
-    marginTop: 4,
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#94A3B8',
+    letterSpacing: 0.4,
+  },
+
+  description: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
+    lineHeight: 16,
   },
 });

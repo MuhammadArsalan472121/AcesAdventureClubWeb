@@ -16,11 +16,25 @@ import { useNavigation } from "@react-navigation/native";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import useResponsive from "../hooks/useResponsive";
+import { useData, resolveAsset } from "../context/DataContext";
 
 const { height, width } = Dimensions.get("window");
 
-export default function ViewTripScreen() {
+export default function ViewTripScreen({ route }) {
   const navigation = useNavigation();
+  const { trips } = useData();
+  const tripId = route?.params?.tripId;
+  const currentTrip = trips.find((t) => t.id === tripId) || trips[0] || {
+    title: "Hunza Explorer",
+    badge: "Featured",
+    duration: "5 Days",
+    difficulty: "Moderate",
+    location: "Gilgit-Baltistan",
+    price: "PKR 40,000",
+    description: "Experience the breathtaking beauty of Pakistan's northern mountain valleys, ancient forts, and rich alpine culture.",
+    imageKey: "tripHero.jpg",
+  };
+
   const {
     isDesktop,
     isTablet,
@@ -36,7 +50,7 @@ export default function ViewTripScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* ================= HERO SECTION ================= */}
         <ImageBackground
-          source={require("../../assets/tripHero.jpg")}
+          source={resolveAsset(currentTrip.imageKey, "tripHero.jpg")}
           style={[styles.hero, { height: isDesktop ? 680 : height * 0.88 }]}
           resizeMode="cover"
         >
@@ -44,16 +58,18 @@ export default function ViewTripScreen() {
             <Header />
 
             <View style={[styles.heroContent, { maxWidth: contentMaxWidth, width: "100%", alignSelf: "center" }]}>
-              <View style={styles.heroBadge}>
-                <Text style={styles.heroBadgeText}>• HUNZA EXPLORER • FEATURED •</Text>
-              </View>
+              {currentTrip.badge ? (
+                <View style={styles.heroBadge}>
+                  <Text style={styles.heroBadgeText}>• {currentTrip.title.toUpperCase()} • {currentTrip.badge.toUpperCase()} •</Text>
+                </View>
+              ) : null}
 
               <Text style={[styles.heroTitle, { fontSize: isDesktop ? 54 : 34 }]}>
-                HUNZA EXPLORER
+                {currentTrip.title.toUpperCase()}
               </Text>
 
               <Text style={[styles.heroDescription, { fontSize: isDesktop ? 17 : 15, maxWidth: 750 }]}>
-                Experience the breathtaking beauty of Pakistan's northern mountain valleys, ancient forts, and rich alpine culture.
+                {currentTrip.description}
               </Text>
 
               {/* 4 Translucent Info Cards Row */}
@@ -62,7 +78,7 @@ export default function ViewTripScreen() {
                   <Ionicons name="time-outline" size={18} color="#38BDF8" />
                   <View style={{ marginLeft: 10 }}>
                     <Text style={styles.infoLabel}>DURATION</Text>
-                    <Text style={styles.infoValue}>5 Days / 4 Nights</Text>
+                    <Text style={styles.infoValue}>{currentTrip.duration}</Text>
                   </View>
                 </View>
 
@@ -70,7 +86,7 @@ export default function ViewTripScreen() {
                   <Ionicons name="speedometer-outline" size={18} color="#38BDF8" />
                   <View style={{ marginLeft: 10 }}>
                     <Text style={styles.infoLabel}>DIFFICULTY</Text>
-                    <Text style={styles.infoValue}>Moderate</Text>
+                    <Text style={styles.infoValue}>{currentTrip.difficulty}</Text>
                   </View>
                 </View>
 
@@ -78,7 +94,7 @@ export default function ViewTripScreen() {
                   <Ionicons name="location-outline" size={18} color="#38BDF8" />
                   <View style={{ marginLeft: 10 }}>
                     <Text style={styles.infoLabel}>LOCATION</Text>
-                    <Text style={styles.infoValue}>Gilgit-Baltistan</Text>
+                    <Text style={styles.infoValue}>{currentTrip.location}</Text>
                   </View>
                 </View>
 
@@ -86,7 +102,7 @@ export default function ViewTripScreen() {
                   <Ionicons name="pricetag-outline" size={18} color="#38BDF8" />
                   <View style={{ marginLeft: 10 }}>
                     <Text style={styles.infoLabel}>PRICE</Text>
-                    <Text style={styles.infoValue}>PKR 40,000 / person</Text>
+                    <Text style={styles.infoValue}>{currentTrip.price} / person</Text>
                   </View>
                 </View>
               </View>

@@ -17,12 +17,15 @@ import { useNavigation } from "@react-navigation/native";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import useResponsive from "../hooks/useResponsive";
+import { useData, resolveAsset } from "../context/DataContext";
 
 const { height, width } = Dimensions.get("window");
 
 export default function ExploreTripsScreen() {
   const navigation = useNavigation();
+  const { trips } = useData();
   const [activeFilter, setActiveFilter] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
   const {
     isMobile,
     isDesktop,
@@ -32,96 +35,22 @@ export default function ExploreTripsScreen() {
     paddingHorizontal,
   } = useResponsive();
 
-  const curatedTrips = [
-    {
-      id: 1,
-      image: require("../../assets/hunza.jpg"),
-      badge: "Featured",
-      location: "Gilgit, Pakistan",
-      title: "Hunza Explorer",
-      description: "Experience breathtaking mountain landscapes and culture.",
-      duration: "5 Days",
-      difficulty: "Easy",
-      difficultyColor: "#22C55E",
-    },
-    {
-      id: 2,
-      image: require("../../assets/fairy.jpg"),
-      badge: "Popular",
-      location: "Diamer, Pakistan",
-      title: "Fairy Meadows Trek",
-      description: "Base camp of mighty Nanga Parbat mountain.",
-      duration: "7 Days",
-      difficulty: "Hard",
-      difficultyColor: "#EF4444",
-    },
-    {
-      id: 3,
-      image: require("../../assets/skardu.jpg"),
-      badge: "Recommended",
-      location: "Skardu, Pakistan",
-      title: "Skardu Adventure",
-      description: "Lakes, cold deserts and unforgettable mountain views.",
-      duration: "10 Days",
-      difficulty: "Moderate",
-      difficultyColor: "#F59E0B",
-    },
-    {
-      id: 4,
-      image: require("../../assets/naran.jpg"),
-      badge: "Trending",
-      location: "Mansehra, Pakistan",
-      title: "Naran Valley Escape",
-      description: "Enjoy lush green valleys and alpine lake views.",
-      duration: "4 Days",
-      difficulty: "Easy",
-      difficultyColor: "#22C55E",
-    },
-    {
-      id: 5,
-      image: require("../../assets/hunza.jpg"),
-      badge: "Featured",
-      location: "Gilgit, Pakistan",
-      title: "Hunza Explorer",
-      description: "Experience breathtaking mountain landscapes and culture.",
-      duration: "5 Days",
-      difficulty: "Easy",
-      difficultyColor: "#22C55E",
-    },
-    {
-      id: 6,
-      image: require("../../assets/fairy.jpg"),
-      badge: "Popular",
-      location: "Diamer, Pakistan",
-      title: "Fairy Meadows Trek",
-      description: "Base camp of mighty Nanga Parbat mountain.",
-      duration: "7 Days",
-      difficulty: "Hard",
-      difficultyColor: "#EF4444",
-    },
-    {
-      id: 7,
-      image: require("../../assets/skardu.jpg"),
-      badge: "Recommended",
-      location: "Skardu, Pakistan",
-      title: "Skardu Adventure",
-      description: "Lakes, cold deserts and unforgettable mountain views.",
-      duration: "10 Days",
-      difficulty: "Moderate",
-      difficultyColor: "#F59E0B",
-    },
-    {
-      id: 8,
-      image: require("../../assets/naran.jpg"),
-      badge: "Trending",
-      location: "Mansehra, Pakistan",
-      title: "Naran Valley Escape",
-      description: "Enjoy lush green valleys and alpine lake views.",
-      duration: "4 Days",
-      difficulty: "Easy",
-      difficultyColor: "#22C55E",
-    },
-  ];
+  const filteredTrips = trips.filter((t) => {
+    const matchesSearch =
+      !searchQuery.trim() ||
+      t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (t.description && t.description.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    if (!matchesSearch) return false;
+    if (activeFilter === "All") return true;
+    if (activeFilter === "Hiking") return t.category === "Hiking";
+    if (activeFilter === "Camping") return t.category === "Camping";
+    if (activeFilter === "Mountains") return t.category === "Trekking" || (t.location && t.location.includes("Gilgit"));
+    if (activeFilter === "Nature") return t.category === "Nature Trails";
+    if (activeFilter === "Heritage") return t.title.includes("Hunza") || t.title.includes("Heritage");
+    return true;
+  });
 
   const popularHubs = [
     {
@@ -216,6 +145,8 @@ export default function ExploreTripsScreen() {
                   placeholder="Search Mountains, Locations, Treks Or Adventures ..."
                   placeholderTextColor="#94A3B8"
                   style={styles.searchInput}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
                 />
               </View>
 
@@ -267,7 +198,7 @@ export default function ExploreTripsScreen() {
           </View>
         </View>
 
-        {/* ================= CURATED JOURNEYS (8 Cards Grid) ================= */}
+        {/* ================= CURATED JOURNEYS (Dynamic Cards Grid) ================= */}
         <View style={[styles.curatedSectionWrapper, { backgroundColor: "#FFFFFF" }]}>
           <View
             style={[
@@ -284,15 +215,15 @@ export default function ExploreTripsScreen() {
             <Text style={styles.curatedSmallTitle}>HANDPICKED EXPEDITIONS</Text>
             <Text style={styles.curatedTitle}>CURATED JOURNEYS</Text>
 
-            {/* 8 Cards Grid */}
+            {/* Cards Grid */}
             <View style={[styles.curatedGrid, isDesktop && { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", marginTop: 35 }]}>
-              {curatedTrips.map((item) => (
+              {filteredTrips.map((item) => (
                 <View
                   key={item.id}
                   style={[styles.curatedCard, isDesktop && { width: "23.5%", marginBottom: 24 }]}
                 >
                   <View style={styles.cardImageWrapper}>
-                    <Image source={item.image} style={styles.curatedImage} />
+                    <Image source={resolveAsset(item.imageKey, "hunza.jpg")} style={styles.curatedImage} />
                     {item.badge && (
                       <View style={styles.curatedBadge}>
                         <Text style={styles.curatedBadgeText}>{item.badge}</Text>
@@ -303,7 +234,7 @@ export default function ExploreTripsScreen() {
                   <View style={styles.curatedContent}>
                     <Text style={styles.curatedLocation}>{item.location}</Text>
                     <Text style={styles.curatedCardTitle}>{item.title}</Text>
-                    <Text style={styles.curatedDescription}>{item.description}</Text>
+                    <Text style={styles.curatedDescription} numberOfLines={2}>{item.description}</Text>
 
                     <View style={styles.curatedDivider} />
 
@@ -315,7 +246,7 @@ export default function ExploreTripsScreen() {
 
                       <View>
                         <Text style={styles.curatedMetaLabel}>DIFFICULTY</Text>
-                        <Text style={[styles.curatedMetaValue, { color: item.difficultyColor }]}>
+                        <Text style={[styles.curatedMetaValue, { color: item.difficultyColor || "#22C55E" }]}>
                           {item.difficulty}
                         </Text>
                       </View>
@@ -323,7 +254,7 @@ export default function ExploreTripsScreen() {
 
                     <TouchableOpacity
                       style={styles.viewDetailsBtn}
-                      onPress={() => navigation.navigate("ViewTrip")}
+                      onPress={() => navigation.navigate("ViewTrip", { tripId: item.id })}
                     >
                       <Text style={styles.viewDetailsBtnText}>View Details</Text>
                     </TouchableOpacity>
