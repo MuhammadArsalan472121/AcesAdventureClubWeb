@@ -28,7 +28,7 @@ const PRESET_IMAGES = [
 ];
 
 export default function ManageTripsScreen() {
-  const { trips, addTrip, updateTrip, deleteTrip } = useData();
+  const { trips, addTrip, updateTrip, deleteTrip } = useData() as any;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -47,6 +47,10 @@ export default function ManageTripsScreen() {
     status: 'UPCOMING',
     members: '20',
     description: '',
+    aboutText: '',
+    fitnessLevel: 'Moderate',
+    groupSize: '15 Max',
+    bestSeason: 'Spring - Autumn',
     imageKey: 'hunza.jpg',
   });
 
@@ -63,6 +67,10 @@ export default function ManageTripsScreen() {
       status: 'UPCOMING',
       members: '20',
       description: 'Experience scenic mountain views and guided nature expeditions with ACES Adventure Club.',
+      aboutText: 'An incredible mountain expedition through pristine valleys and ancient trails.',
+      fitnessLevel: 'Moderate',
+      groupSize: '15 Max',
+      bestSeason: 'Spring - Autumn',
       imageKey: 'hunza.jpg',
     });
     setModalVisible(true);
@@ -81,6 +89,10 @@ export default function ManageTripsScreen() {
       status: trip.status || 'UPCOMING',
       members: trip.members ? trip.members.toString() : '20',
       description: trip.description || '',
+      aboutText: trip.aboutText || trip.description || '',
+      fitnessLevel: trip.fitnessLevel || trip.difficulty || 'Moderate',
+      groupSize: trip.groupSize || (trip.members ? `${trip.members} Max` : '15 Max'),
+      bestSeason: trip.bestSeason || 'Spring - Autumn',
       imageKey: trip.imageKey || 'hunza.jpg',
     });
     setModalVisible(true);
@@ -116,7 +128,7 @@ export default function ManageTripsScreen() {
     }
   };
 
-  const filteredTrips = trips.filter((trip) => {
+  const filteredTrips = trips.filter((trip: any) => {
     const matchesSearch =
       trip.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       trip.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -207,7 +219,7 @@ export default function ManageTripsScreen() {
                 <Text style={styles.emptyText}>No expeditions found matching your search.</Text>
               </View>
             ) : (
-              filteredTrips.map((trip) => (
+              filteredTrips.map((trip: any) => (
                 <View style={styles.tableRow} key={trip.id}>
                   {/* Title & Image & Badge */}
                   <View style={[styles.td, { flex: 2.2, flexDirection: 'row', alignItems: 'center', gap: 12 }]}>
@@ -469,18 +481,58 @@ export default function ManageTripsScreen() {
                   />
                 </View>
 
+                {/* Fitness Level & Best Season */}
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 14 }]}>
+                    <Text style={styles.formLabel}>FITNESS LEVEL</Text>
+                    <TextInput
+                      style={styles.formInput}
+                      placeholder="e.g. Easy-Mod, High, Extreme"
+                      placeholderTextColor="#94A3B8"
+                      value={formData.fitnessLevel}
+                      onChangeText={(t) => setFormData({ ...formData, fitnessLevel: t })}
+                    />
+                  </View>
+
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel}>BEST SEASON</Text>
+                    <TextInput
+                      style={styles.formInput}
+                      placeholder="e.g. Spring - Autumn, Summer"
+                      placeholderTextColor="#94A3B8"
+                      value={formData.bestSeason}
+                      onChangeText={(t) => setFormData({ ...formData, bestSeason: t })}
+                    />
+                  </View>
+                </View>
+
                 {/* Description */}
                 <View style={styles.formGroup}>
-                  <Text style={styles.formLabel}>OVERVIEW DESCRIPTION (FRONTEND DETAILS)</Text>
+                  <Text style={styles.formLabel}>CARD OVERVIEW DESCRIPTION</Text>
                   <TextInput
-                    style={[styles.formInput, { height: 80 }]}
-                    placeholder="Detailed description for the trip card and full trip screen..."
+                    style={[styles.formInput, { height: 70 }]}
+                    placeholder="Brief description for trip cards..."
                     placeholderTextColor="#94A3B8"
                     multiline
-                    numberOfLines={3}
+                    numberOfLines={2}
                     textAlignVertical="top"
                     value={formData.description}
                     onChangeText={(t) => setFormData({ ...formData, description: t })}
+                  />
+                </View>
+
+                {/* Full About / Experience Text */}
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel}>FULL ABOUT / EXPERIENCE DESCRIPTION (VIEW DETAILS SCREEN)</Text>
+                  <TextInput
+                    style={[styles.formInput, { height: 110 }]}
+                    placeholder="Comprehensive overview paragraphs displayed when user opens View Details..."
+                    placeholderTextColor="#94A3B8"
+                    multiline
+                    numberOfLines={4}
+                    textAlignVertical="top"
+                    value={formData.aboutText}
+                    onChangeText={(t) => setFormData({ ...formData, aboutText: t })}
                   />
                 </View>
 

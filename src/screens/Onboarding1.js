@@ -9,9 +9,10 @@ import {
   TouchableOpacity,
   Animated,
   StatusBar,
+  Platform,
 } from "react-native";
 import useResponsive from "../hooks/useResponsive";
-import { useData } from "../context/DataContext";
+import { useData, resolveAsset } from "../context/DataContext";
 
 export default function Onboarding1() {
   const navigation = useNavigation();
@@ -44,7 +45,7 @@ export default function Onboarding1() {
 
   return (
     <ImageBackground
-      source={require("../../assets/onboarding1.jpg")}
+      source={resolveAsset(slideData?.imageKey, "onboarding1.jpg")}
       style={styles.background}
       resizeMode="cover"
     >
@@ -123,10 +124,12 @@ const styles = StyleSheet.create({
     flex: 1,
     width: "100%",
     height: "100%",
+    minHeight: Platform.OS === "web" ? "100vh" : "100%",
   },
 
   overlay: {
     flex: 1,
+    minHeight: Platform.OS === "web" ? "100vh" : "100%",
     backgroundColor: "rgba(6, 18, 32, 0.35)",
     justifyContent: "space-between",
   },

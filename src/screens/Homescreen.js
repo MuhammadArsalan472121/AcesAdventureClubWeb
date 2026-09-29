@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
@@ -11,7 +11,9 @@ import {
   StatusBar,
   TextInput,
   Dimensions,
+  Platform,
 } from "react-native";
+import gsap from "gsap";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import Header from "../components/Header";
@@ -36,6 +38,23 @@ export default function HomeScreen() {
     bodyFontSize,
     bodyLineHeight,
   } = useResponsive();
+
+  useEffect(() => {
+    if (Platform.OS !== "web" || typeof window === "undefined") return;
+
+    const prefersReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReduced) return;
+
+    try {
+      gsap.fromTo(
+        ".gsap-fade-up",
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.8, stagger: 0.12, ease: "power2.out" }
+      );
+    } catch (e) {
+      // Graceful fallback
+    }
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>

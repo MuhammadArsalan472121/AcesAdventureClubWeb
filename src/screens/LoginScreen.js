@@ -67,19 +67,6 @@ export default function LoginScreen({ navigation }) {
     setErrorMessage("");
     setLoading(true);
 
-    // Direct bypass for Admin Credentials entered on main Login screen
-    if (
-      cleanEmail === "admin@acesclub.com" ||
-      cleanEmail === "admin" ||
-      (cleanEmail.includes("admin") && password === "admin123")
-    ) {
-      setTimeout(() => {
-        setLoading(false);
-        navigation?.navigate("AdminDashboard");
-      }, 400);
-      return;
-    }
-
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
       setLoading(false);
@@ -230,7 +217,13 @@ export default function LoginScreen({ navigation }) {
                     }}
                   />
                   <TouchableOpacity
-                    onPress={() => setShowPassword(!showPassword)}
+                    onPress={(e) => {
+                      if (e && typeof e.preventDefault === "function") e.preventDefault();
+                      setShowPassword(!showPassword);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
                     style={styles.eyeBtn}
                     activeOpacity={0.7}
                   >

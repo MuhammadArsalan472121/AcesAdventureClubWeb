@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,7 +11,9 @@ import {
   StatusBar,
   TextInput,
   Dimensions,
+  Platform,
 } from "react-native";
+import gsap from "gsap";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import Header from "../components/Header";
@@ -34,6 +36,23 @@ export default function ExploreTripsScreen() {
     contentMaxWidth,
     paddingHorizontal,
   } = useResponsive();
+
+  useEffect(() => {
+    if (Platform.OS !== "web" || typeof window === "undefined") return;
+
+    const prefersReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReduced) return;
+
+    try {
+      gsap.fromTo(
+        ".gsap-fade-trips",
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.8, stagger: 0.1, ease: "power2.out" }
+      );
+    } catch (e) {
+      // Fallback
+    }
+  }, [activeFilter, searchQuery]);
 
   const filteredTrips = trips.filter((t) => {
     const matchesSearch =
@@ -216,7 +235,7 @@ export default function ExploreTripsScreen() {
             <Text style={styles.curatedTitle}>CURATED JOURNEYS</Text>
 
             {/* Cards Grid */}
-            <View style={[styles.curatedGrid, isDesktop && { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", marginTop: 35 }]}>
+            <View style={[styles.curatedGrid, isDesktop && { flexDirection: "row", flexWrap: "wrap", justifyContent: "flex-start", gap: "2%", marginTop: 35 }]}>
               {filteredTrips.map((item) => (
                 <View
                   key={item.id}

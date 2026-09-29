@@ -137,24 +137,24 @@ export default function ViewTripScreen({ route }) {
             {/* Left Column (Text Content) */}
             <View style={{ flex: isDesktop ? 1 : undefined, maxWidth: isDesktop ? 620 : "100%", marginRight: isDesktop ? 40 : 0 }}>
               <Text style={styles.aboutSmallTitle}>FULL EXPERIENCE</Text>
-              <Text style={styles.aboutTitle}>About This Adventure</Text>
+              <Text style={styles.aboutTitle}>About {currentTrip.title}</Text>
 
-              <Text style={styles.aboutParagraph}>
-                The Hunza Valley Adventure is a journey through one of the most serene and majestic places on earth. Surrounded by iconic peaks such as Rakaposhi, Ultar Sar, and Ladyfinger Peak, this expedition offers an unforgettable blend of natural grandeur and vibrant local culture.
-              </Text>
-
-              <Text style={styles.aboutParagraph}>
-                From exploring ancient 800-year-old forts like Baltit and Altit to walking alongside tranquil turquoise lakes at Attabad, every day is crafted to provide a deep connection with nature and local mountain traditions.
-              </Text>
+              {(currentTrip.aboutText || currentTrip.description || "")
+                .split("\n\n")
+                .map((paragraph, index) => (
+                  <Text key={index} style={styles.aboutParagraph}>
+                    {paragraph}
+                  </Text>
+                ))}
 
               <TouchableOpacity style={styles.learnMoreBtn} onPress={() => navigation.navigate("Contact")}>
-                <Text style={styles.learnMoreBtnText}>Learn More</Text>
+                <Text style={styles.learnMoreBtnText}>Inquire About Trip</Text>
               </TouchableOpacity>
             </View>
 
             {/* Right Column (Featured Image) */}
             <View style={{ flex: isDesktop ? 1 : undefined, width: "100%", maxWidth: isDesktop ? 580 : "100%", marginTop: isDesktop ? 0 : 35 }}>
-              <Image source={require("../../assets/aboutTrip.jpg")} style={styles.aboutImage} />
+              <Image source={resolveAsset(currentTrip.imageKey, "aboutTrip.jpg")} style={styles.aboutImage} />
             </View>
           </View>
         </View>
@@ -170,45 +170,25 @@ export default function ViewTripScreen({ route }) {
 
               {/* 4 Feature Cards Grid */}
               <View style={[styles.featuresGrid, isDesktop && { flexDirection: "row", justifyContent: "space-between" }]}>
-                <View style={[styles.featureCardItem, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
-                  <View style={styles.featureIconCircle}>
-                    <Ionicons name="compass-outline" size={24} color="#0B5CAD" />
-                  </View>
-                  <Text style={styles.featureCardHeading}>Scenic Accommodation</Text>
-                  <Text style={styles.featureCardText}>
-                    Stay in handpicked boutique hotels and cozy riverside glamping sites.
-                  </Text>
-                </View>
-
-                <View style={[styles.featureCardItem, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
-                  <View style={styles.featureIconCircle}>
-                    <Ionicons name="person-outline" size={24} color="#0B5CAD" />
-                  </View>
-                  <Text style={styles.featureCardHeading}>Guided Excursions</Text>
-                  <Text style={styles.featureCardText}>
-                    Expert local guides leading every trek and cultural site tour.
-                  </Text>
-                </View>
-
-                <View style={[styles.featureCardItem, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
-                  <View style={styles.featureIconCircle}>
-                    <Ionicons name="camera-outline" size={24} color="#0B5CAD" />
-                  </View>
-                  <Text style={styles.featureCardHeading}>Photography Spots</Text>
-                  <Text style={styles.featureCardText}>
-                    Access to exclusive vantage points for sunrise and sunset photography.
-                  </Text>
-                </View>
-
-                <View style={[styles.featureCardItem, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
-                  <View style={styles.featureIconCircle}>
-                    <Ionicons name="leaf-outline" size={24} color="#0B5CAD" />
-                  </View>
-                  <Text style={styles.featureCardHeading}>Nature Encounters</Text>
-                  <Text style={styles.featureCardText}>
-                    Walk through apricot orchards and tranquil mountain streams.
-                  </Text>
-                </View>
+                {(
+                  currentTrip.includedFeatures || [
+                    { title: "Scenic Accommodation", desc: "Stay in handpicked boutique hotels and cozy riverside glamping sites." },
+                    { title: "Guided Excursions", desc: "Expert local guides leading every trek and cultural site tour." },
+                    { title: "Photography Spots", desc: "Access to exclusive vantage points for sunrise and sunset photography." },
+                    { title: "Nature Encounters", desc: "Walk through pine orchards and tranquil mountain streams." },
+                  ]
+                ).map((feat, idx) => {
+                  const icons = ["compass-outline", "person-outline", "camera-outline", "leaf-outline"];
+                  return (
+                    <View key={idx} style={[styles.featureCardItem, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
+                      <View style={styles.featureIconCircle}>
+                        <Ionicons name={icons[idx % icons.length]} size={24} color="#0B5CAD" />
+                      </View>
+                      <Text style={styles.featureCardHeading}>{feat.title}</Text>
+                      <Text style={styles.featureCardText}>{feat.desc}</Text>
+                    </View>
+                  );
+                })}
               </View>
             </View>
           </View>
@@ -235,62 +215,49 @@ export default function ViewTripScreen({ route }) {
 
             {/* Timeline Steps */}
             <View style={styles.timelineContainer}>
-              {/* Day 1 */}
-              <View style={[styles.timelineRow, isDesktop && { flexDirection: "row", alignItems: "center", marginBottom: 40 }]}>
-                <View style={[styles.timelineTextCol, isDesktop && { flex: 1, paddingRight: 30 }]}>
-                  <Text style={styles.dayBadgeText}>DAY 01</Text>
-                  <Text style={styles.dayTitle}>Arrival and Orientation</Text>
-                  <Text style={styles.dayDescription}>
-                    Arrive in Islamabad, transfer to airport for Gilgit flight or scenic drive. Check in to hotel and evening orientation dinner.
-                  </Text>
-                </View>
+              {(
+                currentTrip.itinerary || [
+                  { day: "DAY 01", title: "Arrival & Welcome Orientation", desc: "Arrive at starting location, transfer to hotel/camp. Evening welcome dinner and briefing.", imageKey: "featured1.jpg" },
+                  { day: "DAY 02", title: "Valley & Mountain Exploration", desc: "Explore local viewpoints, scenic rivers, and iconic landmarks with expert guide.", imageKey: "featured2.jpg" },
+                  { day: "DAY 03", title: "Alpine Trek & Return Journey", desc: "Day hike to high elevation views followed by traditional dinner and departure.", imageKey: "featured3.jpg" },
+                ]
+              ).map((item, idx) => {
+                const isEven = idx % 2 === 1;
+                return (
+                  <View
+                    key={idx}
+                    style={[styles.timelineRow, isDesktop && { flexDirection: "row", alignItems: "center", marginBottom: 40 }]}
+                  >
+                    {!isEven || !isDesktop ? (
+                      <View style={[styles.timelineTextCol, isDesktop && { flex: 1, paddingRight: 30 }]}>
+                        <Text style={styles.dayBadgeText}>{item.day}</Text>
+                        <Text style={styles.dayTitle}>{item.title}</Text>
+                        <Text style={styles.dayDescription}>{item.desc}</Text>
+                      </View>
+                    ) : (
+                      <View style={[styles.timelineImageCol, isDesktop && { flex: 1, paddingRight: 30 }]}>
+                        <Image source={resolveAsset(item.imageKey, "featured2.jpg")} style={styles.timelineImage} />
+                      </View>
+                    )}
 
-                <View style={styles.timelineNode}>
-                  <Text style={styles.timelineNodeText}>1</Text>
-                </View>
+                    <View style={styles.timelineNode}>
+                      <Text style={styles.timelineNodeText}>{idx + 1}</Text>
+                    </View>
 
-                <View style={[styles.timelineImageCol, isDesktop && { flex: 1, paddingLeft: 30 }]}>
-                  <Image source={require("../../assets/featured1.jpg")} style={styles.timelineImage} />
-                </View>
-              </View>
-
-              {/* Day 2 */}
-              <View style={[styles.timelineRow, isDesktop && { flexDirection: "row", alignItems: "center", marginBottom: 40 }]}>
-                <View style={[styles.timelineImageCol, isDesktop && { flex: 1, paddingRight: 30 }]}>
-                  <Image source={require("../../assets/featured2.jpg")} style={styles.timelineImage} />
-                </View>
-
-                <View style={styles.timelineNode}>
-                  <Text style={styles.timelineNodeText}>2</Text>
-                </View>
-
-                <View style={[styles.timelineTextCol, isDesktop && { flex: 1, paddingLeft: 30 }]}>
-                  <Text style={styles.dayBadgeText}>DAY 02</Text>
-                  <Text style={styles.dayTitle}>Mountain Exploration</Text>
-                  <Text style={styles.dayDescription}>
-                    Drive towards Hunza Valley, stopping at Rakaposhi View Point. Explore ancient Baltit Fort and local bazaars in Karimabad.
-                  </Text>
-                </View>
-              </View>
-
-              {/* Day 3 */}
-              <View style={[styles.timelineRow, isDesktop && { flexDirection: "row", alignItems: "center" }]}>
-                <View style={[styles.timelineTextCol, isDesktop && { flex: 1, paddingRight: 30 }]}>
-                  <Text style={styles.dayBadgeText}>DAY 03</Text>
-                  <Text style={styles.dayTitle}>Sightseeing and Return</Text>
-                  <Text style={styles.dayDescription}>
-                    Visit Attabad Lake, Passu Cones, and Hussaini Suspension Bridge. Enjoy traditional music performance before return journey.
-                  </Text>
-                </View>
-
-                <View style={styles.timelineNode}>
-                  <Text style={styles.timelineNodeText}>3</Text>
-                </View>
-
-                <View style={[styles.timelineImageCol, isDesktop && { flex: 1, paddingLeft: 30 }]}>
-                  <Image source={require("../../assets/featured3.jpg")} style={styles.timelineImage} />
-                </View>
-              </View>
+                    {!isEven || !isDesktop ? (
+                      <View style={[styles.timelineImageCol, isDesktop && { flex: 1, paddingLeft: 30 }]}>
+                        <Image source={resolveAsset(item.imageKey, "featured1.jpg")} style={styles.timelineImage} />
+                      </View>
+                    ) : (
+                      <View style={[styles.timelineTextCol, isDesktop && { flex: 1, paddingLeft: 30 }]}>
+                        <Text style={styles.dayBadgeText}>{item.day}</Text>
+                        <Text style={styles.dayTitle}>{item.title}</Text>
+                        <Text style={styles.dayDescription}>{item.desc}</Text>
+                      </View>
+                    )}
+                  </View>
+                );
+              })}
             </View>
           </View>
         </View>
@@ -327,16 +294,16 @@ export default function ViewTripScreen({ route }) {
             <View style={[styles.collageGrid, isDesktop && { flexDirection: "row", justifyContent: "space-between" }]}>
               {/* Left Tall Image */}
               <View style={[styles.tallImageWrapper, isDesktop && { width: "48%" }]}>
-                <Image source={require("../../assets/hunza.jpg")} style={styles.tallImage} />
+                <Image source={resolveAsset(currentTrip.imageKey, "hunza.jpg")} style={styles.tallImage} />
               </View>
 
               {/* Right 2x2 Image Grid */}
               <View style={[styles.rightImagesCol, isDesktop && { width: "49%" }]}>
                 <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 16 }}>
-                  <Image source={require("../../assets/hub2.jpg")} style={styles.gridSquareImage} />
-                  <Image source={require("../../assets/hub3.jpg")} style={styles.gridSquareImage} />
+                  <Image source={resolveAsset("hub2.jpg")} style={styles.gridSquareImage} />
+                  <Image source={resolveAsset("hub3.jpg")} style={styles.gridSquareImage} />
                 </View>
-                <Image source={require("../../assets/featured3.jpg")} style={styles.gridWideImage} />
+                <Image source={resolveAsset("featured3.jpg")} style={styles.gridWideImage} />
               </View>
             </View>
           </View>
@@ -350,28 +317,28 @@ export default function ViewTripScreen({ route }) {
                 {/* Card 1 */}
                 <View style={[styles.statWhiteCard, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
                   <Ionicons name="time-outline" size={24} color="#0B5CAD" />
-                  <Text style={styles.statCardValue}>5 Days</Text>
+                  <Text style={styles.statCardValue}>{currentTrip.duration || "5 Days"}</Text>
                   <Text style={styles.statCardLabel}>TOTAL DURATION</Text>
                 </View>
 
                 {/* Card 2 */}
                 <View style={[styles.statWhiteCard, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
                   <Ionicons name="speedometer-outline" size={24} color="#0B5CAD" />
-                  <Text style={styles.statCardValue}>Easy-Mod</Text>
+                  <Text style={styles.statCardValue}>{currentTrip.fitnessLevel || currentTrip.difficulty || "Moderate"}</Text>
                   <Text style={styles.statCardLabel}>FITNESS LEVEL</Text>
                 </View>
 
                 {/* Card 3 */}
                 <View style={[styles.statWhiteCard, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
                   <Ionicons name="people-outline" size={24} color="#0B5CAD" />
-                  <Text style={styles.statCardValue}>12 Max</Text>
+                  <Text style={styles.statCardValue}>{currentTrip.groupSize || (currentTrip.members ? `${currentTrip.members} Max` : "15 Max")}</Text>
                   <Text style={styles.statCardLabel}>GROUP SIZE</Text>
                 </View>
 
                 {/* Card 4 */}
                 <View style={[styles.statWhiteCard, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
                   <Ionicons name="calendar-outline" size={24} color="#0B5CAD" />
-                  <Text style={styles.statCardValue}>All Year</Text>
+                  <Text style={styles.statCardValue}>{currentTrip.bestSeason || "Spring - Autumn"}</Text>
                   <Text style={styles.statCardLabel}>BEST SEASON</Text>
                 </View>
               </View>

@@ -12,6 +12,8 @@ import { useData } from '../context/DataContext';
 export default function AdminDashboardScreen() {
   const { trips, users, sponsors, gallery, inquiries } = useData();
 
+  console.log('[ADMIN_USERS_READ_DEBUG] AdminDashboardScreen useData().users count:', users?.length, users);
+
   const stats = [
     {
       icon: '👥',

@@ -7,7 +7,9 @@ export default function UsersTable() {
   const { users } = useData();
   const navigation = useNavigation<any>();
 
+  console.log('[ADMIN_USERS_READ_DEBUG] UsersTable useData().users count:', users?.length, users);
   const recentUsers = users.slice(0, 5);
+  console.log('[ADMIN_USERS_READ_DEBUG] UsersTable recentUsers count:', recentUsers.length);
 
   return (
     <View style={styles.container}>

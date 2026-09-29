@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   SafeAreaView,
   ScrollView,
@@ -10,7 +10,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  Platform,
 } from "react-native";
+import gsap from "gsap";
 import { useNavigation } from "@react-navigation/native";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -31,6 +33,23 @@ export default function AboutScreen() {
     contentMaxWidth,
     paddingHorizontal,
   } = useResponsive();
+
+  useEffect(() => {
+    if (Platform.OS !== "web" || typeof window === "undefined") return;
+
+    const prefersReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReduced) return;
+
+    try {
+      gsap.fromTo(
+        ".gsap-fade-up-about",
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.8, stagger: 0.12, ease: "power2.out" }
+      );
+    } catch (e) {
+      // Fallback
+    }
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>

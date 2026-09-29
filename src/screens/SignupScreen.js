@@ -15,7 +15,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth } from "./firebaseConfig";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { auth, db } from "./firebaseConfig";
 
 const heroImage = require("../../assets/tripHero.jpg");
 const logoImage = require("../../assets/logo.png");
@@ -88,12 +89,19 @@ export default function SignupScreen({ navigation }) {
     setErrorMessage("");
     setLoading(true);
 
+    console.log("[AUTH_SIGNUP_DEBUG] Signup button/handler triggered.");
+    console.log("[AUTH_SIGNUP_DEBUG] Firebase Auth account creation started for email:", email.trim());
+
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email.trim(),
         password
       );
+      const uid = userCredential.user.uid;
+      console.log("[AUTH_SIGNUP_DEBUG] Auth account creation success.");
+      console.log("[AUTH_SIGNUP_DEBUG] Created Firebase Auth UID:", uid);
+
       if (fullName.trim()) {
         try {
           await updateProfile(userCredential.user, {
@@ -101,7 +109,7 @@ export default function SignupScreen({ navigation }) {
           });
           if (Platform.OS === "web" && typeof window !== "undefined" && window.localStorage) {
             window.localStorage.setItem(
-              `aces_club_user_profile_${userCredential.user.uid}`,
+              `aces_club_user_profile_${uid}`,
               JSON.stringify({
                 fullName: fullName.trim(),
                 email: email.trim(),
@@ -115,12 +123,47 @@ export default function SignupScreen({ navigation }) {
             );
           }
         } catch (profileErr) {
-          console.warn("Could not update displayName", profileErr);
+          console.warn("[AUTH_SIGNUP_DEBUG] Could not update displayName:", profileErr);
         }
       }
+
+      // Create Firestore user document in `users/{uid}`
+      const targetPath = `users/${uid}`;
+      console.log("[AUTH_SIGNUP_DEBUG] Firestore users document write started.");
+      console.log("[AUTH_SIGNUP_DEBUG] Exact Firestore document path:", targetPath);
+
+      const formattedJoined = new Date().toLocaleDateString("en-US", {
+        month: "short",
+        day: "2-digit",
+        year: "numeric",
+      });
+
+      const userDocRef = doc(db, "users", uid);
+      const payload = {
+        uid: uid,
+        name: fullName.trim(),
+        email: email.trim(),
+        role: "Member",
+        status: "ACTIVE",
+        phone: "+92 300 9876543",
+        location: "Islamabad, Pakistan",
+        joined: formattedJoined,
+        createdAt: serverTimestamp(),
+      };
+      console.log("[AUTH_SIGNUP_DEBUG] Writing document payload:", payload);
+
+      try {
+        await setDoc(userDocRef, payload, { merge: true });
+        console.log("[AUTH_SIGNUP_DEBUG] Firestore write success for UID:", uid);
+      } catch (firestoreErr) {
+        console.error("[AUTH_SIGNUP_DEBUG] Firestore write exact error:", firestoreErr?.code, firestoreErr?.message, firestoreErr);
+      }
+
+      console.log("[AUTH_SIGNUP_DEBUG] Final signup result: Success. Navigating to Home.");
       setLoading(false);
       navigation?.navigate("Home");
     } catch (error) {
+      console.error("[AUTH_SIGNUP_DEBUG] Final signup result: Failed with Auth Error:", error?.code, error?.message, error);
       setLoading(false);
       setErrorMessage(getAuthErrorMessage(error));
     }
@@ -275,7 +318,13 @@ export default function SignupScreen({ navigation }) {
                       }}
                     />
                     <TouchableOpacity
-                      onPress={() => setShowPassword(!showPassword)}
+                      onPress={(e) => {
+                        if (e && typeof e.preventDefault === "function") e.preventDefault();
+                        setShowPassword(!showPassword);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
                       style={styles.eyeBtn}
                       activeOpacity={0.7}
                     >
@@ -304,7 +353,13 @@ export default function SignupScreen({ navigation }) {
                       }}
                     />
                     <TouchableOpacity
-                      onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                      onPress={(e) => {
+                        if (e && typeof e.preventDefault === "function") e.preventDefault();
+                        setShowConfirmPassword(!showConfirmPassword);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                      aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
                       style={styles.eyeBtn}
                       activeOpacity={0.7}
                     >

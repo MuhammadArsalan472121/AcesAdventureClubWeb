@@ -12,19 +12,42 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "./firebaseConfig";
 
 export default function AdminLoginScreen({ navigation }) {
   const { width } = useWindowDimensions();
   const isWide = width >= 800;
 
-  const [email, setEmail] = useState("admin@acesclub.com");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleAdminLogin = () => {
-    if (!email.trim()) {
+  const getAuthErrorMessage = (error) => {
+    switch (error?.code) {
+      case "auth/invalid-email":
+        return "Invalid email address format.";
+      case "auth/user-not-found":
+      case "auth/wrong-password":
+      case "auth/invalid-credential":
+        return "Invalid administrator credentials.";
+      case "auth/too-many-requests":
+        return "Too many failed attempts. Please try again later.";
+      case "auth/network-request-failed":
+        return "Network connection error. Please try again.";
+      case "auth/user-disabled":
+        return "This administrator account has been disabled.";
+      default:
+        return error?.message || "Authentication failed. Please verify your credentials.";
+    }
+  };
+
+  const handleAdminLogin = async () => {
+    const cleanEmail = email.trim();
+    if (!cleanEmail) {
       setErrorMessage("Please enter admin username or email");
       return;
     }
@@ -36,17 +59,42 @@ export default function AdminLoginScreen({ navigation }) {
     setErrorMessage("");
     setLoading(true);
 
-    // Simulated verified admin login with instant dashboard access
-    setTimeout(() => {
-      setLoading(false);
-      navigation?.navigate("AdminDashboard");
-    }, 500);
-  };
+    try {
+      // Authenticate against Firebase Authentication
+      const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, password);
+      const uid = userCredential.user.uid;
 
-  const handleQuickFill = () => {
-    setEmail("admin@acesclub.com");
-    setPassword("admin123");
-    setErrorMessage("");
+      // Read user document from Firestore users/{uid}
+      const userDocRef = doc(db, "users", uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (!userDocSnap.exists()) {
+        await signOut(auth);
+        setLoading(false);
+        setErrorMessage("Access Denied: Admin profile document not found in Firestore.");
+        return;
+      }
+
+      const userData = userDocSnap.data();
+      const role = userData?.role ? String(userData.role).toLowerCase() : "";
+
+      // Verify role is "admin" or "super_admin"
+      if (role === "admin" || role === "super_admin") {
+        setLoading(false);
+        navigation?.navigate("AdminDashboard");
+      } else {
+        // Access Denied for regular members or unrecognized roles
+        await signOut(auth);
+        setLoading(false);
+        setErrorMessage(
+          `Access Denied: Account '${cleanEmail}' is registered as '${userData?.role || "member"}'. Admin privileges required.`
+        );
+      }
+    } catch (error) {
+      console.error("[ADMIN_AUTH_ERROR]", error);
+      setLoading(false);
+      setErrorMessage(getAuthErrorMessage(error));
+    }
   };
 
   return (
@@ -82,25 +130,6 @@ export default function AdminLoginScreen({ navigation }) {
             </Text>
           </View>
 
-          {/* Demo Credentials Info Box */}
-          <View style={styles.demoCredentialsBox}>
-            <View style={styles.demoHeaderRow}>
-              <Ionicons name="key-outline" size={16} color="#0284C7" />
-              <Text style={styles.demoTitle}>Default Admin Credentials</Text>
-              <TouchableOpacity onPress={handleQuickFill} style={styles.quickFillBtn}>
-                <Text style={styles.quickFillText}>Quick Fill</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.demoRow}>
-              <Text style={styles.demoLabel}>Email:</Text>
-              <Text style={styles.demoVal}>admin@acesclub.com</Text>
-            </View>
-            <View style={styles.demoRow}>
-              <Text style={styles.demoLabel}>Password:</Text>
-              <Text style={styles.demoVal}>admin123</Text>
-            </View>
-          </View>
-
           {/* Error Message */}
           {errorMessage ? (
             <View style={styles.errorBox}>
@@ -118,7 +147,7 @@ export default function AdminLoginScreen({ navigation }) {
                 <Ionicons name="person-outline" size={18} color="#64748B" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="admin@acesclub.com"
+                  placeholder="Enter admin email address"
                   placeholderTextColor="#475569"
                   value={email}
                   onChangeText={setEmail}
@@ -142,8 +171,15 @@ export default function AdminLoginScreen({ navigation }) {
                   secureTextEntry={!showPassword}
                 />
                 <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
+                  onPress={(e) => {
+                    if (e && typeof e.preventDefault === "function") e.preventDefault();
+                    setShowPassword(!showPassword);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                   style={styles.eyeBtn}
+                  activeOpacity={0.7}
                 >
                   <Ionicons
                     name={showPassword ? "eye-off-outline" : "eye-outline"}

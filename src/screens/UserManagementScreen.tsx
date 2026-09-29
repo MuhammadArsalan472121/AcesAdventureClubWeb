@@ -16,6 +16,8 @@ import { useData } from '../context/DataContext';
 export default function UserManagementScreen() {
   const { users, addUser, updateUser, deleteUser } = useData();
 
+  console.log('[USERS_DEBUG] UserManagementScreen rendered. users count:', users?.length, users);
+
   const [modalVisible, setModalVisible] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -58,6 +60,7 @@ export default function UserManagementScreen() {
   };
 
   const handleSave = () => {
+    console.log('[USERS_DEBUG] handleSave invoked. editingUserId:', editingUserId, 'formData:', formData);
     if (!formData.name.trim() || !formData.email.trim()) {
       alert('Please fill in user full name and email address');
       return;
@@ -72,18 +75,25 @@ export default function UserManagementScreen() {
   };
 
   const handleDelete = (id: string, name: string) => {
+    console.log(`[USERS_DEBUG] handleDelete invoked for user ID [${id}], name [${name}]`);
     if (confirm(`Are you sure you want to remove user "${name}" from the system?`)) {
       deleteUser(id);
     }
   };
 
+  console.log('[ADMIN_USERS_READ_DEBUG] 9. useData().users length inside UserManagementScreen:', users?.length, users);
+
   const filteredUsers = users.filter(
     (u) =>
-      u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (u.name && u.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (u.email && u.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (u.role && u.role.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (u.location && u.location.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  console.log('[ADMIN_USERS_READ_DEBUG] 10. filteredUsers length:', filteredUsers.length, filteredUsers);
+  console.log('[ADMIN_USERS_READ_DEBUG] 11. displayed users length:', filteredUsers.length);
+  console.log('[ADMIN_USERS_READ_DEBUG] 12. Exact user count rendered by Users page:', filteredUsers.length);
 
   return (
     <View style={styles.container}>
