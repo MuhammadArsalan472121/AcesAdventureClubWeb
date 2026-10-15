@@ -13,12 +13,13 @@ import {
   SafeAreaView,
   ActivityIndicator,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebaseConfig";
+import AdventureBearMascot from "../components/AdventureBearMascot";
 
-const heroImage = require("../../assets/tripHero.jpg");
+const heroImage = require("../../assets/adventure-bg.jpg");
 const logoImage = require("../../assets/logo.png");
 
 const getAuthErrorMessage = (error) => {
@@ -47,6 +48,8 @@ export default function SignupScreen({ navigation }) {
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [location, setLocation] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -54,6 +57,16 @@ export default function SignupScreen({ navigation }) {
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [focusedField, setFocusedField] = useState(null);
+
+  // Mascot covers eyes when ANY password eye toggle is ON (password exposed)
+  const isPasswordVisible = showPassword || showConfirmPassword;
+
+  const isLookingDown =
+    focusedField === "fullName" ||
+    focusedField === "email" ||
+    focusedField === "phone" ||
+    focusedField === "location";
 
   const handleCreateAccount = async () => {
     if (!fullName.trim()) {
@@ -67,6 +80,14 @@ export default function SignupScreen({ navigation }) {
     const emailRegex = /\S+@\S+\.\S+/;
     if (!emailRegex.test(email)) {
       setErrorMessage("Please enter a valid email address");
+      return;
+    }
+    if (!phone.trim()) {
+      setErrorMessage("Please enter your phone number");
+      return;
+    }
+    if (!location.trim()) {
+      setErrorMessage("Please enter your city / location");
       return;
     }
     if (!password) {
@@ -89,9 +110,6 @@ export default function SignupScreen({ navigation }) {
     setErrorMessage("");
     setLoading(true);
 
-    console.log("[AUTH_SIGNUP_DEBUG] Signup button/handler triggered.");
-    console.log("[AUTH_SIGNUP_DEBUG] Firebase Auth account creation started for email:", email.trim());
-
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -99,8 +117,6 @@ export default function SignupScreen({ navigation }) {
         password
       );
       const uid = userCredential.user.uid;
-      console.log("[AUTH_SIGNUP_DEBUG] Auth account creation success.");
-      console.log("[AUTH_SIGNUP_DEBUG] Created Firebase Auth UID:", uid);
 
       if (fullName.trim()) {
         try {
@@ -113,8 +129,8 @@ export default function SignupScreen({ navigation }) {
               JSON.stringify({
                 fullName: fullName.trim(),
                 email: email.trim(),
-                phone: "+92 300 9876543",
-                location: "Islamabad, Pakistan",
+                phone: phone.trim(),
+                location: location.trim(),
                 aboutMe: "High-altitude trekking enthusiast, landscape photographer, and passionate mountain explorer.",
                 membershipTier: "Aces Elite Gold",
                 role: "Expedition Explorer • Aces Club Member",
@@ -128,10 +144,6 @@ export default function SignupScreen({ navigation }) {
       }
 
       // Create Firestore user document in `users/{uid}`
-      const targetPath = `users/${uid}`;
-      console.log("[AUTH_SIGNUP_DEBUG] Firestore users document write started.");
-      console.log("[AUTH_SIGNUP_DEBUG] Exact Firestore document path:", targetPath);
-
       const formattedJoined = new Date().toLocaleDateString("en-US", {
         month: "short",
         day: "2-digit",
@@ -145,25 +157,31 @@ export default function SignupScreen({ navigation }) {
         email: email.trim(),
         role: "Member",
         status: "ACTIVE",
-        phone: "+92 300 9876543",
-        location: "Islamabad, Pakistan",
+        phone: phone.trim(),
+        location: location.trim(),
         joined: formattedJoined,
         createdAt: serverTimestamp(),
       };
-      console.log("[AUTH_SIGNUP_DEBUG] Writing document payload:", payload);
 
       try {
         await setDoc(userDocRef, payload, { merge: true });
-        console.log("[AUTH_SIGNUP_DEBUG] Firestore write success for UID:", uid);
       } catch (firestoreErr) {
-        console.error("[AUTH_SIGNUP_DEBUG] Firestore write exact error:", firestoreErr?.code, firestoreErr?.message, firestoreErr);
+        console.error("[AUTH_SIGNUP_DEBUG] Firestore write error:", firestoreErr?.message);
       }
 
-      console.log("[AUTH_SIGNUP_DEBUG] Final signup result: Success. Navigating to Home.");
+      // Send Firebase email verification link
+      try {
+        await sendEmailVerification(userCredential.user);
+      } catch (verificationErr) {
+        console.warn("[AUTH_SIGNUP_DEBUG] Error sending email verification:", verificationErr);
+      }
+
       setLoading(false);
-      navigation?.navigate("Home");
+      navigation?.navigate("EmailVerification", {
+        email: email.trim(),
+        justSignedUp: true,
+      });
     } catch (error) {
-      console.error("[AUTH_SIGNUP_DEBUG] Final signup result: Failed with Auth Error:", error?.code, error?.message, error);
       setLoading(false);
       setErrorMessage(getAuthErrorMessage(error));
     }
@@ -209,7 +227,7 @@ export default function SignupScreen({ navigation }) {
               }}
               activeOpacity={0.8}
             >
-              <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
+              <Ionicons name="arrow-back" size={18} color="#FFFFFF" />
               <Text style={styles.backBtnText}>Home</Text>
             </TouchableOpacity>
 
@@ -218,6 +236,7 @@ export default function SignupScreen({ navigation }) {
               <View style={styles.heroContent}>
                 <Image source={logoImage} style={styles.heroLogo} />
                 <View style={styles.heroBadge}>
+                  <Ionicons name="compass" size={13} color="#FFD700" style={{ marginRight: 6 }} />
                   <Text style={styles.heroBadgeText}>JOIN EXPEDITION ALPHA</Text>
                 </View>
                 <Text style={styles.heroTitle}>
@@ -226,10 +245,26 @@ export default function SignupScreen({ navigation }) {
                 <Text style={styles.heroSubtitle}>
                   Unlock access to curated Himalayan expeditions, private chalets, expert mountain guides, and a global club of adventurers.
                 </Text>
+                <View style={styles.heroStatsRow}>
+                  <View style={styles.heroStatItem}>
+                    <Text style={styles.heroStatVal}>40+</Text>
+                    <Text style={styles.heroStatLbl}>Expeditions</Text>
+                  </View>
+                  <View style={styles.heroStatDivider} />
+                  <View style={styles.heroStatItem}>
+                    <Text style={styles.heroStatVal}>12k+</Text>
+                    <Text style={styles.heroStatLbl}>Adventurers</Text>
+                  </View>
+                  <View style={styles.heroStatDivider} />
+                  <View style={styles.heroStatItem}>
+                    <Text style={styles.heroStatVal}>100%</Text>
+                    <Text style={styles.heroStatLbl}>Verified Safe</Text>
+                  </View>
+                </View>
               </View>
             )}
 
-            {/* Mobile Header Content */}
+            {/* Mobile Header Banner */}
             {!isWide && (
               <View style={styles.mobileHeroContent}>
                 <Image source={logoImage} style={styles.mobileHeroLogo} />
@@ -245,34 +280,55 @@ export default function SignupScreen({ navigation }) {
               isWide ? styles.formPanelWide : styles.formPanelNarrow,
             ]}
           >
+            {/* Mascot Wrapper */}
+            <View style={styles.mascotWrapper}>
+              <AdventureBearMascot
+                isPasswordVisible={isPasswordVisible}
+                isLookingDown={isLookingDown}
+              />
+            </View>
+
             <View style={styles.card}>
               <View style={styles.badge}>
-                <Text style={styles.badgeText}>JOIN THE COMMUNITY 🏔</Text>
+                <Ionicons name="sparkles" size={12} color="#0B5CAD" style={{ marginRight: 5 }} />
+                <Text style={styles.badgeText}>JOIN THE COMMUNITY 🏔️</Text>
               </View>
 
               <Text style={styles.title}>Create Your Explorer Account</Text>
               <Text style={styles.subtitle}>
-                Begin discovering breathtaking destinations, tailored itineraries, and unforgettable luxury adventures.
+                Begin discovering breathtaking destinations and tailored luxury expeditions.
               </Text>
 
               {errorMessage ? (
                 <View style={styles.errorBox}>
-                  <Ionicons name="alert-circle-outline" size={16} color="#FF6B6B" />
+                  <Ionicons name="alert-circle" size={16} color="#EF4444" />
                   <Text style={styles.errorText}>{errorMessage}</Text>
                 </View>
               ) : null}
 
-              {/* Form Fields: Row on Desktop, Column on Mobile */}
+              {/* Form Fields: Row 1 - Name & Email */}
               <View style={isWide ? styles.fieldRow : styles.fieldColumn}>
                 <View style={isWide ? styles.fieldHalf : styles.fieldFull}>
                   <Text style={styles.fieldLabel}>FULL NAME</Text>
-                  <View style={styles.inputWrapper}>
-                    <Ionicons name="person-outline" size={18} color="#7f93a6" style={styles.inputIcon} />
+                  <View
+                    style={[
+                      styles.inputWrapper,
+                      focusedField === "fullName" && styles.inputWrapperFocused,
+                    ]}
+                  >
+                    <Ionicons
+                      name="person-outline"
+                      size={17}
+                      color={focusedField === "fullName" ? "#0B5CAD" : "#64748B"}
+                      style={styles.inputIcon}
+                    />
                     <TextInput
                       style={styles.input}
                       placeholder="Johnathan Doe"
-                      placeholderTextColor="#627d98"
+                      placeholderTextColor="#94A3B8"
                       value={fullName}
+                      onFocus={() => setFocusedField("fullName")}
+                      onBlur={() => setFocusedField(null)}
                       onChangeText={(t) => {
                         setFullName(t);
                         if (errorMessage) setErrorMessage("");
@@ -283,15 +339,27 @@ export default function SignupScreen({ navigation }) {
 
                 <View style={isWide ? styles.fieldHalf : styles.fieldFull}>
                   <Text style={styles.fieldLabel}>EMAIL ADDRESS</Text>
-                  <View style={styles.inputWrapper}>
-                    <Ionicons name="mail-outline" size={18} color="#7f93a6" style={styles.inputIcon} />
+                  <View
+                    style={[
+                      styles.inputWrapper,
+                      focusedField === "email" && styles.inputWrapperFocused,
+                    ]}
+                  >
+                    <Ionicons
+                      name="mail-outline"
+                      size={17}
+                      color={focusedField === "email" ? "#0B5CAD" : "#64748B"}
+                      style={styles.inputIcon}
+                    />
                     <TextInput
                       style={styles.input}
                       placeholder="explorer@club.com"
-                      placeholderTextColor="#627d98"
+                      placeholderTextColor="#94A3B8"
                       autoCapitalize="none"
                       keyboardType="email-address"
                       value={email}
+                      onFocus={() => setFocusedField("email")}
+                      onBlur={() => setFocusedField(null)}
                       onChangeText={(t) => {
                         setEmail(t);
                         if (errorMessage) setErrorMessage("");
@@ -301,17 +369,97 @@ export default function SignupScreen({ navigation }) {
                 </View>
               </View>
 
+              {/* Form Fields: Row 2 - Phone & City/Location */}
               <View style={isWide ? styles.fieldRow : styles.fieldColumn}>
                 <View style={isWide ? styles.fieldHalf : styles.fieldFull}>
-                  <Text style={styles.fieldLabel}>PASSWORD</Text>
-                  <View style={styles.inputWrapper}>
-                    <Ionicons name="lock-closed-outline" size={18} color="#7f93a6" style={styles.inputIcon} />
+                  <Text style={styles.fieldLabel}>PHONE NUMBER</Text>
+                  <View
+                    style={[
+                      styles.inputWrapper,
+                      focusedField === "phone" && styles.inputWrapperFocused,
+                    ]}
+                  >
+                    <Ionicons
+                      name="call-outline"
+                      size={17}
+                      color={focusedField === "phone" ? "#0B5CAD" : "#64748B"}
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="+92 300 1234567"
+                      placeholderTextColor="#94A3B8"
+                      keyboardType="phone-pad"
+                      value={phone}
+                      onFocus={() => setFocusedField("phone")}
+                      onBlur={() => setFocusedField(null)}
+                      onChangeText={(t) => {
+                        setPhone(t);
+                        if (errorMessage) setErrorMessage("");
+                      }}
+                    />
+                  </View>
+                </View>
+
+                <View style={isWide ? styles.fieldHalf : styles.fieldFull}>
+                  <Text style={styles.fieldLabel}>CITY / LOCATION</Text>
+                  <View
+                    style={[
+                      styles.inputWrapper,
+                      focusedField === "location" && styles.inputWrapperFocused,
+                    ]}
+                  >
+                    <Ionicons
+                      name="location-outline"
+                      size={17}
+                      color={focusedField === "location" ? "#0B5CAD" : "#64748B"}
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Islamabad, Pakistan"
+                      placeholderTextColor="#94A3B8"
+                      value={location}
+                      onFocus={() => setFocusedField("location")}
+                      onBlur={() => setFocusedField(null)}
+                      onChangeText={(t) => {
+                        setLocation(t);
+                        if (errorMessage) setErrorMessage("");
+                      }}
+                    />
+                  </View>
+                </View>
+              </View>
+
+              {/* Form Fields: Row 3 - Password & Confirm Password */}
+              <View style={isWide ? styles.fieldRow : styles.fieldColumn}>
+                <View style={isWide ? styles.fieldHalf : styles.fieldFull}>
+                  <View style={styles.passwordLabelRow}>
+                    <Text style={styles.fieldLabel}>PASSWORD</Text>
+                    {showPassword ? (
+                      <Text style={styles.bearHintText}>🙈 Mascot eyes covered</Text>
+                    ) : null}
+                  </View>
+                  <View
+                    style={[
+                      styles.inputWrapper,
+                      focusedField === "password" && styles.inputWrapperFocused,
+                    ]}
+                  >
+                    <Ionicons
+                      name="lock-closed-outline"
+                      size={17}
+                      color={focusedField === "password" ? "#0B5CAD" : "#64748B"}
+                      style={styles.inputIcon}
+                    />
                     <TextInput
                       style={styles.input}
                       placeholder="Min 6 characters"
-                      placeholderTextColor="#627d98"
+                      placeholderTextColor="#94A3B8"
                       secureTextEntry={!showPassword}
                       value={password}
+                      onFocus={() => setFocusedField("password")}
+                      onBlur={() => setFocusedField(null)}
                       onChangeText={(t) => {
                         setPassword(t);
                         if (errorMessage) setErrorMessage("");
@@ -331,21 +479,40 @@ export default function SignupScreen({ navigation }) {
                       <Ionicons
                         name={showPassword ? "eye-off-outline" : "eye-outline"}
                         size={18}
-                        color="#7f93a6"
+                        color={showPassword ? "#0B5CAD" : "#64748B"}
                       />
                     </TouchableOpacity>
                   </View>
                 </View>
 
                 <View style={isWide ? styles.fieldHalf : styles.fieldFull}>
-                  <Text style={styles.fieldLabel}>CONFIRM PASSWORD</Text>
-                  <View style={styles.inputWrapper}>
-                    <Ionicons name="shield-checkmark-outline" size={18} color="#7f93a6" style={styles.inputIcon} />
+                  <View style={styles.passwordLabelRow}>
+                    <Text style={styles.fieldLabel}>CONFIRM PASSWORD</Text>
+                    {showConfirmPassword ? (
+                      <Text style={styles.bearHintText}>🙈 Mascot eyes covered</Text>
+                    ) : null}
+                  </View>
+                  <View
+                    style={[
+                      styles.inputWrapper,
+                      focusedField === "confirmPassword" && styles.inputWrapperFocused,
+                    ]}
+                  >
+                    <Ionicons
+                      name="shield-checkmark-outline"
+                      size={17}
+                      color={focusedField === "confirmPassword" ? "#0B5CAD" : "#64748B"}
+                      style={styles.inputIcon}
+                    />
                     <TextInput
                       style={styles.input}
                       placeholder="Repeat password"
-                      placeholderTextColor="#627d98"
+                      placeholderTextColor="#94A3B8"
                       secureTextEntry={!showConfirmPassword}
+                      returnKeyType="go"
+                      onFocus={() => setFocusedField("confirmPassword")}
+                      onBlur={() => setFocusedField(null)}
+                      onSubmitEditing={handleCreateAccount}
                       value={confirmPassword}
                       onChangeText={(t) => {
                         setConfirmPassword(t);
@@ -366,7 +533,7 @@ export default function SignupScreen({ navigation }) {
                       <Ionicons
                         name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
                         size={18}
-                        color="#7f93a6"
+                        color={showConfirmPassword ? "#0B5CAD" : "#64748B"}
                       />
                     </TouchableOpacity>
                   </View>
@@ -380,7 +547,7 @@ export default function SignupScreen({ navigation }) {
                 activeOpacity={0.8}
               >
                 <View style={[styles.checkbox, agreed && styles.checkboxChecked]}>
-                  {agreed && <Ionicons name="checkmark" size={12} color="#0d1b2a" />}
+                  {agreed && <Ionicons name="checkmark" size={12} color="#FFFFFF" />}
                 </View>
                 <Text style={styles.termsText}>
                   I agree to the <Text style={styles.link}>Terms & Conditions</Text> and the{" "}
@@ -397,13 +564,13 @@ export default function SignupScreen({ navigation }) {
               >
                 {loading ? (
                   <>
-                    <ActivityIndicator size="small" color="#0d1b2a" style={{ marginRight: 8 }} />
+                    <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 8 }} />
                     <Text style={styles.primaryButtonText}>Creating Account...</Text>
                   </>
                 ) : (
                   <>
-                    <Text style={styles.primaryButtonText}>Create Account</Text>
-                    <Ionicons name="arrow-forward" size={18} color="#0d1b2a" style={{ marginLeft: 8 }} />
+                    <Text style={styles.primaryButtonText}>Create Explorer Account</Text>
+                    <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{ marginLeft: 6 }} />
                   </>
                 )}
               </TouchableOpacity>
@@ -422,7 +589,7 @@ export default function SignupScreen({ navigation }) {
               style={styles.homeLinkBtn}
               onPress={() => navigation?.navigate("Home")}
             >
-              <Ionicons name="home-outline" size={16} color="#7f93a6" style={{ marginRight: 6 }} />
+              <Ionicons name="home-outline" size={15} color="#0B5CAD" style={{ marginRight: 5 }} />
               <Text style={styles.homeLinkText}>Return to Home Page</Text>
             </TouchableOpacity>
           </View>
@@ -432,14 +599,13 @@ export default function SignupScreen({ navigation }) {
   );
 }
 
-const CARD_BG = "#1b334d";
-const INPUT_BG = "#122336";
-const GOLD = "#d4af6a";
+const BRAND_BLUE = "#0B5CAD";
+const DARK_BLUE = "#073B6F";
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#0d1b2a",
+    backgroundColor: "#F0F7FF",
   },
   container: {
     flex: 1,
@@ -453,6 +619,8 @@ const styles = StyleSheet.create({
   },
   scrollContentNarrow: {
     flexDirection: "column",
+    alignItems: "center",
+    paddingBottom: 24,
   },
 
   // HERO PANEL
@@ -463,13 +631,13 @@ const styles = StyleSheet.create({
   },
   heroPanelWide: {
     width: "44%",
-    minHeight: 720,
-    padding: 48,
+    minHeight: 650,
+    padding: 38,
   },
   heroPanelNarrow: {
     width: "100%",
-    height: 200,
-    padding: 16,
+    height: 120,
+    padding: 12,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -480,270 +648,370 @@ const styles = StyleSheet.create({
   },
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(10, 24, 40, 0.65)",
+    backgroundColor: "transparent",
+    ...(Platform.OS === "web"
+      ? {
+          backgroundImage:
+            "linear-gradient(180deg, rgba(11, 92, 173, 0.45) 0%, rgba(7, 59, 111, 0.82) 100%)",
+        }
+      : {
+          backgroundColor: "rgba(7, 59, 111, 0.65)",
+        }),
   },
 
   backBtn: {
     position: "absolute",
-    top: 20,
-    left: 20,
+    top: 14,
+    left: 14,
     zIndex: 10,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(13, 27, 42, 0.75)",
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 20,
+    backgroundColor: "rgba(11, 92, 173, 0.6)",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.15)",
+    borderColor: "rgba(255, 255, 255, 0.3)",
+    ...(Platform.OS === "web" ? { backdropFilter: "blur(6px)" } : {}),
   },
   backBtnText: {
     color: "#FFFFFF",
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: "600",
-    marginLeft: 6,
+    marginLeft: 5,
   },
 
   heroContent: {
     marginTop: "auto",
-    maxWidth: 480,
+    maxWidth: 440,
+    backgroundColor: "rgba(7, 59, 111, 0.6)",
+    padding: 24,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.22)",
+    ...(Platform.OS === "web" ? { backdropFilter: "blur(10px)" } : {}),
   },
   heroLogo: {
-    width: 68,
-    height: 68,
+    width: 64,
+    height: 64,
     resizeMode: "contain",
-    marginBottom: 20,
+    marginBottom: 12,
   },
   heroBadge: {
+    flexDirection: "row",
+    alignItems: "center",
     alignSelf: "flex-start",
-    backgroundColor: "rgba(212, 175, 106, 0.15)",
-    borderColor: GOLD,
+    backgroundColor: "rgba(255, 215, 0, 0.2)",
+    borderColor: "#FFD700",
     borderWidth: 1,
-    borderRadius: 20,
-    paddingVertical: 5,
-    paddingHorizontal: 12,
-    marginBottom: 16,
+    borderRadius: 16,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    marginBottom: 10,
   },
   heroBadgeText: {
-    color: GOLD,
-    fontSize: 11,
+    color: "#FFD700",
+    fontSize: 10.5,
     fontWeight: "700",
-    letterSpacing: 1,
+    letterSpacing: 0.8,
   },
   heroTitle: {
-    fontSize: 36,
+    fontSize: 30,
     fontFamily: Platform.select({ ios: "Georgia", android: "serif", default: "serif" }),
     color: "#FFFFFF",
-    lineHeight: 44,
-    marginBottom: 16,
+    lineHeight: 38,
+    marginBottom: 10,
     fontWeight: "700",
   },
   heroSubtitle: {
-    fontSize: 15,
-    color: "#cbd5e1",
-    lineHeight: 22,
+    fontSize: 13.5,
+    color: "#F0F9FF",
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  heroStatsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.18)",
+  },
+  heroStatItem: {
+    alignItems: "center",
+  },
+  heroStatVal: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  heroStatLbl: {
+    color: "#BAE6FD",
+    fontSize: 10.5,
+    fontWeight: "600",
+    marginTop: 2,
+  },
+  heroStatDivider: {
+    width: 1,
+    height: 22,
+    backgroundColor: "rgba(255, 255, 255, 0.25)",
   },
 
   mobileHeroContent: {
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 20,
+    marginTop: 10,
+    backgroundColor: "rgba(7, 59, 111, 0.65)",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 14,
   },
   mobileHeroLogo: {
-    width: 48,
-    height: 48,
+    width: 36,
+    height: 36,
     resizeMode: "contain",
-    marginBottom: 8,
+    marginBottom: 4,
   },
   mobileHeroTitle: {
     color: "#FFFFFF",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "700",
     letterSpacing: 0.5,
   },
 
-  // FORM PANEL
+  // BRIGHT FORM PANEL
   formPanel: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#0d1b2a",
+    backgroundColor: "#F0F7FF",
+    width: "100%",
   },
   formPanelWide: {
-    paddingVertical: 48,
-    paddingHorizontal: 40,
+    paddingVertical: 20,
+    paddingHorizontal: 24,
   },
   formPanelNarrow: {
-    paddingVertical: 24,
-    paddingHorizontal: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+  },
+
+  mascotWrapper: {
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10,
+    marginBottom: -4,
   },
 
   card: {
     width: "100%",
-    maxWidth: 520,
-    backgroundColor: CARD_BG,
+    maxWidth: 480,
+    backgroundColor: "#FFFFFF",
     borderRadius: 24,
-    padding: 32,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 8,
+    paddingVertical: 22,
+    paddingHorizontal: 20,
+    borderWidth: 1.5,
+    borderColor: "rgba(11, 92, 173, 0.14)",
+    shadowColor: BRAND_BLUE,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 5,
   },
 
   badge: {
+    flexDirection: "row",
+    alignItems: "center",
     alignSelf: "center",
     borderWidth: 1,
-    borderColor: GOLD,
-    borderRadius: 20,
-    paddingVertical: 5,
-    paddingHorizontal: 14,
-    marginBottom: 18,
-    backgroundColor: "rgba(212, 175, 106, 0.1)",
+    borderColor: BRAND_BLUE,
+    borderRadius: 16,
+    paddingVertical: 3.5,
+    paddingHorizontal: 12,
+    marginBottom: 10,
+    backgroundColor: "#EBF5FF",
   },
   badgeText: {
-    color: GOLD,
-    fontSize: 11,
+    color: BRAND_BLUE,
+    fontSize: 10.5,
     fontWeight: "700",
-    letterSpacing: 1,
+    letterSpacing: 0.8,
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontFamily: Platform.select({ ios: "Georgia", android: "serif", default: "serif" }),
-    color: "#FFFFFF",
+    color: "#0F172A",
     textAlign: "center",
-    marginBottom: 10,
+    marginBottom: 4,
     fontWeight: "700",
   },
   subtitle: {
-    fontSize: 13,
-    color: "#94a3b8",
+    fontSize: 12,
+    color: "#64748B",
     textAlign: "center",
-    marginBottom: 24,
-    lineHeight: 20,
+    marginBottom: 14,
+    lineHeight: 17,
   },
 
   errorBox: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(239, 68, 68, 0.15)",
+    backgroundColor: "#FEF2F2",
     borderWidth: 1,
-    borderColor: "#EF4444",
-    padding: 10,
+    borderColor: "#FCA5A5",
+    padding: 8,
     borderRadius: 8,
-    marginBottom: 16,
+    marginBottom: 10,
   },
   errorText: {
-    color: "#FCA5A5",
-    fontSize: 12,
-    marginLeft: 8,
+    color: "#B91C1C",
+    fontSize: 11.5,
+    marginLeft: 6,
     flex: 1,
+    lineHeight: 16,
   },
 
   fieldRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    width: "100%",
   },
   fieldColumn: {
     flexDirection: "column",
+    width: "100%",
   },
   fieldHalf: {
     width: "48%",
-    marginBottom: 16,
+    marginBottom: 10,
   },
   fieldFull: {
     width: "100%",
-    marginBottom: 16,
+    marginBottom: 10,
   },
   fieldLabel: {
-    color: "#94a3b8",
-    fontSize: 11,
+    color: DARK_BLUE,
+    fontSize: 10.5,
     fontWeight: "700",
-    letterSpacing: 0.8,
-    marginBottom: 8,
+    letterSpacing: 0.6,
+    marginBottom: 5,
+  },
+  passwordLabelRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 5,
+  },
+  bearHintText: {
+    color: BRAND_BLUE,
+    fontSize: 10,
+    fontWeight: "700",
   },
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: INPUT_BG,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
-    paddingHorizontal: 12,
+    backgroundColor: "#F8FAFC",
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: "#E2E8F0",
+    paddingLeft: 10,
+    paddingRight: 6,
+    height: 44,
+    width: "100%",
+    overflow: "hidden",
+  },
+  inputWrapperFocused: {
+    borderColor: BRAND_BLUE,
+    backgroundColor: "#FFFFFF",
+    shadowColor: BRAND_BLUE,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
   },
   inputIcon: {
-    marginRight: 8,
+    marginRight: 6,
   },
   input: {
     flex: 1,
-    paddingVertical: 13,
-    color: "#FFFFFF",
-    fontSize: 13.5,
+    minWidth: 0,
+    height: "100%",
+    paddingVertical: 0,
+    paddingHorizontal: 4,
+    color: "#0F172A",
+    fontSize: 13,
+    ...(Platform.OS === "web" ? { outlineStyle: "none" } : {}),
   },
   eyeBtn: {
-    padding: 6,
+    width: 32,
+    height: 32,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 16,
   },
 
   termsRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 6,
-    marginBottom: 22,
+    marginTop: 4,
+    marginBottom: 14,
+    width: "100%",
   },
   checkbox: {
-    width: 18,
-    height: 18,
+    width: 17,
+    height: 17,
     borderRadius: 4,
-    borderWidth: 1,
-    borderColor: "#627d98",
-    marginRight: 10,
+    borderWidth: 1.5,
+    borderColor: "#CBD5E1",
+    marginRight: 8,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: INPUT_BG,
+    backgroundColor: "#FFFFFF",
   },
   checkboxChecked: {
-    backgroundColor: GOLD,
-    borderColor: GOLD,
+    backgroundColor: BRAND_BLUE,
+    borderColor: BRAND_BLUE,
   },
   termsText: {
     flex: 1,
-    color: "#94a3b8",
-    fontSize: 12.5,
-    lineHeight: 18,
+    color: "#475569",
+    fontSize: 12,
+    lineHeight: 16,
   },
   link: {
-    color: GOLD,
+    color: BRAND_BLUE,
     fontWeight: "600",
   },
   linkBold: {
-    color: GOLD,
-    fontSize: 13,
+    color: BRAND_BLUE,
     fontWeight: "700",
+    fontSize: 13,
   },
 
   primaryButton: {
     flexDirection: "row",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    paddingVertical: 14,
+    backgroundColor: BRAND_BLUE,
+    borderRadius: 10,
+    paddingVertical: 12,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 18,
-    shadowColor: "#000",
+    marginTop: 2,
+    marginBottom: 12,
+    shadowColor: BRAND_BLUE,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 3,
+    width: "100%",
   },
   buttonDisabled: {
     opacity: 0.7,
   },
   primaryButtonText: {
-    color: "#0d1b2a",
+    color: "#FFFFFF",
     fontWeight: "700",
-    fontSize: 14,
+    fontSize: 13.5,
     letterSpacing: 0.3,
   },
 
@@ -753,18 +1021,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   bottomText: {
-    color: "#94a3b8",
-    fontSize: 13,
+    color: "#64748B",
+    fontSize: 12.5,
   },
 
   homeLinkBtn: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 20,
-    paddingVertical: 8,
+    marginTop: 12,
+    paddingVertical: 6,
   },
   homeLinkText: {
-    color: "#7f93a6",
-    fontSize: 13,
+    color: BRAND_BLUE,
+    fontSize: 12.5,
+    fontWeight: "600",
   },
 });

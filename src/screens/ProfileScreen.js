@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   SafeAreaView,
   ScrollView,
@@ -14,10 +14,11 @@ import {
   Platform,
   ActivityIndicator,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import TravelLoader from "../components/TravelLoader";
 import useResponsive from "../hooks/useResponsive";
 import { useAuth } from "../context/AuthContext";
 
@@ -31,7 +32,9 @@ export default function ProfileScreen() {
   } = useResponsive();
 
   const isWide = isDesktop || isTablet;
-  const { user, userProfile, updateUserProfile, loading } = useAuth();
+  const { user, userProfile, updateUserProfile, updateUserPassword, loading } = useAuth();
+
+  const fileInputRef = useRef(null);
 
   // Form State
   const [fullName, setFullName] = useState("");
@@ -39,8 +42,22 @@ export default function ProfileScreen() {
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
   const [aboutMe, setAboutMe] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    if (!loading && user && !user.emailVerified) {
+      navigation.navigate("EmailVerification", {
+        email: user.email,
+        requiresVerification: true,
+      });
+    }
+  }, [user, loading, navigation]);
 
   useEffect(() => {
     if (userProfile) {
@@ -52,24 +69,83 @@ export default function ProfileScreen() {
     }
   }, [userProfile, user]);
 
-  const handleSave = async () => {
-    if (!fullName.trim()) {
+  if (loading) {
+    return <TravelLoader visible={true} message="Loading your explorer profile..." />;
+  }
+
+  const handleAvatarPress = () => {
+    if (Platform.OS === "web" && fileInputRef.current) {
+      fileInputRef.current.click();
+    } else if (Platform.OS !== "web") {
+      Alert.alert("Photo Upload", "Photo upload feature is supported on web browsers.");
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target && e.target.files && e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
       if (Platform.OS === "web") {
-        alert("Please enter your full name.");
+        alert("Please select a valid image file.");
       } else {
-        Alert.alert("Validation Error", "Please enter your full name.");
+        Alert.alert("Invalid File", "Please select a valid image file.");
       }
       return;
     }
 
+    const reader = new FileReader();
+    reader.onload = async (uploadEvent) => {
+      const dataUrl = uploadEvent.target?.result;
+      if (dataUrl) {
+        try {
+          await updateUserProfile({ avatarUrl: dataUrl });
+          setSavedSuccess(true);
+          setTimeout(() => setSavedSuccess(false), 3000);
+        } catch (err) {
+          console.error("Failed to save avatar photo:", err);
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = async () => {
+    if (!fullName.trim()) {
+      setErrorMessage("Please enter your full name.");
+      return;
+    }
+
+    if (newPassword) {
+      if (newPassword.length < 6) {
+        setErrorMessage("Password must be at least 6 characters.");
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        setErrorMessage("Passwords do not match.");
+        return;
+      }
+    }
+
+    setErrorMessage("");
     setSaving(true);
+
     try {
+      // Update profile info
       await updateUserProfile({
         fullName: fullName.trim(),
         phone: phone.trim(),
         location: location.trim(),
         aboutMe: aboutMe.trim(),
       });
+
+      // Update password if specified
+      if (newPassword) {
+        await updateUserPassword(newPassword);
+        setNewPassword("");
+        setConfirmPassword("");
+      }
+
       setSavedSuccess(true);
       if (Platform.OS !== "web") {
         Alert.alert("Success", "Your profile details have been saved successfully!");
@@ -79,11 +155,7 @@ export default function ProfileScreen() {
       }, 4000);
     } catch (err) {
       console.error(err);
-      if (Platform.OS === "web") {
-        alert("Failed to update profile: " + (err.message || "Unknown error"));
-      } else {
-        Alert.alert("Error", err.message || "Failed to update profile");
-      }
+      setErrorMessage(err.message || "Failed to update profile.");
     } finally {
       setSaving(false);
     }
@@ -96,20 +168,40 @@ export default function ProfileScreen() {
       setPhone(userProfile.phone || "");
       setLocation(userProfile.location || "");
       setAboutMe(userProfile.aboutMe || "");
+      setNewPassword("");
+      setConfirmPassword("");
+      setErrorMessage("");
     }
   };
 
-  const favoriteDestinations = [
-    { name: "Hunza Valley", tag: "Gilgit-Baltistan" },
-    { name: "Fairy Meadows & Nanga Parbat", tag: "Diamer" },
-    { name: "Skardu & Shangrila", tag: "Baltistan" },
-    { name: "Deosai National Park", tag: "Plateau" },
-    { name: "K2 Basecamp", tag: "Concordia" },
-  ];
+  const handleRemoveWishlistItem = async (itemToRemove) => {
+    const current = userProfile?.wishlist || [];
+    const updated = current.filter(
+      (item) => item.id !== itemToRemove.id && item.name !== itemToRemove.name
+    );
+    await updateUserProfile({ wishlist: updated });
+  };
+
+  const wishlistItems = userProfile?.wishlist || [];
+  const completedTrips = userProfile?.completedTrips || 0;
+  const upcomingTrips = userProfile?.upcomingTrips || 0;
+  const totalTrips = completedTrips + upcomingTrips;
+  const travelGoalProgress = userProfile?.goalProgress || 0;
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+
+      {/* Hidden File Input for Web Photo Picker */}
+      {Platform.OS === "web" && (
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept="image/*"
+          style={{ display: "none" }}
+          onChange={handleFileChange}
+        />
+      )}
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* ================= HERO & HEADER ================= */}
@@ -133,7 +225,7 @@ export default function ProfileScreen() {
                 My <Text style={styles.heroHighlight}>Profile</Text>
               </Text>
               <Text style={[styles.heroSubtitle, { fontSize: isDesktop ? 16 : 14 }]}>
-                Manage your personal details, expedition logs, and Aces Club membership perks.
+                Manage your personal details, trip logs, and club account settings.
               </Text>
             </View>
           </View>
@@ -156,7 +248,7 @@ export default function ProfileScreen() {
                 <Ionicons name="lock-closed" size={48} color="#0B5CAD" style={{ marginBottom: 16 }} />
                 <Text style={styles.notLoggedInTitle}>Account Authentication Required</Text>
                 <Text style={styles.notLoggedInSubtitle}>
-                  Please sign in to your Aces Adventure Club account to view and manage your expedition profile, preferences, and club membership benefits.
+                  Please sign in to your Aces Adventure Club account to view and manage your profile and preferences.
                 </Text>
                 <View style={styles.notLoggedInBtnRow}>
                   <TouchableOpacity
@@ -183,19 +275,17 @@ export default function ProfileScreen() {
                   <View style={styles.avatarRow}>
                     <View style={styles.avatarContainer}>
                       <Image
-                        source={require("../../assets/partnerProfile.jpg")}
+                        source={
+                          userProfile?.avatarUrl
+                            ? { uri: userProfile.avatarUrl }
+                            : require("../../assets/partnerProfile.jpg")
+                        }
                         style={styles.avatarImage}
                       />
                       <TouchableOpacity
                         style={styles.avatarEditBadge}
                         activeOpacity={0.8}
-                        onPress={() => {
-                          if (Platform.OS === "web") {
-                            alert("Profile photo update opened. You can choose a new avatar image.");
-                          } else {
-                            Alert.alert("Photo Upload", "Photo upload feature opened.");
-                          }
-                        }}
+                        onPress={handleAvatarPress}
                       >
                         <Ionicons name="camera" size={16} color="#FFFFFF" />
                       </TouchableOpacity>
@@ -206,14 +296,14 @@ export default function ProfileScreen() {
                         <Text style={styles.profileName}>{fullName || user?.displayName || "Explorer"}</Text>
                         <View style={styles.vipBadge}>
                           <Ionicons name="sparkles" size={12} color="#F59E0B" />
-                          <Text style={styles.vipBadgeText}>{userProfile?.membershipTier || "ELITE GOLD"}</Text>
+                          <Text style={styles.vipBadgeText}>{userProfile?.membershipTier || "Aces Member"}</Text>
                         </View>
                       </View>
-                      <Text style={styles.profileRole}>{userProfile?.role || "Expedition Explorer • Aces Club Member"}</Text>
+                      <Text style={styles.profileRole}>{userProfile?.role || "Explorer • Aces Club Member"}</Text>
                       <View style={styles.metaRow}>
                         <View style={styles.metaItem}>
                           <Ionicons name="location-outline" size={14} color="#64748B" />
-                          <Text style={styles.metaText}>{location || "Islamabad, Pakistan"}</Text>
+                          <Text style={styles.metaText}>{location || userProfile?.location || "Location not set"}</Text>
                         </View>
                         <View style={styles.metaItem}>
                           <Ionicons name="calendar-outline" size={14} color="#64748B" />
@@ -222,7 +312,7 @@ export default function ProfileScreen() {
                       </View>
                     </View>
 
-                    {/* Direct quick link to Settings */}
+                    {/* Quick link to Settings */}
                     <TouchableOpacity
                       style={styles.settingsQuickBtn}
                       onPress={() => navigation.navigate("Settings")}
@@ -243,6 +333,14 @@ export default function ProfileScreen() {
                   </View>
                 )}
 
+                {/* ERROR BANNER */}
+                {errorMessage ? (
+                  <View style={styles.errorBanner}>
+                    <Ionicons name="alert-circle" size={22} color="#EF4444" style={{ marginRight: 10 }} />
+                    <Text style={styles.errorBannerText}>{errorMessage}</Text>
+                  </View>
+                ) : null}
+
                 {/* TWO-COLUMN LAYOUT (DESKTOP) / STACK (MOBILE) */}
                 <View style={[styles.gridRow, { flexDirection: isDesktop ? "row" : "column" }]}>
                   {/* ================= LEFT COLUMN: EDITABLE FORM ================= */}
@@ -255,7 +353,7 @@ export default function ProfileScreen() {
                         <View>
                           <Text style={styles.cardTitle}>Personal Information</Text>
                           <Text style={styles.cardSubtitle}>
-                            Update your personal and contact details for bookings
+                            Update your personal, contact, and account security details
                           </Text>
                         </View>
                       </View>
@@ -273,7 +371,10 @@ export default function ProfileScreen() {
                             <TextInput
                               style={styles.textInput}
                               value={fullName}
-                              onChangeText={setFullName}
+                              onChangeText={(t) => {
+                                setFullName(t);
+                                if (errorMessage) setErrorMessage("");
+                              }}
                               placeholder="Enter your full name"
                               placeholderTextColor="#94A3B8"
                             />
@@ -283,9 +384,7 @@ export default function ProfileScreen() {
                         {/* Email & Phone in a row on wide screen */}
                         <View style={[styles.inputRow, { flexDirection: isWide ? "row" : "column", gap: 16 }]}>
                           <View style={[styles.inputGroup, { flex: 1 }]}>
-                            <Text style={styles.inputLabel}>
-                              Email Address (Account)
-                            </Text>
+                            <Text style={styles.inputLabel}>Email Address (Account)</Text>
                             <View style={[styles.inputWrapper, { backgroundColor: "#F8FAFC" }]}>
                               <Ionicons name="mail-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
                               <TextInput
@@ -305,7 +404,10 @@ export default function ProfileScreen() {
                               <TextInput
                                 style={styles.textInput}
                                 value={phone}
-                                onChangeText={setPhone}
+                                onChangeText={(t) => {
+                                  setPhone(t);
+                                  if (errorMessage) setErrorMessage("");
+                                }}
                                 placeholder="+92 300 0000000"
                                 placeholderTextColor="#94A3B8"
                                 keyboardType="phone-pad"
@@ -322,22 +424,67 @@ export default function ProfileScreen() {
                             <TextInput
                               style={styles.textInput}
                               value={location}
-                              onChangeText={setLocation}
+                              onChangeText={(t) => {
+                                setLocation(t);
+                                if (errorMessage) setErrorMessage("");
+                              }}
                               placeholder="City, Country"
                               placeholderTextColor="#94A3B8"
                             />
                           </View>
                         </View>
 
+                        {/* Password Change Section */}
+                        <View style={styles.passwordSectionBox}>
+                          <Text style={styles.passwordSectionTitle}>SECURITY & PASSWORD</Text>
+                          <View style={[styles.inputRow, { flexDirection: isWide ? "row" : "column", gap: 16, marginTop: 8 }]}>
+                            <View style={[styles.inputGroup, { flex: 1 }]}>
+                              <Text style={styles.inputLabel}>New Password</Text>
+                              <View style={styles.inputWrapper}>
+                                <Ionicons name="lock-closed-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
+                                <TextInput
+                                  style={styles.textInput}
+                                  value={newPassword}
+                                  onChangeText={(t) => {
+                                    setNewPassword(t);
+                                    if (errorMessage) setErrorMessage("");
+                                  }}
+                                  placeholder="Leave blank to keep current"
+                                  placeholderTextColor="#94A3B8"
+                                  secureTextEntry={!showPassword}
+                                />
+                              </View>
+                            </View>
+
+                            <View style={[styles.inputGroup, { flex: 1 }]}>
+                              <Text style={styles.inputLabel}>Confirm New Password</Text>
+                              <View style={styles.inputWrapper}>
+                                <Ionicons name="shield-checkmark-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
+                                <TextInput
+                                  style={styles.textInput}
+                                  value={confirmPassword}
+                                  onChangeText={(t) => {
+                                    setConfirmPassword(t);
+                                    if (errorMessage) setErrorMessage("");
+                                  }}
+                                  placeholder="Repeat new password"
+                                  placeholderTextColor="#94A3B8"
+                                  secureTextEntry={!showPassword}
+                                />
+                              </View>
+                            </View>
+                          </View>
+                        </View>
+
                         {/* About Me */}
                         <View style={styles.inputGroup}>
-                          <Text style={styles.inputLabel}>About Me & Adventure Bio</Text>
+                          <Text style={styles.inputLabel}>About Me & Travel Bio</Text>
                           <View style={[styles.inputWrapper, styles.textAreaWrapper]}>
                             <TextInput
                               style={[styles.textInput, styles.textAreaInput]}
                               value={aboutMe}
                               onChangeText={setAboutMe}
-                              placeholder="Tell fellow adventurers about your travel interests, trekking experience, and passion for the wild..."
+                              placeholder="Tell fellow travelers about your travel interests and experiences..."
                               placeholderTextColor="#94A3B8"
                               multiline
                               numberOfLines={4}
@@ -374,124 +521,97 @@ export default function ProfileScreen() {
                     </View>
                   </View>
 
-              {/* ================= RIGHT COLUMN: STATISTIC CARDS ================= */}
-              <View style={[styles.rightStatsColumn, { flex: isDesktop ? 1 : 1 }]}>
-                {/* 1. Trips Joined Card */}
-                <View style={styles.statCard}>
-                  <View style={styles.statCardHeader}>
-                    <View style={[styles.statIconBox, { backgroundColor: "#E0F2FE" }]}>
-                      <Ionicons name="compass" size={22} color="#0284C7" />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.statCardCategory}>EXPEDITION LOG</Text>
-                      <Text style={styles.statCardHeading}>Trips Joined</Text>
-                    </View>
-                    <View style={styles.statBadgeHighlight}>
-                      <Text style={styles.statBadgeHighlightText}>14 Total</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.statCountersGrid}>
-                    <View style={styles.counterBox}>
-                      <Text style={styles.counterValue}>12</Text>
-                      <Text style={styles.counterLabel}>Completed</Text>
-                    </View>
-                    <View style={styles.counterBox}>
-                      <Text style={[styles.counterValue, { color: "#0B5CAD" }]}>2</Text>
-                      <Text style={styles.counterLabel}>Upcoming</Text>
-                    </View>
-                    <View style={styles.counterBox}>
-                      <Text style={[styles.counterValue, { color: "#059669" }]}>8</Text>
-                      <Text style={styles.counterLabel}>Summits</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.expeditionProgress}>
-                    <View style={styles.progressRow}>
-                      <Text style={styles.progressLabel}>2026 Exploration Goal</Text>
-                      <Text style={styles.progressValue}>75%</Text>
-                    </View>
-                    <View style={styles.progressBarBg}>
-                      <View style={[styles.progressBarFill, { width: "75%" }]} />
-                    </View>
-                  </View>
-                </View>
-
-                {/* 2. Favorite Destinations Card */}
-                <View style={styles.statCard}>
-                  <View style={styles.statCardHeader}>
-                    <View style={[styles.statIconBox, { backgroundColor: "#FEF3C7" }]}>
-                      <Ionicons name="heart" size={22} color="#D97706" />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.statCardCategory}>WISHLIST & TRAVELS</Text>
-                      <Text style={styles.statCardHeading}>Favorite Destinations</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.destinationsList}>
-                    {favoriteDestinations.map((dest, idx) => (
-                      <View key={idx} style={styles.destinationItem}>
-                        <View style={styles.destDot} />
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.destName}>{dest.name}</Text>
-                          <Text style={styles.destRegion}>{dest.tag}</Text>
+                  {/* ================= RIGHT COLUMN: STATISTIC CARDS ================= */}
+                  <View style={[styles.rightStatsColumn, { flex: isDesktop ? 1 : 1 }]}>
+                    {/* 1. Trips Joined Card */}
+                    <View style={styles.statCard}>
+                      <View style={styles.statCardHeader}>
+                        <View style={[styles.statIconBox, { backgroundColor: "#E0F2FE" }]}>
+                          <Ionicons name="compass" size={22} color="#0284C7" />
                         </View>
-                        <Ionicons name="bookmark" size={16} color="#F59E0B" />
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.statCardCategory}>MY TRIPS</Text>
+                          <Text style={styles.statCardHeading}>Trips Joined</Text>
+                        </View>
+                        <View style={styles.statBadgeHighlight}>
+                          <Text style={styles.statBadgeHighlightText}>{totalTrips} Total</Text>
+                        </View>
                       </View>
-                    ))}
-                  </View>
 
-                  <TouchableOpacity
-                    style={styles.exploreMoreBtn}
-                    onPress={() => navigation.navigate("BrowseTrips")}
-                  >
-                    <Text style={styles.exploreMoreText}>Browse More Expeditions ➔</Text>
-                  </TouchableOpacity>
+                      {/* 2 Counters Grid (Summits removed as requested) */}
+                      <View style={styles.statCountersGrid}>
+                        <View style={styles.counterBox}>
+                          <Text style={styles.counterValue}>{completedTrips}</Text>
+                          <Text style={styles.counterLabel}>Completed</Text>
+                        </View>
+                        <View style={styles.counterBox}>
+                          <Text style={[styles.counterValue, { color: "#0B5CAD" }]}>{upcomingTrips}</Text>
+                          <Text style={styles.counterLabel}>Upcoming</Text>
+                        </View>
+                      </View>
+
+                      <View style={styles.expeditionProgress}>
+                        <View style={styles.progressRow}>
+                          <Text style={styles.progressLabel}>2026 Travel Goal</Text>
+                          <Text style={styles.progressValue}>{travelGoalProgress}%</Text>
+                        </View>
+                        <View style={styles.progressBarBg}>
+                          <View style={[styles.progressBarFill, { width: `${travelGoalProgress}%` }]} />
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* 2. Wishlist & Favorite Destinations Card */}
+                    <View style={styles.statCard}>
+                      <View style={styles.statCardHeader}>
+                        <View style={[styles.statIconBox, { backgroundColor: "#FEF3C7" }]}>
+                          <Ionicons name="heart" size={22} color="#D97706" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.statCardCategory}>WISHLIST & FAVORITES</Text>
+                          <Text style={styles.statCardHeading}>Favorite Destinations</Text>
+                        </View>
+                      </View>
+
+                      {wishlistItems.length > 0 ? (
+                        <View style={styles.destinationsList}>
+                          {wishlistItems.map((item, idx) => (
+                            <View key={item.id || idx} style={styles.destinationItem}>
+                              <View style={styles.destDot} />
+                              <View style={{ flex: 1 }}>
+                                <Text style={styles.destName}>{item.name || item.title}</Text>
+                                <Text style={styles.destRegion}>{item.tag || item.location || "Trip"}</Text>
+                              </View>
+                              <TouchableOpacity
+                                onPress={() => handleRemoveWishlistItem(item)}
+                                style={{ padding: 4 }}
+                                activeOpacity={0.7}
+                              >
+                                <Ionicons name="trash-outline" size={16} color="#EF4444" />
+                              </TouchableOpacity>
+                            </View>
+                          ))}
+                        </View>
+                      ) : (
+                        <View style={styles.emptyWishlistBox}>
+                          <Ionicons name="heart-dislike-outline" size={32} color="#94A3B8" style={{ marginBottom: 8 }} />
+                          <Text style={styles.emptyWishlistText}>
+                            No favorite trips saved yet. Browse trips and tap the heart icon to save your favorites!
+                          </Text>
+                        </View>
+                      )}
+
+                      <TouchableOpacity
+                        style={styles.exploreMoreBtn}
+                        onPress={() => navigation.navigate("ExploreTrips")}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.exploreMoreText}>Browse More Trips ➔</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
                 </View>
-
-                {/* 3. Membership Status Card */}
-                <View style={[styles.statCard, styles.membershipCard]}>
-                  <View style={styles.statCardHeader}>
-                    <View style={[styles.statIconBox, { backgroundColor: "rgba(245, 158, 11, 0.15)" }]}>
-                      <Ionicons name="ribbon" size={24} color="#F59E0B" />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.statCardCategory, { color: "#FDE68A" }]}>CLUB STATUS</Text>
-                      <Text style={[styles.statCardHeading, { color: "#FFFFFF" }]}>Membership Tier</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.vipTierBanner}>
-                    <Text style={styles.tierName}>Aces Elite Gold</Text>
-                    <Text style={styles.tierSub}>VIP Explorer & Priority Access</Text>
-                  </View>
-
-                  <View style={styles.membershipDetails}>
-                    <View style={styles.membershipDetailRow}>
-                      <Text style={styles.memLabel}>Club Rewards Points:</Text>
-                      <Text style={styles.memVal}>1,850 Pts</Text>
-                    </View>
-                    <View style={styles.membershipDetailRow}>
-                      <Text style={styles.memLabel}>Member Discount:</Text>
-                      <Text style={styles.memVal}>15% Off All Trips</Text>
-                    </View>
-                    <View style={styles.membershipDetailRow}>
-                      <Text style={styles.memLabel}>Status Valid Through:</Text>
-                      <Text style={styles.memVal}>Dec 2026</Text>
-                    </View>
-                  </View>
-
-                  <TouchableOpacity
-                    style={styles.manageMembershipBtn}
-                    onPress={() => navigation.navigate("Settings")}
-                  >
-                    <Text style={styles.manageMembershipText}>Manage Membership</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-            </>
+              </>
             )}
           </View>
         </View>
@@ -588,7 +708,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E2E8F0",
     marginBottom: 30,
-    textAlign: "center",
   },
   notLoggedInTitle: {
     fontSize: 22,
@@ -618,10 +737,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     paddingVertical: 14,
     borderRadius: 14,
-    shadowColor: "#0B5CAD",
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
   },
   notLoggedInLoginText: {
     color: "#FFFFFF",
@@ -669,7 +784,6 @@ const styles = StyleSheet.create({
     borderColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
-    cursor: "pointer",
   },
   avatarInfo: {
     flex: 1,
@@ -735,7 +849,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 12,
-    cursor: "pointer",
   },
   settingsQuickText: {
     color: "#0B5CAD",
@@ -754,6 +867,22 @@ const styles = StyleSheet.create({
   },
   successBannerText: {
     color: "#065F46",
+    fontSize: 14,
+    fontWeight: "600",
+    flex: 1,
+  },
+  errorBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FCA5A5",
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 20,
+  },
+  errorBannerText: {
+    color: "#991B1B",
     fontSize: 14,
     fontWeight: "600",
     flex: 1,
@@ -844,7 +973,20 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     color: "#0F172A",
-    outlineStyle: "none",
+  },
+  passwordSectionBox: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    marginVertical: 4,
+  },
+  passwordSectionTitle: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#0B5CAD",
+    letterSpacing: 0.8,
   },
   textAreaWrapper: {
     alignItems: "flex-start",
@@ -869,7 +1011,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     paddingVertical: 14,
     borderRadius: 12,
-    cursor: "pointer",
     shadowColor: "#0B5CAD",
     shadowOpacity: 0.3,
     shadowRadius: 10,
@@ -888,7 +1029,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "#E2E8F0",
     backgroundColor: "#FFFFFF",
-    cursor: "pointer",
   },
   cancelButtonText: {
     color: "#64748B",
@@ -944,7 +1084,7 @@ const styles = StyleSheet.create({
   },
   statCountersGrid: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "space-around",
     backgroundColor: "#F8FAFC",
     borderRadius: 14,
     padding: 14,
@@ -1021,71 +1161,28 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#64748B",
   },
+  emptyWishlistBox: {
+    paddingVertical: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 12,
+  },
+  emptyWishlistText: {
+    fontSize: 13,
+    color: "#64748B",
+    textAlign: "center",
+    lineHeight: 18,
+  },
   exploreMoreBtn: {
-    paddingVertical: 10,
+    paddingVertical: 12,
     alignItems: "center",
     backgroundColor: "#F8FAFC",
     borderRadius: 10,
-    cursor: "pointer",
+    marginTop: 8,
   },
   exploreMoreText: {
     color: "#0B5CAD",
     fontSize: 13,
     fontWeight: "700",
-  },
-  membershipCard: {
-    backgroundColor: "#081B2E",
-    borderColor: "#1E293B",
-  },
-  vipTierBanner: {
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    padding: 16,
-    borderRadius: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: "#F59E0B",
-    marginBottom: 16,
-  },
-  tierName: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: "#F59E0B",
-  },
-  tierSub: {
-    fontSize: 13,
-    color: "#CBD5E1",
-    marginTop: 2,
-  },
-  membershipDetails: {
-    gap: 10,
-    marginBottom: 18,
-  },
-  membershipDetailRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.08)",
-    paddingBottom: 8,
-  },
-  memLabel: {
-    fontSize: 13,
-    color: "#94A3B8",
-  },
-  memVal: {
-    fontSize: 13,
-    color: "#FFFFFF",
-    fontWeight: "600",
-  },
-  manageMembershipBtn: {
-    backgroundColor: "#F59E0B",
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: "center",
-    cursor: "pointer",
-  },
-  manageMembershipText: {
-    color: "#081B2E",
-    fontSize: 13,
-    fontWeight: "800",
-    letterSpacing: 0.5,
   },
 });

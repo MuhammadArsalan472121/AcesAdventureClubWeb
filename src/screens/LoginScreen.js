@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -13,11 +13,12 @@ import {
   SafeAreaView,
   ActivityIndicator,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { signInWithEmailAndPassword, reload } from "firebase/auth";
 import { auth } from "./firebaseConfig";
+import AdventureBearMascot from "../components/AdventureBearMascot";
 
-const heroImage = require("../../assets/hero.jpg");
+const heroImage = require("../../assets/adventure-bg.jpg");
 const logoImage = require("../../assets/logo.png");
 
 const getAuthErrorMessage = (error) => {
@@ -53,6 +54,9 @@ export default function LoginScreen({ navigation }) {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [focusedField, setFocusedField] = useState(null);
+
+  const passwordInputRef = useRef(null);
 
   const handleSignIn = async () => {
     const cleanEmail = email.trim().toLowerCase();
@@ -68,7 +72,20 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email.trim(), password);
+      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
+
+      // Refresh user from Firebase to get accurate emailVerified status
+      await reload(userCredential.user);
+
+      if (!userCredential.user.emailVerified) {
+        setLoading(false);
+        navigation?.navigate("EmailVerification", {
+          email: userCredential.user.email,
+          requiresVerification: true,
+        });
+        return;
+      }
+
       setLoading(false);
       navigation?.navigate("Home");
     } catch (error) {
@@ -117,7 +134,7 @@ export default function LoginScreen({ navigation }) {
               }}
               activeOpacity={0.8}
             >
-              <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
+              <Ionicons name="arrow-back" size={18} color="#FFFFFF" />
               <Text style={styles.backBtnText}>Home</Text>
             </TouchableOpacity>
 
@@ -126,18 +143,29 @@ export default function LoginScreen({ navigation }) {
               <View style={styles.heroContent}>
                 <Image source={logoImage} style={styles.heroLogo} />
                 <View style={styles.heroBadge}>
+                  <Ionicons name="compass" size={13} color="#FFD700" style={{ marginRight: 6 }} />
                   <Text style={styles.heroBadgeText}>ACES ADVENTURE CLUB</Text>
                 </View>
                 <Text style={styles.heroTitle}>
                   The peak of luxury is just ahead.
                 </Text>
                 <Text style={styles.heroSubtitle}>
-                  Join an exclusive circle of modern explorers discovering the world's most remote wonders in unparalleled comfort.
+                  Join an exclusive circle of modern explorers discovering the world&apos;s most remote wonders in unparalleled comfort.
                 </Text>
+                <View style={styles.heroFeatureRow}>
+                  <View style={styles.heroFeaturePill}>
+                    <Ionicons name="shield-checkmark" size={12} color="#38BDF8" style={{ marginRight: 5 }} />
+                    <Text style={styles.heroFeatureText}>Verified Guides</Text>
+                  </View>
+                  <View style={styles.heroFeaturePill}>
+                    <Ionicons name="bonfire" size={12} color="#FBBF24" style={{ marginRight: 5 }} />
+                    <Text style={styles.heroFeatureText}>Private Chalets</Text>
+                  </View>
+                </View>
               </View>
             )}
 
-            {/* Mobile Header Content */}
+            {/* Mobile Header Banner */}
             {!isWide && (
               <View style={styles.mobileHeroContent}>
                 <Image source={logoImage} style={styles.mobileHeroLogo} />
@@ -153,19 +181,28 @@ export default function LoginScreen({ navigation }) {
               isWide ? styles.formPanelWide : styles.formPanelNarrow,
             ]}
           >
+            {/* Mascot Wrapper */}
+            <View style={styles.mascotWrapper}>
+              <AdventureBearMascot
+                isPasswordVisible={showPassword}
+                isLookingDown={focusedField === "email"}
+              />
+            </View>
+
             <View style={styles.card}>
               <View style={styles.badge}>
-                <Text style={styles.badgeText}>WELCOME BACK 👋</Text>
+                <Ionicons name="compass-outline" size={13} color="#0B5CAD" style={{ marginRight: 5 }} />
+                <Text style={styles.badgeText}>MEMBER PORTAL LOGIN</Text>
               </View>
 
               <Text style={styles.title}>Continue Your Adventure</Text>
               <Text style={styles.subtitle}>
-                Sign in to explore destinations, manage your expeditions, and access member-only experiences.
+                Sign in to manage your expeditions and member perks.
               </Text>
 
               {errorMessage ? (
                 <View style={styles.errorBox}>
-                  <Ionicons name="alert-circle-outline" size={16} color="#FF6B6B" />
+                  <Ionicons name="alert-circle" size={16} color="#EF4444" />
                   <Text style={styles.errorText}>{errorMessage}</Text>
                 </View>
               ) : null}
@@ -173,19 +210,28 @@ export default function LoginScreen({ navigation }) {
               {/* Email Field */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>EMAIL ADDRESS</Text>
-                <View style={styles.inputWrapper}>
+                <View
+                  style={[
+                    styles.inputWrapper,
+                    focusedField === "email" && styles.inputWrapperFocused,
+                  ]}
+                >
                   <Ionicons
                     name="mail-outline"
-                    size={18}
-                    color="#7f93a6"
+                    size={17}
+                    color={focusedField === "email" ? "#0B5CAD" : "#64748B"}
                     style={styles.inputIcon}
                   />
                   <TextInput
                     style={styles.input}
                     placeholder="explorer@acesadventure.com"
-                    placeholderTextColor="#627d98"
+                    placeholderTextColor="#94A3B8"
                     autoCapitalize="none"
                     keyboardType="email-address"
+                    returnKeyType="next"
+                    onFocus={() => setFocusedField("email")}
+                    onBlur={() => setFocusedField(null)}
+                    onSubmitEditing={() => passwordInputRef.current?.focus()}
                     value={email}
                     onChangeText={(t) => {
                       setEmail(t);
@@ -197,19 +243,34 @@ export default function LoginScreen({ navigation }) {
 
               {/* Password Field */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>PASSWORD</Text>
-                <View style={styles.inputWrapper}>
+                <View style={styles.passwordLabelRow}>
+                  <Text style={styles.inputLabel}>PASSWORD</Text>
+                  {showPassword ? (
+                    <Text style={styles.bearHintText}>🙈 Mascot is covering eyes!</Text>
+                  ) : null}
+                </View>
+                <View
+                  style={[
+                    styles.inputWrapper,
+                    focusedField === "password" && styles.inputWrapperFocused,
+                  ]}
+                >
                   <Ionicons
                     name="lock-closed-outline"
-                    size={18}
-                    color="#7f93a6"
+                    size={17}
+                    color={focusedField === "password" ? "#0B5CAD" : "#64748B"}
                     style={styles.inputIcon}
                   />
                   <TextInput
+                    ref={passwordInputRef}
                     style={styles.input}
                     placeholder="Enter your password"
-                    placeholderTextColor="#627d98"
+                    placeholderTextColor="#94A3B8"
                     secureTextEntry={!showPassword}
+                    returnKeyType="go"
+                    onFocus={() => setFocusedField("password")}
+                    onBlur={() => setFocusedField(null)}
+                    onSubmitEditing={handleSignIn}
                     value={password}
                     onChangeText={(t) => {
                       setPassword(t);
@@ -229,8 +290,8 @@ export default function LoginScreen({ navigation }) {
                   >
                     <Ionicons
                       name={showPassword ? "eye-off-outline" : "eye-outline"}
-                      size={18}
-                      color="#7f93a6"
+                      size={19}
+                      color={showPassword ? "#0B5CAD" : "#64748B"}
                     />
                   </TouchableOpacity>
                 </View>
@@ -244,7 +305,7 @@ export default function LoginScreen({ navigation }) {
                   activeOpacity={0.8}
                 >
                   <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
-                    {rememberMe && <Ionicons name="checkmark" size={12} color="#0d1b2a" />}
+                    {rememberMe && <Ionicons name="checkmark" size={12} color="#FFFFFF" />}
                   </View>
                   <Text style={styles.checkboxLabel}>Remember Me</Text>
                 </TouchableOpacity>
@@ -266,20 +327,20 @@ export default function LoginScreen({ navigation }) {
               >
                 {loading ? (
                   <>
-                    <ActivityIndicator size="small" color="#0d1b2a" style={{ marginRight: 8 }} />
+                    <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 8 }} />
                     <Text style={styles.primaryButtonText}>Signing In...</Text>
                   </>
                 ) : (
                   <>
                     <Text style={styles.primaryButtonText}>Sign In</Text>
-                    <Ionicons name="arrow-forward" size={18} color="#0d1b2a" style={{ marginLeft: 8 }} />
+                    <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{ marginLeft: 6 }} />
                   </>
                 )}
               </TouchableOpacity>
 
               {/* Sign Up Link */}
               <View style={styles.bottomRow}>
-                <Text style={styles.bottomText}>Don't have an account? </Text>
+                <Text style={styles.bottomText}>Don&apos;t have an account? </Text>
                 <TouchableOpacity onPress={() => navigation?.navigate("Signup")}>
                   <Text style={styles.linkBold}>Create Account</Text>
                 </TouchableOpacity>
@@ -291,8 +352,8 @@ export default function LoginScreen({ navigation }) {
                 onPress={() => navigation?.navigate("AdminLogin")}
                 activeOpacity={0.8}
               >
-                <Ionicons name="shield-checkmark-outline" size={15} color="#d4af6a" style={{ marginRight: 6 }} />
-                <Text style={styles.adminPortalText}>Admin Control Console Login ➔</Text>
+                <Ionicons name="shield-checkmark-outline" size={14} color="#0B5CAD" style={{ marginRight: 5 }} />
+                <Text style={styles.adminPortalText}>Admin Control Console ➔</Text>
               </TouchableOpacity>
             </View>
 
@@ -301,7 +362,7 @@ export default function LoginScreen({ navigation }) {
               style={styles.homeLinkBtn}
               onPress={() => navigation?.navigate("Home")}
             >
-              <Ionicons name="home-outline" size={16} color="#7f93a6" style={{ marginRight: 6 }} />
+              <Ionicons name="home-outline" size={15} color="#0B5CAD" style={{ marginRight: 5 }} />
               <Text style={styles.homeLinkText}>Return to Home Page</Text>
             </TouchableOpacity>
           </View>
@@ -311,14 +372,13 @@ export default function LoginScreen({ navigation }) {
   );
 }
 
-const CARD_BG = "#1b334d";
-const INPUT_BG = "#122336";
-const GOLD = "#d4af6a";
+const BRAND_BLUE = "#0B5CAD";
+const DARK_BLUE = "#073B6F";
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#0d1b2a",
+    backgroundColor: "#F0F7FF",
   },
   container: {
     flex: 1,
@@ -332,6 +392,8 @@ const styles = StyleSheet.create({
   },
   scrollContentNarrow: {
     flexDirection: "column",
+    alignItems: "center",
+    paddingBottom: 24,
   },
 
   // HERO PANEL
@@ -342,13 +404,13 @@ const styles = StyleSheet.create({
   },
   heroPanelWide: {
     width: "48%",
-    minHeight: 700,
-    padding: 48,
+    minHeight: 650,
+    padding: 38,
   },
   heroPanelNarrow: {
     width: "100%",
-    height: 200,
-    padding: 16,
+    height: 120,
+    padding: 12,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -359,260 +421,348 @@ const styles = StyleSheet.create({
   },
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(10, 24, 40, 0.65)",
+    backgroundColor: "transparent",
+    ...(Platform.OS === "web"
+      ? {
+          backgroundImage:
+            "linear-gradient(180deg, rgba(11, 92, 173, 0.45) 0%, rgba(7, 59, 111, 0.82) 100%)",
+        }
+      : {
+          backgroundColor: "rgba(7, 59, 111, 0.65)",
+        }),
   },
 
   backBtn: {
     position: "absolute",
-    top: 20,
-    left: 20,
+    top: 14,
+    left: 14,
     zIndex: 10,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(13, 27, 42, 0.75)",
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 20,
+    backgroundColor: "rgba(11, 92, 173, 0.6)",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.15)",
+    borderColor: "rgba(255, 255, 255, 0.3)",
+    ...(Platform.OS === "web" ? { backdropFilter: "blur(6px)" } : {}),
   },
   backBtnText: {
     color: "#FFFFFF",
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: "600",
-    marginLeft: 6,
+    marginLeft: 5,
   },
 
   heroContent: {
     marginTop: "auto",
-    maxWidth: 480,
+    maxWidth: 440,
+    backgroundColor: "rgba(7, 59, 111, 0.6)",
+    padding: 24,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.22)",
+    ...(Platform.OS === "web" ? { backdropFilter: "blur(10px)" } : {}),
   },
   heroLogo: {
-    width: 68,
-    height: 68,
+    width: 64,
+    height: 64,
     resizeMode: "contain",
-    marginBottom: 20,
+    marginBottom: 12,
   },
   heroBadge: {
+    flexDirection: "row",
+    alignItems: "center",
     alignSelf: "flex-start",
-    backgroundColor: "rgba(212, 175, 106, 0.15)",
-    borderColor: GOLD,
+    backgroundColor: "rgba(255, 215, 0, 0.2)",
+    borderColor: "#FFD700",
     borderWidth: 1,
-    borderRadius: 20,
-    paddingVertical: 5,
-    paddingHorizontal: 12,
-    marginBottom: 16,
+    borderRadius: 16,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    marginBottom: 10,
   },
   heroBadgeText: {
-    color: GOLD,
-    fontSize: 11,
+    color: "#FFD700",
+    fontSize: 10.5,
     fontWeight: "700",
-    letterSpacing: 1,
+    letterSpacing: 0.8,
   },
   heroTitle: {
-    fontSize: 36,
+    fontSize: 30,
     fontFamily: Platform.select({ ios: "Georgia", android: "serif", default: "serif" }),
     color: "#FFFFFF",
-    lineHeight: 44,
-    marginBottom: 16,
+    lineHeight: 38,
+    marginBottom: 10,
     fontWeight: "700",
   },
   heroSubtitle: {
-    fontSize: 15,
-    color: "#cbd5e1",
-    lineHeight: 22,
+    fontSize: 13.5,
+    color: "#F0F9FF",
+    lineHeight: 20,
+    marginBottom: 14,
+  },
+  heroFeatureRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  heroFeaturePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    paddingVertical: 4,
+    paddingHorizontal: 9,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
+  },
+  heroFeatureText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "600",
   },
 
   mobileHeroContent: {
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 20,
+    marginTop: 10,
+    backgroundColor: "rgba(7, 59, 111, 0.65)",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 14,
   },
   mobileHeroLogo: {
-    width: 48,
-    height: 48,
+    width: 36,
+    height: 36,
     resizeMode: "contain",
-    marginBottom: 8,
+    marginBottom: 4,
   },
   mobileHeroTitle: {
     color: "#FFFFFF",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "700",
     letterSpacing: 0.5,
   },
 
-  // FORM PANEL
+  // BRIGHT FORM PANEL
   formPanel: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#0d1b2a",
+    backgroundColor: "#F0F7FF",
+    width: "100%",
   },
   formPanelWide: {
-    paddingVertical: 48,
-    paddingHorizontal: 40,
+    paddingVertical: 24,
+    paddingHorizontal: 28,
   },
   formPanelNarrow: {
-    paddingVertical: 24,
-    paddingHorizontal: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+  },
+
+  mascotWrapper: {
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10,
+    marginBottom: -4,
   },
 
   card: {
     width: "100%",
-    maxWidth: 460,
-    backgroundColor: CARD_BG,
+    maxWidth: 420,
+    backgroundColor: "#FFFFFF",
     borderRadius: 24,
-    padding: 32,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 8,
+    paddingVertical: 24,
+    paddingHorizontal: 22,
+    borderWidth: 1.5,
+    borderColor: "rgba(11, 92, 173, 0.14)",
+    shadowColor: BRAND_BLUE,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 5,
   },
 
   badge: {
+    flexDirection: "row",
+    alignItems: "center",
     alignSelf: "center",
     borderWidth: 1,
-    borderColor: GOLD,
-    borderRadius: 20,
-    paddingVertical: 5,
-    paddingHorizontal: 14,
-    marginBottom: 18,
-    backgroundColor: "rgba(212, 175, 106, 0.1)",
+    borderColor: BRAND_BLUE,
+    borderRadius: 16,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+    backgroundColor: "#EBF5FF",
   },
   badgeText: {
-    color: GOLD,
-    fontSize: 11,
+    color: BRAND_BLUE,
+    fontSize: 10.5,
     fontWeight: "700",
-    letterSpacing: 1,
+    letterSpacing: 0.8,
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontFamily: Platform.select({ ios: "Georgia", android: "serif", default: "serif" }),
-    color: "#FFFFFF",
+    color: "#0F172A",
     textAlign: "center",
-    marginBottom: 10,
+    marginBottom: 4,
     fontWeight: "700",
   },
   subtitle: {
-    fontSize: 13,
-    color: "#94a3b8",
+    fontSize: 12.5,
+    color: "#64748B",
     textAlign: "center",
-    marginBottom: 24,
-    lineHeight: 20,
+    marginBottom: 16,
+    lineHeight: 18,
   },
 
   errorBox: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(239, 68, 68, 0.15)",
+    backgroundColor: "#FEF2F2",
     borderWidth: 1,
-    borderColor: "#EF4444",
-    padding: 10,
+    borderColor: "#FCA5A5",
+    padding: 9,
     borderRadius: 8,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   errorText: {
-    color: "#FCA5A5",
+    color: "#B91C1C",
     fontSize: 12,
-    marginLeft: 8,
+    marginLeft: 6,
     flex: 1,
+    lineHeight: 16,
   },
 
   inputGroup: {
-    marginBottom: 16,
+    marginBottom: 12,
+    width: "100%",
+  },
+  passwordLabelRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
   },
   inputLabel: {
-    color: "#94a3b8",
+    color: DARK_BLUE,
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 0.8,
-    marginBottom: 8,
+    marginBottom: 6,
+  },
+  bearHintText: {
+    color: BRAND_BLUE,
+    fontSize: 10.5,
+    fontWeight: "700",
   },
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: INPUT_BG,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
-    paddingHorizontal: 14,
+    backgroundColor: "#F8FAFC",
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: "#E2E8F0",
+    paddingLeft: 12,
+    paddingRight: 6,
+    height: 46,
+    width: "100%",
+    overflow: "hidden",
+  },
+  inputWrapperFocused: {
+    borderColor: BRAND_BLUE,
+    backgroundColor: "#FFFFFF",
+    shadowColor: BRAND_BLUE,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
   },
   inputIcon: {
-    marginRight: 10,
+    marginRight: 8,
   },
   input: {
     flex: 1,
-    paddingVertical: 14,
-    color: "#FFFFFF",
-    fontSize: 14,
+    minWidth: 0,
+    height: "100%",
+    paddingVertical: 0,
+    paddingHorizontal: 4,
+    color: "#0F172A",
+    fontSize: 13.5,
+    ...(Platform.OS === "web" ? { outlineStyle: "none" } : {}),
   },
   eyeBtn: {
-    padding: 6,
+    width: 34,
+    height: 34,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 17,
   },
 
   rowBetween: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginVertical: 14,
+    marginVertical: 10,
+    width: "100%",
   },
   checkboxRow: {
     flexDirection: "row",
     alignItems: "center",
   },
   checkbox: {
-    width: 18,
-    height: 18,
+    width: 17,
+    height: 17,
     borderRadius: 4,
-    borderWidth: 1,
-    borderColor: "#627d98",
-    marginRight: 8,
+    borderWidth: 1.5,
+    borderColor: "#CBD5E1",
+    marginRight: 7,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: INPUT_BG,
+    backgroundColor: "#FFFFFF",
   },
   checkboxChecked: {
-    backgroundColor: GOLD,
-    borderColor: GOLD,
+    backgroundColor: BRAND_BLUE,
+    borderColor: BRAND_BLUE,
   },
   checkboxLabel: {
-    color: "#cbd5e1",
-    fontSize: 13,
+    color: "#334155",
+    fontSize: 12.5,
+    fontWeight: "500",
   },
   link: {
-    color: GOLD,
-    fontSize: 13,
+    color: BRAND_BLUE,
+    fontSize: 12.5,
     fontWeight: "600",
   },
   linkBold: {
-    color: GOLD,
+    color: BRAND_BLUE,
     fontSize: 13,
     fontWeight: "700",
   },
 
   primaryButton: {
     flexDirection: "row",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    paddingVertical: 14,
+    backgroundColor: BRAND_BLUE,
+    borderRadius: 10,
+    paddingVertical: 12,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 10,
-    marginBottom: 18,
-    shadowColor: "#000",
+    marginTop: 6,
+    marginBottom: 12,
+    shadowColor: BRAND_BLUE,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 3,
+    width: "100%",
   },
   buttonDisabled: {
     opacity: 0.7,
   },
   primaryButtonText: {
-    color: "#0d1b2a",
+    color: "#FFFFFF",
     fontWeight: "700",
     fontSize: 14,
     letterSpacing: 0.3,
@@ -622,35 +772,38 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
+    marginTop: 2,
   },
   bottomText: {
-    color: "#94a3b8",
-    fontSize: 13,
+    color: "#64748B",
+    fontSize: 12.5,
   },
 
   homeLinkBtn: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 20,
-    paddingVertical: 8,
+    marginTop: 14,
+    paddingVertical: 6,
   },
   homeLinkText: {
-    color: "#7f93a6",
-    fontSize: 13,
+    color: BRAND_BLUE,
+    fontSize: 12.5,
+    fontWeight: "600",
   },
   adminPortalBtn: {
-    marginTop: 18,
-    paddingTop: 14,
+    marginTop: 14,
+    paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: "rgba(255, 255, 255, 0.08)",
+    borderTopColor: "#F1F5F9",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    width: "100%",
   },
   adminPortalText: {
-    color: "#d4af6a",
+    color: BRAND_BLUE,
     fontSize: 12,
     fontWeight: "700",
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
 });

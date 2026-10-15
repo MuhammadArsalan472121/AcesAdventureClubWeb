@@ -14,6 +14,7 @@ import {
 import Sidebar from '../components/Sidebar';
 import TopBar from '../components/TopBar';
 import { useData, resolveAsset } from '../context/DataContext';
+import { pickImageFromDevice } from '../utils/imageUpload';
 
 const GALLERY_PRESETS = [
   { key: 'gallery1.jpg', label: 'Hunza Valley' },
@@ -32,7 +33,7 @@ const GALLERY_PRESETS = [
 ];
 
 export default function GalleryManagementScreen() {
-  const { gallery, addGalleryItem, updateGalleryItem, deleteGalleryItem } = useData();
+  const { gallery, addGalleryItem, updateGalleryItem, deleteGalleryItem } = useData() as any;
 
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [modalVisible, setModalVisible] = useState(false);
@@ -43,9 +44,27 @@ export default function GalleryManagementScreen() {
     category: 'MOUNTAINS',
     imageKey: 'gallery1.jpg',
     height: 260,
+    uploadedFileName: '',
+    uploadedFileSize: '',
   });
 
   const categories = ['ALL', 'MOUNTAINS', 'LAKES', 'CAMPING', 'TREKKING', 'NATURE TRAILS'];
+
+  const handleUploadFromDevice = async () => {
+    try {
+      const res = await pickImageFromDevice();
+      if (res && res.dataUrl) {
+        setFormData((prev) => ({
+          ...prev,
+          imageKey: res.dataUrl,
+          uploadedFileName: res.fileName,
+          uploadedFileSize: res.fileSize,
+        }));
+      }
+    } catch (e) {
+      console.warn('Error picking file from device:', e);
+    }
+  };
 
   const handleOpenAdd = () => {
     setEditingItemId(null);
@@ -54,6 +73,8 @@ export default function GalleryManagementScreen() {
       category: selectedCategory === 'ALL' ? 'MOUNTAINS' : selectedCategory,
       imageKey: 'gallery1.jpg',
       height: 260,
+      uploadedFileName: '',
+      uploadedFileSize: '',
     });
     setModalVisible(true);
   };
@@ -65,6 +86,8 @@ export default function GalleryManagementScreen() {
       category: item.category || 'MOUNTAINS',
       imageKey: item.imageKey || 'gallery1.jpg',
       height: item.height || 260,
+      uploadedFileName: '',
+      uploadedFileSize: '',
     });
     setModalVisible(true);
   };
@@ -90,9 +113,11 @@ export default function GalleryManagementScreen() {
   };
 
   const filteredGallery =
-    selectedCategory === 'ALL'
-      ? gallery
-      : gallery.filter((item) => item.category === selectedCategory);
+    selectedCategory.toUpperCase() === 'ALL'
+      ? (gallery || [])
+      : (gallery || []).filter((item: any) =>
+          String(item.category || '').trim().toUpperCase() === selectedCategory.trim().toUpperCase()
+        );
 
   return (
     <View style={styles.container}>
@@ -147,7 +172,7 @@ export default function GalleryManagementScreen() {
 
           {/* Gallery Media Grid */}
           <View style={styles.grid}>
-            {filteredGallery.map((item) => (
+            {filteredGallery.map((item: any) => (
               <View style={styles.card} key={item.id}>
                 <Image
                   source={resolveAsset(item.imageKey, 'gallery1.jpg')}
@@ -241,9 +266,59 @@ export default function GalleryManagementScreen() {
                   </View>
                 </View>
 
+                {/* Upload Image From Device Option */}
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel}>UPLOAD IMAGE → FROM YOUR DEVICE</Text>
+
+                  {formData.imageKey && formData.imageKey.startsWith('data:') ? (
+                    <View style={styles.devicePreviewCard}>
+                      <Image
+                        source={resolveAsset(formData.imageKey)}
+                        style={styles.devicePreviewThumb}
+                      />
+                      <View style={{ flex: 1 }}>
+                        <View style={styles.deviceSuccessChip}>
+                          <Text style={styles.deviceSuccessChipText}>✓ Ready from Device</Text>
+                        </View>
+                        <Text style={styles.devicePreviewName} numberOfLines={1}>
+                          {formData.uploadedFileName || 'Image from your device'}
+                        </Text>
+                        <Text style={styles.devicePreviewSize}>
+                          {formData.uploadedFileSize || 'Compressed for web'}
+                        </Text>
+                        <TouchableOpacity
+                          style={styles.deviceChangeBtn}
+                          onPress={handleUploadFromDevice}
+                        >
+                          <Text style={styles.deviceChangeBtnText}>Change Device Image</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.deviceUploadCard}
+                      onPress={handleUploadFromDevice}
+                      activeOpacity={0.8}
+                    >
+                      <View style={styles.deviceIconCircle}>
+                        <Text style={{ fontSize: 24 }}>📁</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.deviceCardTitle}>Upload Image → From Your Device</Text>
+                        <Text style={styles.deviceCardSub}>
+                          Select any JPG, PNG, or WebP photo directly from your computer or phone
+                        </Text>
+                      </View>
+                      <View style={styles.deviceBrowseBtn}>
+                        <Text style={styles.deviceBrowseBtnText}>Browse Files</Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                </View>
+
                 {/* Preset image selector */}
                 <View style={styles.formGroup}>
-                  <Text style={styles.formLabel}>SELECT IMAGE PRESET</Text>
+                  <Text style={styles.formLabel}>OR CHOOSE FROM PRESETS</Text>
                   <View style={styles.presetGrid}>
                     {GALLERY_PRESETS.map((preset) => (
                       <TouchableOpacity
@@ -671,5 +746,110 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     color: '#FFFFFF',
+  },
+
+  /* Device Upload Card Styles */
+  deviceUploadCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    borderWidth: 2,
+    borderColor: '#BFDBFE',
+    borderStyle: 'dashed',
+    borderRadius: 14,
+    padding: 16,
+    backgroundColor: '#F8FAFC',
+    cursor: 'pointer',
+  },
+
+  deviceIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  deviceCardTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0B5CAD',
+  },
+
+  deviceCardSub: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 2,
+  },
+
+  deviceBrowseBtn: {
+    backgroundColor: '#0B5CAD',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+
+  deviceBrowseBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
+  devicePreviewCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 12,
+    padding: 12,
+  },
+
+  devicePreviewThumb: {
+    width: 72,
+    height: 72,
+    borderRadius: 10,
+    backgroundColor: '#E2E8F0',
+  },
+
+  deviceSuccessChip: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginBottom: 4,
+  },
+
+  deviceSuccessChipText: {
+    color: '#16A34A',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+
+  devicePreviewName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+
+  devicePreviewSize: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 2,
+  },
+
+  deviceChangeBtn: {
+    marginTop: 4,
+    alignSelf: 'flex-start',
+  },
+
+  deviceChangeBtnText: {
+    fontSize: 11,
+    color: '#0B5CAD',
+    fontWeight: '700',
+    textDecorationLine: 'underline',
   },
 });

@@ -1,12 +1,18 @@
 import React from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity, Linking } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import useResponsive from "../hooks/useResponsive";
+import { useData } from "../context/DataContext";
 
 export default function Footer() {
   const navigation = useNavigation();
   const { isDesktop, isTablet } = useResponsive();
+  const { contactContent } = useData() || {};
+
+  const location = contactContent?.location || "Attock, Punjab, Pakistan";
+  const phone = contactContent?.phone || "+92 312 1578099";
+  const email = contactContent?.email || "info.acesadventureclub@gmail.com";
 
   const navigateTo = (screen) => {
     navigation.navigate(screen);
@@ -88,16 +94,28 @@ export default function Footer() {
           <Text style={styles.columnTitle}>Get In Touch</Text>
           <View style={styles.contactItem}>
             <Ionicons name="location-outline" size={16} color="#0B5CAD" />
-            <Text style={styles.contactText}>Islamabad & Skardu, Pakistan</Text>
+            <Text style={styles.contactText}>{location}</Text>
           </View>
-          <View style={styles.contactItem}>
+          <TouchableOpacity
+            style={styles.contactItem}
+            onPress={() => {
+              if (phone) Linking.openURL(`tel:${phone.replace(/\s+/g, "")}`);
+            }}
+            activeOpacity={0.7}
+          >
             <Ionicons name="call-outline" size={16} color="#0B5CAD" />
-            <Text style={styles.contactText}>+92 300 1234567</Text>
-          </View>
-          <View style={styles.contactItem}>
+            <Text style={styles.contactText}>{phone}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.contactItem}
+            onPress={() => {
+              if (email) Linking.openURL(`mailto:${email}`);
+            }}
+            activeOpacity={0.7}
+          >
             <Ionicons name="mail-outline" size={16} color="#0B5CAD" />
-            <Text style={styles.contactText}>info@acesadventureclub.com</Text>
-          </View>
+            <Text style={styles.contactText}>{email}</Text>
+          </TouchableOpacity>
         </View>
 
       </View>

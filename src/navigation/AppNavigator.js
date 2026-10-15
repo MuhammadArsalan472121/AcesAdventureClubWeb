@@ -11,6 +11,7 @@ import ContactScreen from "../screens/ContactScreen";
 import LoginScreen from "../screens/LoginScreen";
 import SignupScreen from "../screens/SignupScreen";
 import ForgotPasswordScreen from "../screens/ForgotPasswordScreen";
+import EmailVerificationScreen from "../screens/EmailVerificationScreen";
 import Onboarding1 from "../screens/Onboarding1";
 import Onboarding2 from "../screens/Onboarding2";
 import Onboarding3 from "../screens/Onboarding3";
@@ -25,11 +26,16 @@ import SponsorsManagementScreen from "../screens/SponsorsManagementScreen";
 import GalleryManagementScreen from "../screens/GalleryManagementScreen";
 import ConsoleSettingsScreen from "../screens/ConsoleSettingsScreen";
 
+import { getOnboardingCompleted } from "../utils/onboardingStorage";
+
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
+  const isCompleted = getOnboardingCompleted();
+  const initialRoute = isCompleted ? "Home" : "Onboarding1";
+
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Onboarding1" component={Onboarding1} />
       <Stack.Screen name="Onboarding2" component={Onboarding2} />
       <Stack.Screen name="Onboarding3" component={Onboarding3} />
@@ -43,6 +49,7 @@ export default function AppNavigator() {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Signup" component={SignupScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <Stack.Screen name="EmailVerification" component={EmailVerificationScreen} />
       <Stack.Screen name="ViewTrip" component={ViewTripScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />

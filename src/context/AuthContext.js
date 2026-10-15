@@ -4,6 +4,8 @@ import {
   signOut,
   updateProfile as firebaseUpdateProfile,
   updatePassword as firebaseUpdatePassword,
+  sendEmailVerification as firebaseSendEmailVerification,
+  reload as firebaseReload,
 } from "firebase/auth";
 import { auth } from "../screens/firebaseConfig";
 import { Platform } from "react-native";
@@ -12,9 +14,12 @@ const AuthContext = createContext({
   user: null,
   userProfile: null,
   loading: true,
+  isEmailVerified: false,
   updateUserProfile: async () => {},
   updateUserPassword: async () => {},
   logout: async () => {},
+  reloadUser: async () => {},
+  sendVerificationEmail: async () => {},
 });
 
 export const AuthProvider = ({ children }) => {
@@ -39,13 +44,15 @@ export const AuthProvider = ({ children }) => {
       setUserProfile({
         fullName: "",
         email: "",
-        phone: "+92 300 9876543",
-        location: "Islamabad, Pakistan",
-        aboutMe:
-          "High-altitude trekking enthusiast, landscape photographer, and passionate mountain explorer. Traveled through Karakoram and Himalayas with Aces Adventure Club.",
-        membershipTier: "Aces Elite Gold",
-        role: "Expedition Explorer • Aces Club Member",
-        joinedDate: "March 2023",
+        phone: "",
+        location: "",
+        avatarUrl: null,
+        wishlist: [],
+        aboutMe: "",
+        membershipTier: "Aces Member",
+        role: "Explorer • Aces Club Member",
+        joinedDate: new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+        theme: "light",
       });
       return;
     }
@@ -66,24 +73,25 @@ export const AuthProvider = ({ children }) => {
       currentUser.displayName ||
       (currentUser.email ? currentUser.email.split("@")[0] : "Adventurer");
 
+    const realJoinedDate = currentUser.metadata?.creationTime
+      ? new Date(currentUser.metadata.creationTime).toLocaleDateString("en-US", {
+          month: "long",
+          year: "numeric",
+        })
+      : new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
     setUserProfile({
       fullName: saved?.fullName || currentUser.displayName || defaultName,
       email: currentUser.email || saved?.email || "",
-      phone: saved?.phone || "+92 300 9876543",
-      location: saved?.location || "Islamabad, Pakistan",
-      aboutMe:
-        saved?.aboutMe ||
-        "High-altitude trekking enthusiast, landscape photographer, and passionate mountain explorer. Traveled through Karakoram and Himalayas with Aces Adventure Club.",
-      membershipTier: saved?.membershipTier || "Aces Elite Gold",
-      role: saved?.role || "Expedition Explorer • Aces Club Member",
-      joinedDate:
-        saved?.joinedDate ||
-        (currentUser.metadata?.creationTime
-          ? new Date(currentUser.metadata.creationTime).toLocaleDateString("en-US", {
-              month: "long",
-              year: "numeric",
-            })
-          : "March 2023"),
+      phone: saved?.phone !== undefined ? saved.phone : "",
+      location: saved?.location !== undefined ? saved.location : "",
+      avatarUrl: saved?.avatarUrl || null,
+      wishlist: Array.isArray(saved?.wishlist) ? saved.wishlist : [],
+      aboutMe: saved?.aboutMe || "",
+      membershipTier: saved?.membershipTier || "Aces Member",
+      role: saved?.role || "Explorer • Aces Club Member",
+      joinedDate: saved?.joinedDate || realJoinedDate,
+      theme: saved?.theme || "light",
     });
   };
 
@@ -96,10 +104,49 @@ export const AuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
-  const updateUserProfile = async (newProfileData) => {
-    if (!auth.currentUser) return;
+  useEffect(() => {
+    if (Platform.OS === "web" && typeof window !== "undefined" && window.document) {
+      const activeTheme = userProfile?.theme || "light";
+      const root = window.document.documentElement;
+      const body = window.document.body;
+      if (activeTheme === "dark") {
+        root.style.colorScheme = "dark";
+        body.style.backgroundColor = "#0d1b2a";
+        body.style.color = "#F8FAFC";
+        body.classList.add("dark-theme");
+      } else {
+        root.style.colorScheme = "light";
+        body.style.backgroundColor = "#F8FBFF";
+        body.style.color = "#0F172A";
+        body.classList.remove("dark-theme");
+      }
+    }
+  }, [userProfile?.theme]);
 
-    if (newProfileData.fullName && newProfileData.fullName !== auth.currentUser.displayName) {
+  const reloadUser = async () => {
+    if (!auth.currentUser) return null;
+    await firebaseReload(auth.currentUser);
+    // Create new object with prototype intact so user methods exist and React triggers a state change
+    const refreshed = Object.assign(
+      Object.create(Object.getPrototypeOf(auth.currentUser)),
+      auth.currentUser
+    );
+    setUser(refreshed);
+    return refreshed;
+  };
+
+  const sendVerificationEmail = async (targetUser = auth.currentUser) => {
+    const userToVerify = targetUser || auth.currentUser;
+    if (!userToVerify) {
+      throw new Error("No user is currently signed in.");
+    }
+    await firebaseSendEmailVerification(userToVerify);
+  };
+
+  const updateUserProfile = async (newProfileData) => {
+    const currentUid = auth.currentUser?.uid || "guest";
+
+    if (auth.currentUser && newProfileData.fullName && newProfileData.fullName !== auth.currentUser.displayName) {
       try {
         await firebaseUpdateProfile(auth.currentUser, {
           displayName: newProfileData.fullName,
@@ -112,14 +159,14 @@ export const AuthProvider = ({ children }) => {
     const merged = {
       ...userProfile,
       ...newProfileData,
-      email: auth.currentUser.email || newProfileData.email || userProfile.email,
+      email: auth.currentUser?.email || newProfileData.email || userProfile.email,
     };
 
     setUserProfile(merged);
 
     if (Platform.OS === "web" && typeof window !== "undefined" && window.localStorage) {
       try {
-        window.localStorage.setItem(getStorageKey(auth.currentUser.uid), JSON.stringify(merged));
+        window.localStorage.setItem(getStorageKey(currentUid), JSON.stringify(merged));
       } catch (e) {
         console.warn("Failed to save profile to localStorage", e);
       }
@@ -145,16 +192,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const isEmailVerified = user ? Boolean(user.emailVerified) : false;
+
   return (
     <AuthContext.Provider
       value={{
         user,
         userProfile,
         loading,
+        isEmailVerified,
         updateUserProfile,
         updateUserPassword,
         logout,
         setUserProfile,
+        reloadUser,
+        sendVerificationEmail,
       }}
     >
       {children}

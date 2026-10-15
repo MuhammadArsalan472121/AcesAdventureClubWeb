@@ -7,7 +7,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import useResponsive from "../hooks/useResponsive";
 import { useAuth } from "../context/AuthContext";
 
@@ -24,6 +24,24 @@ export default function Header() {
     navigation.navigate(screenName);
   };
 
+  const handleProfilePress = () => {
+    setMenuVisible(false);
+    if (user && !user.emailVerified) {
+      navigation.navigate("EmailVerification");
+    } else {
+      navigation.navigate("Profile");
+    }
+  };
+
+  const handleSettingsPress = () => {
+    setMenuVisible(false);
+    if (user && !user.emailVerified) {
+      navigation.navigate("EmailVerification");
+    } else {
+      navigation.navigate("Settings");
+    }
+  };
+
   const handleLogout = async () => {
     setMenuVisible(false);
     await logout();
@@ -33,7 +51,7 @@ export default function Header() {
   const navItems = [
     { label: "Home", screen: "Home" },
     { label: "About", screen: "About" },
-    { label: "Browse Trips", screen: "BrowseTrips", hasDropdown: true },
+    { label: "Browse Trips", screen: "BrowseTrips" },
     { label: "Gallery", screen: "Gallery" },
     { label: "Sponsored", screen: "Sponsors" },
     { label: "Contact", screen: "Contact" },
@@ -68,14 +86,6 @@ export default function Header() {
                     <Text style={[styles.desktopNavText, isActive && styles.desktopNavTextActive]}>
                       {item.label}
                     </Text>
-                    {item.hasDropdown && (
-                      <Ionicons
-                        name="chevron-down"
-                        size={14}
-                        color={isActive ? "#FFFFFF" : "#E2E8F0"}
-                        style={{ marginLeft: 4 }}
-                      />
-                    )}
                   </TouchableOpacity>
                 );
               })}
@@ -85,6 +95,17 @@ export default function Header() {
             <View style={styles.desktopAuthRow}>
               {user ? (
                 <>
+                  {user && !user.emailVerified && (
+                    <TouchableOpacity
+                      style={styles.desktopVerifyBadge}
+                      onPress={() => navigateTo("EmailVerification")}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons name="mail-unread-outline" size={14} color="#ffd700" style={{ marginRight: 5 }} />
+                      <Text style={styles.desktopVerifyText}>Verify Email</Text>
+                    </TouchableOpacity>
+                  )}
+
                   {/* Profile Avatar Quick Button */}
                   <TouchableOpacity
                     style={[
@@ -92,11 +113,15 @@ export default function Header() {
                       (route.name === "Profile" || route.name === "Settings") &&
                         styles.desktopAvatarBtnActive,
                     ]}
-                    onPress={() => navigateTo("Profile")}
+                    onPress={handleProfilePress}
                     activeOpacity={0.8}
                   >
                     <Image
-                      source={require("../../assets/partnerProfile.jpg")}
+                      source={
+                        userProfile?.avatarUrl
+                          ? { uri: userProfile.avatarUrl }
+                          : require("../../assets/partnerProfile.jpg")
+                      }
                       style={styles.desktopAvatarImg}
                     />
                     <Text style={styles.desktopAvatarText}>{displayName}</Text>
@@ -177,18 +202,35 @@ export default function Header() {
 
           {user ? (
             <>
+              {user && !user.emailVerified && (
+                <TouchableOpacity
+                  style={styles.mobileVerifyBanner}
+                  onPress={() => navigateTo("EmailVerification")}
+                >
+                  <Ionicons name="alert-circle" size={18} color="#d97706" style={{ marginRight: 8 }} />
+                  <Text style={styles.mobileVerifyBannerText}>Action Required: Verify Email</Text>
+                </TouchableOpacity>
+              )}
+
               {/* Profile & Settings in Mobile Menu */}
               <TouchableOpacity
                 style={styles.menuRow}
-                onPress={() => navigateTo("Profile")}
+                onPress={handleProfilePress}
               >
-                <Ionicons name="person-outline" size={20} color="#0B5CAD" />
+                {userProfile?.avatarUrl ? (
+                  <Image
+                    source={{ uri: userProfile.avatarUrl }}
+                    style={styles.mobileAvatarImg}
+                  />
+                ) : (
+                  <Ionicons name="person-outline" size={20} color="#0B5CAD" />
+                )}
                 <Text style={styles.menuItem}>My Profile ({displayName})</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.menuRow}
-                onPress={() => navigateTo("Settings")}
+                onPress={handleSettingsPress}
               >
                 <Ionicons name="settings-outline" size={20} color="#0B5CAD" />
                 <Text style={styles.menuItem}>Account Settings</Text>
@@ -439,5 +481,45 @@ const styles = StyleSheet.create({
     color: "#DC2626",
     fontWeight: "700",
     fontSize: 15,
+  },
+
+  mobileAvatarImg: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: "#0B5CAD",
+  },
+  desktopVerifyBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 215, 0, 0.15)",
+    borderWidth: 1,
+    borderColor: "#ffd700",
+    borderRadius: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    cursor: "pointer",
+  },
+  desktopVerifyText: {
+    color: "#ffd700",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  mobileVerifyBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FEF3C7",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#F59E0B",
+    marginBottom: 10,
+  },
+  mobileVerifyBannerText: {
+    color: "#B45309",
+    fontSize: 13,
+    fontWeight: "700",
   },
 });

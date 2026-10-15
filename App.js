@@ -7,64 +7,94 @@ import AppNavigator from "./src/navigation/AppNavigator";
 import { AuthProvider } from "./src/context/AuthContext";
 import { DataProvider } from "./src/context/DataContext";
 
-// Preload essential hero and onboarding images for instant rendering
-const PRELOAD_ASSETS = [
-  require("./assets/onboarding1.jpg"),
-  require("./assets/onboarding2.jpg"),
-  require("./assets/onboarding3.jpg"),
-  require("./assets/hero.jpg"),
-  require("./assets/logo.png"),
-  require("./assets/about-bg.jpg"),
-  require("./assets/galleryHero.jpg"),
-  require("./assets/adventure-bg.jpg"),
-  require("./assets/hunza.jpg"),
-  require("./assets/fairy.jpg"),
-  require("./assets/skardu.jpg"),
-  require("./assets/naran.jpg"),
-  require("./assets/hiking.jpg"),
-  require("./assets/camping.jpg"),
-  require("./assets/trekking.jpg"),
-];
+import Ionicons from "@expo/vector-icons/Ionicons";
 
-function preloadCriticalImages() {
-  PRELOAD_ASSETS.forEach((img) => {
-    try {
-      const resolved = Image.resolveAssetSource(img);
-      if (resolved?.uri) {
-        if (Platform.OS === "web" && typeof window !== "undefined" && typeof document !== "undefined") {
-          // Preload link tag for high network priority
-          const link = document.createElement("link");
-          link.rel = "preload";
-          link.as = "image";
-          link.href = resolved.uri;
-          document.head.appendChild(link);
+import * as Linking from "expo-linking";
 
-          // Force decode into browser image cache
-          const nativeImg = new window.Image();
-          nativeImg.decoding = "async";
-          nativeImg.src = resolved.uri;
-        } else if (Image.prefetch) {
-          Image.prefetch(resolved.uri);
-        }
-      }
-    } catch (_e) {
-      // Graceful fallback
-    }
-  });
-}
+import TravelLoader from "./src/components/TravelLoader";
+
+const prefix = Linking.createURL("/");
+
+const linking = {
+  prefixes: [prefix],
+  config: {
+    screens: {
+      Onboarding1: "onboarding1",
+      Onboarding2: "onboarding2",
+      Onboarding3: "onboarding3",
+      Home: "",
+      About: "about",
+      BrowseTrips: "trips",
+      Gallery: "gallery",
+      Map: "map",
+      Sponsors: "sponsors",
+      Contact: "contact",
+      Login: "login",
+      Signup: "signup",
+      ForgotPassword: "forgot-password",
+      EmailVerification: "verify-email",
+      ViewTrip: "trip",
+      Profile: "profile",
+      Settings: "settings",
+      AdminLogin: "admin-login",
+      AdminDashboard: "admin",
+      AdminUsers: "admin-users",
+      AdminTrips: "admin-trips",
+      AdminSponsors: "admin-sponsors",
+      AdminGallery: "admin-gallery",
+      AdminSettings: "admin-settings",
+    },
+  },
+};
 
 export default function App() {
+  const [initialLoading, setInitialLoading] = React.useState(true);
+  const [navLoading, setNavLoading] = React.useState(false);
+  const loadingTimerRef = React.useRef(null);
+
   useEffect(() => {
-    preloadCriticalImages();
+    // 1. Refresh & Initial launch loader timer (2.8s display)
+    const initTimer = setTimeout(() => {
+      setInitialLoading(false);
+    }, 2800);
+
+    // 2. Warm up icon font immediately so icons render instantly without blank delays
+    try {
+      Ionicons.loadFont?.();
+    } catch (_e) {}
+
+    // 3. Preload brand logo
+    try {
+      if (Platform.OS === "web" && typeof window !== "undefined") {
+        const logoAsset = Image.resolveAssetSource(require("./assets/logo.png"));
+        if (logoAsset?.uri) {
+          const img = new window.Image();
+          img.src = logoAsset.uri;
+        }
+      }
+    } catch (_e) {}
+
+    return () => clearTimeout(initTimer);
   }, []);
+
+  const handleStateChange = () => {
+    setNavLoading(true);
+    if (loadingTimerRef.current) clearTimeout(loadingTimerRef.current);
+    loadingTimerRef.current = setTimeout(() => {
+      setNavLoading(false);
+    }, 850);
+  };
+
+  const isLoaderVisible = initialLoading || navLoading;
 
   return (
     <SafeAreaProvider initialMetrics={initialWindowMetrics} style={styles.root}>
       <DataProvider>
         <AuthProvider>
           <View style={styles.root}>
-            <NavigationContainer>
+            <NavigationContainer linking={linking} onStateChange={handleStateChange}>
               <AppNavigator />
+              <TravelLoader visible={isLoaderVisible} overlay={true} />
             </NavigationContainer>
           </View>
         </AuthProvider>

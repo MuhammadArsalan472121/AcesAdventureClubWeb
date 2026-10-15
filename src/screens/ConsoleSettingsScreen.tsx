@@ -20,6 +20,13 @@ export default function ConsoleSettingsScreen() {
     contactContent,
     onboardingContent,
     inquiries,
+    trips = [],
+    tripCategories = [],
+    tripBadges = [],
+    addTripCategory,
+    deleteTripCategory,
+    addTripBadge,
+    deleteTripBadge,
     updateHomeContent,
     updateAboutContent,
     updateContactContent,
@@ -27,9 +34,12 @@ export default function ConsoleSettingsScreen() {
     updateInquiryStatus,
     deleteInquiry,
     resetToDefaults,
-  } = useData();
+  } = useData() as any;
 
-  const [activeTab, setActiveTab] = useState<'home' | 'about' | 'contact' | 'onboarding' | 'inquiries' | 'system'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'about' | 'contact' | 'tripPresets' | 'onboarding' | 'inquiries' | 'system'>('home');
+
+  const [adminCatInput, setAdminCatInput] = useState('');
+  const [adminBadgeInput, setAdminBadgeInput] = useState('');
 
   // Forms
   const [homeForm, setHomeForm] = useState(homeContent);
@@ -107,7 +117,8 @@ export default function ConsoleSettingsScreen() {
               { key: 'home', label: '🏠 Home Page CMS' },
               { key: 'about', label: '📖 About Page CMS' },
               { key: 'contact', label: '📞 Contact Info' },
-              { key: 'inquiries', label: `📥 Inquiries Inbox (${inquiries.filter(i => i.status === 'NEW').length} New)` },
+              { key: 'tripPresets', label: '🏷️ Categories & Badges' },
+              { key: 'inquiries', label: `📥 Inquiries Inbox (${inquiries.filter((i: any) => i.status === 'NEW').length} New)` },
               { key: 'onboarding', label: '📱 Onboarding Slides' },
               { key: 'system', label: '⚙️ System & Reset' },
             ].map((tab) => (
@@ -364,6 +375,174 @@ export default function ConsoleSettingsScreen() {
             </View>
           )}
 
+          {/* TAB: TRIP CATEGORIES & BADGES CMS */}
+          {activeTab === 'tripPresets' && (
+            <View style={styles.sectionCard}>
+              <Text style={styles.sectionHeaderTitle}>Expedition Categories & Badge Tags Manager</Text>
+              <Text style={{ fontSize: 13, color: '#64748B', marginBottom: 20 }}>
+                Control which preset options appear in the Create/Edit Expedition dropdowns. Options added here are automatically available when publishing new trips.
+              </Text>
+
+              <View style={{ flexDirection: 'row', gap: 24, flexWrap: 'wrap' }}>
+                {/* Categories Management Box */}
+                <View style={{ flex: 1, minWidth: 320, backgroundColor: '#F8FAFC', borderRadius: 14, padding: 18, borderWidth: 1, borderColor: '#E2E8F0' }}>
+                  <Text style={{ fontSize: 16, fontWeight: '800', color: '#0F172A', marginBottom: 4 }}>
+                    📂 Categories ({(tripCategories || []).length})
+                  </Text>
+                  <Text style={{ fontSize: 12, color: '#64748B', marginBottom: 14 }}>
+                    Dropdown categories used to group expeditions and enable website filtering.
+                  </Text>
+
+                  {/* Add Input */}
+                  <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+                    <TextInput
+                      style={[styles.input, { flex: 1, backgroundColor: '#FFFFFF' }]}
+                      placeholder="e.g. Mountaineering, Road Trip..."
+                      placeholderTextColor="#94A3B8"
+                      value={adminCatInput}
+                      onChangeText={setAdminCatInput}
+                      onSubmitEditing={() => {
+                        if (adminCatInput.trim()) {
+                          addTripCategory(adminCatInput.trim());
+                          showSavedNotification(`Category "${adminCatInput.trim()}" added successfully!`);
+                          setAdminCatInput('');
+                        }
+                      }}
+                    />
+                    <TouchableOpacity
+                      style={{ backgroundColor: '#0B5CAD', paddingHorizontal: 16, borderRadius: 8, justifyContent: 'center' }}
+                      onPress={() => {
+                        if (adminCatInput.trim()) {
+                          addTripCategory(adminCatInput.trim());
+                          showSavedNotification(`Category "${adminCatInput.trim()}" added successfully!`);
+                          setAdminCatInput('');
+                        }
+                      }}
+                    >
+                      <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 13 }}>+ Add</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* List */}
+                  <View style={{ gap: 8 }}>
+                    {(tripCategories || []).map((cat: string) => {
+                      const count = (trips || []).filter((t: any) => t.category?.toLowerCase() === cat.toLowerCase()).length;
+                      return (
+                        <View
+                          key={cat}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            backgroundColor: '#FFFFFF',
+                            padding: 10,
+                            borderRadius: 10,
+                            borderWidth: 1,
+                            borderColor: '#E2E8F0',
+                          }}
+                        >
+                          <View>
+                            <Text style={{ fontSize: 13, fontWeight: '700', color: '#0F172A' }}>{cat}</Text>
+                            <Text style={{ fontSize: 11, color: '#94A3B8' }}>{count} live expedition{count !== 1 ? 's' : ''}</Text>
+                          </View>
+                          <TouchableOpacity
+                            style={{ backgroundColor: '#FEE2E2', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}
+                            onPress={() => {
+                              deleteTripCategory(cat);
+                              showSavedNotification(`Category "${cat}" removed from options!`);
+                            }}
+                          >
+                            <Text style={{ fontSize: 11, color: '#DC2626', fontWeight: '700' }}>✕ Delete</Text>
+                          </TouchableOpacity>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+
+                {/* Badges Management Box */}
+                <View style={{ flex: 1, minWidth: 320, backgroundColor: '#F8FAFC', borderRadius: 14, padding: 18, borderWidth: 1, borderColor: '#E2E8F0' }}>
+                  <Text style={{ fontSize: 16, fontWeight: '800', color: '#0F172A', marginBottom: 4 }}>
+                    🏷️ Badge Tags ({(tripBadges || []).length})
+                  </Text>
+                  <Text style={{ fontSize: 12, color: '#64748B', marginBottom: 14 }}>
+                    Highlight cards with eye-catching labels (e.g. Featured, Popular, Elite).
+                  </Text>
+
+                  {/* Add Input */}
+                  <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+                    <TextInput
+                      style={[styles.input, { flex: 1, backgroundColor: '#FFFFFF' }]}
+                      placeholder="e.g. Special Offer, Trending..."
+                      placeholderTextColor="#94A3B8"
+                      value={adminBadgeInput}
+                      onChangeText={setAdminBadgeInput}
+                      onSubmitEditing={() => {
+                        if (adminBadgeInput.trim()) {
+                          addTripBadge(adminBadgeInput.trim());
+                          showSavedNotification(`Badge "${adminBadgeInput.trim()}" added successfully!`);
+                          setAdminBadgeInput('');
+                        }
+                      }}
+                    />
+                    <TouchableOpacity
+                      style={{ backgroundColor: '#0B5CAD', paddingHorizontal: 16, borderRadius: 8, justifyContent: 'center' }}
+                      onPress={() => {
+                        if (adminBadgeInput.trim()) {
+                          addTripBadge(adminBadgeInput.trim());
+                          showSavedNotification(`Badge "${adminBadgeInput.trim()}" added successfully!`);
+                          setAdminBadgeInput('');
+                        }
+                      }}
+                    >
+                      <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 13 }}>+ Add</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* List */}
+                  <View style={{ gap: 8 }}>
+                    {(tripBadges || []).map((bg: string) => {
+                      const count = (trips || []).filter((t: any) => t.badge?.toLowerCase() === bg.toLowerCase()).length;
+                      return (
+                        <View
+                          key={bg}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            backgroundColor: '#FFFFFF',
+                            padding: 10,
+                            borderRadius: 10,
+                            borderWidth: 1,
+                            borderColor: '#E2E8F0',
+                          }}
+                        >
+                          <View>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                              <View style={{ backgroundColor: '#0B5CAD', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
+                                <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700' }}>{bg}</Text>
+                              </View>
+                            </View>
+                            <Text style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{count} live expedition{count !== 1 ? 's' : ''}</Text>
+                          </View>
+                          <TouchableOpacity
+                            style={{ backgroundColor: '#FEE2E2', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}
+                            onPress={() => {
+                              deleteTripBadge(bg);
+                              showSavedNotification(`Badge "${bg}" removed from options!`);
+                            }}
+                          >
+                            <Text style={{ fontSize: 11, color: '#DC2626', fontWeight: '700' }}>✕ Delete</Text>
+                          </TouchableOpacity>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+              </View>
+            </View>
+          )}
+
           {/* TAB 4: INQUIRIES INBOX */}
           {activeTab === 'inquiries' && (
             <View style={styles.sectionCard}>
@@ -375,7 +554,7 @@ export default function ConsoleSettingsScreen() {
                 </View>
               ) : (
                 <View style={{ gap: 16 }}>
-                  {inquiries.map((inq) => (
+                  {inquiries.map((inq: any) => (
                     <View style={styles.inquiryCard} key={inq.id}>
                       <View style={styles.inquiryHeader}>
                         <View style={{ flex: 1 }}>

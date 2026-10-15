@@ -12,7 +12,7 @@ import {
   TouchableOpacity,
   Dimensions,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -23,7 +23,7 @@ const { height, width } = Dimensions.get("window");
 
 export default function ContactScreen() {
   const navigation = useNavigation();
-  const { contactContent, addInquiry } = useData();
+  const { contactContent, addInquiry, trips = [], tripCategories = [] } = useData();
   const {
     isDesktop,
     isTablet,
@@ -37,12 +37,65 @@ export default function ContactScreen() {
     lastName: "Vance",
     email: "aiden.v@luxury.com",
     phone: "+92 300 1234567",
-    destination: "Northern Areas, Pakistan",
+    destination: "Hunza Valley, Gilgit-Baltistan",
     travelDate: "10/15/2026",
-    travelers: "1 - 2 Person",
-    adventureType: "Hiking",
+    travelers: "1 - 2 Persons",
+    adventureType: "Trekking & Hiking",
     message: "I am looking for a secluded trekking experience with luxury camping amenities...",
   });
+
+  const [destinationDropdownOpen, setDestinationDropdownOpen] = useState(false);
+  const [travelersDropdownOpen, setTravelersDropdownOpen] = useState(false);
+  const [adventureTypeDropdownOpen, setAdventureTypeDropdownOpen] = useState(false);
+
+  const [customDestination, setCustomDestination] = useState("");
+  const [customTravelers, setCustomTravelers] = useState("");
+  const [customAdventureType, setCustomAdventureType] = useState("");
+
+  const defaultDestinations = [
+    "Hunza Valley, Gilgit-Baltistan",
+    "Skardu & Deosai Plains",
+    "Fairy Meadows & Nanga Parbat",
+    "K2 Base Camp & Concordia",
+    "Naran & Kaghan Valley",
+    "Swat Valley & Kalam",
+    "Neelum Valley, Azad Kashmir",
+    "Kumrat Valley, Upper Dir",
+    "Chitral & Kalash Valley",
+    "Gwadar & Makran Coastal Highway",
+  ];
+  const tripDestinations = Array.isArray(trips)
+    ? trips.map((t) => t.location || t.destination).filter(Boolean)
+    : [];
+  const destinationPresets = Array.from(new Set([...defaultDestinations, ...tripDestinations]));
+
+  const travelerPresets = [
+    "1 Traveler (Solo Explorer)",
+    "2 Travelers (Couple / Duo)",
+    "3 - 5 Travelers (Small Group)",
+    "6 - 10 Travelers (Medium Group)",
+    "10 - 20 Travelers (Large Group)",
+    "20+ Travelers (Corporate / School Tour)",
+  ];
+
+  const defaultAdventureTypes = [
+    "Trekking & Hiking",
+    "Mountain Expedition",
+    "Camping & Bonfire",
+    "Jeep Safari & Off-Roading",
+    "Cultural & Sightseeing Tour",
+    "Photography & Nature Tour",
+    "Family & Luxury Retreat",
+    "Winter Sports & Skiing",
+  ];
+  const categoryPresets = Array.isArray(tripCategories)
+    ? tripCategories.map((c) =>
+        c.charAt(0).toUpperCase() + c.slice(1).toLowerCase()
+      )
+    : [];
+  const adventureTypePresets = Array.from(
+    new Set([...defaultAdventureTypes, ...categoryPresets])
+  );
 
   const handleSubmit = () => {
     if (!formData.firstName || !formData.email) {
@@ -184,21 +237,149 @@ export default function ContactScreen() {
                     </View>
 
                     {/* Row 3 */}
-                    <View style={[(isDesktop || isTablet) ? { flexDirection: "row", gap: 16, marginTop: 16 } : { flexDirection: "column", gap: 12, marginTop: 12 }]}>
-                      <View style={[(isDesktop || isTablet) && { flex: 1 }]}>
+                    <View
+                      style={[
+                        (isDesktop || isTablet)
+                          ? { flexDirection: "row", gap: 16, marginTop: 16 }
+                          : { flexDirection: "column", gap: 12, marginTop: 12 },
+                        { zIndex: destinationDropdownOpen ? 300 : 20, position: "relative" },
+                      ]}
+                    >
+                      {/* PREFERRED DESTINATION WITH DROPDOWN + MANUAL ENTRY */}
+                      <View
+                        style={[
+                          (isDesktop || isTablet) && { flex: 1 },
+                          { zIndex: destinationDropdownOpen ? 400 : 20, position: "relative" },
+                        ]}
+                      >
                         <Text style={styles.label}>PREFERRED DESTINATION</Text>
-                        <View style={styles.dropdownInputWrapper}>
+                        <View
+                          style={[
+                            styles.dropdownInputWrapper,
+                            destinationDropdownOpen && styles.dropdownInputWrapperActive,
+                          ]}
+                        >
                           <TextInput
                             value={formData.destination}
                             onChangeText={(text) => setFormData({ ...formData, destination: text })}
+                            onFocus={() => {
+                              setDestinationDropdownOpen(true);
+                              setTravelersDropdownOpen(false);
+                              setAdventureTypeDropdownOpen(false);
+                            }}
+                            placeholder="Select or enter destination..."
                             placeholderTextColor="#94A3B8"
                             style={styles.darkInputDropdown}
                           />
-                          <Ionicons name="chevron-down" size={18} color="#94A3B8" style={styles.dropdownIcon} />
+                          <TouchableOpacity
+                            style={styles.dropdownChevronBtn}
+                            onPress={() => {
+                              setDestinationDropdownOpen(!destinationDropdownOpen);
+                              setTravelersDropdownOpen(false);
+                              setAdventureTypeDropdownOpen(false);
+                            }}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons
+                              name={destinationDropdownOpen ? "chevron-up" : "chevron-down"}
+                              size={18}
+                              color={destinationDropdownOpen ? "#38BDF8" : "#94A3B8"}
+                            />
+                          </TouchableOpacity>
+
+                          {/* Destination Dropdown Menu */}
+                          {destinationDropdownOpen && (
+                            <View style={styles.dropdownMenu}>
+                              <View style={styles.dropdownHeader}>
+                                <Text style={styles.dropdownSectionTitle}>📍 PRESET DESTINATIONS</Text>
+                                <TouchableOpacity
+                                  onPress={() => setDestinationDropdownOpen(false)}
+                                  style={styles.dropdownCloseBtn}
+                                >
+                                  <Ionicons name="close" size={16} color="#94A3B8" />
+                                </TouchableOpacity>
+                              </View>
+                              <ScrollView
+                                style={styles.dropdownList}
+                                nestedScrollEnabled={true}
+                                showsVerticalScrollIndicator={true}
+                              >
+                                {destinationPresets.map((dest) => {
+                                  const isSelected =
+                                    formData.destination?.toLowerCase() === dest.toLowerCase();
+                                  return (
+                                    <TouchableOpacity
+                                      key={dest}
+                                      style={[
+                                        styles.dropdownItem,
+                                        isSelected && styles.dropdownItemSelected,
+                                      ]}
+                                      onPress={() => {
+                                        setFormData({ ...formData, destination: dest });
+                                        setDestinationDropdownOpen(false);
+                                      }}
+                                      activeOpacity={0.7}
+                                    >
+                                      <Text
+                                        style={[
+                                          styles.dropdownItemText,
+                                          isSelected && styles.dropdownItemTextSelected,
+                                        ]}
+                                      >
+                                        {dest}
+                                      </Text>
+                                      {isSelected && (
+                                        <Ionicons name="checkmark-circle" size={16} color="#38BDF8" />
+                                      )}
+                                    </TouchableOpacity>
+                                  );
+                                })}
+                              </ScrollView>
+
+                              {/* Manual Entry Section */}
+                              <View style={styles.dropdownManualSection}>
+                                <Text style={styles.dropdownManualLabel}>✍️ Or Enter Manually / Custom:</Text>
+                                <View style={styles.dropdownManualRow}>
+                                  <TextInput
+                                    value={customDestination}
+                                    onChangeText={setCustomDestination}
+                                    placeholder="Type custom destination..."
+                                    placeholderTextColor="#64748B"
+                                    style={styles.dropdownManualInput}
+                                    onSubmitEditing={() => {
+                                      if (customDestination.trim()) {
+                                        setFormData({ ...formData, destination: customDestination.trim() });
+                                        setCustomDestination("");
+                                        setDestinationDropdownOpen(false);
+                                      }
+                                    }}
+                                  />
+                                  <TouchableOpacity
+                                    style={styles.dropdownManualApplyBtn}
+                                    onPress={() => {
+                                      if (customDestination.trim()) {
+                                        setFormData({ ...formData, destination: customDestination.trim() });
+                                        setCustomDestination("");
+                                        setDestinationDropdownOpen(false);
+                                      }
+                                    }}
+                                  >
+                                    <Text style={styles.dropdownManualApplyText}>Apply</Text>
+                                  </TouchableOpacity>
+                                </View>
+                              </View>
+                            </View>
+                          )}
                         </View>
                       </View>
 
-                      <View style={[(isDesktop || isTablet) && { flex: 1 }]}>
+                      {/* TRAVEL DATE */}
+                      <View
+                        style={[
+                          (isDesktop || isTablet) && { flex: 1 },
+                          { zIndex: 1 },
+                        ]}
+                      >
                         <Text style={styles.label}>TRAVEL DATE</Text>
                         <TextInput
                           value={formData.travelDate}
@@ -210,30 +391,270 @@ export default function ContactScreen() {
                     </View>
 
                     {/* Row 4 */}
-                    <View style={[(isDesktop || isTablet) ? { flexDirection: "row", gap: 16, marginTop: 16 } : { flexDirection: "column", gap: 12, marginTop: 12 }]}>
-                      <View style={[(isDesktop || isTablet) && { flex: 1 }]}>
+                    <View
+                      style={[
+                        (isDesktop || isTablet)
+                          ? { flexDirection: "row", gap: 16, marginTop: 16 }
+                          : { flexDirection: "column", gap: 12, marginTop: 12 },
+                        {
+                          zIndex: (travelersDropdownOpen || adventureTypeDropdownOpen) ? 300 : 10,
+                          position: "relative",
+                        },
+                      ]}
+                    >
+                      {/* TRAVELERS WITH DROPDOWN + MANUAL ENTRY */}
+                      <View
+                        style={[
+                          (isDesktop || isTablet) && { flex: 1 },
+                          { zIndex: travelersDropdownOpen ? 400 : 10, position: "relative" },
+                        ]}
+                      >
                         <Text style={styles.label}>TRAVELERS</Text>
-                        <View style={styles.dropdownInputWrapper}>
+                        <View
+                          style={[
+                            styles.dropdownInputWrapper,
+                            travelersDropdownOpen && styles.dropdownInputWrapperActive,
+                          ]}
+                        >
                           <TextInput
                             value={formData.travelers}
                             onChangeText={(text) => setFormData({ ...formData, travelers: text })}
+                            onFocus={() => {
+                              setTravelersDropdownOpen(true);
+                              setDestinationDropdownOpen(false);
+                              setAdventureTypeDropdownOpen(false);
+                            }}
+                            placeholder="Select or enter travelers..."
                             placeholderTextColor="#94A3B8"
                             style={styles.darkInputDropdown}
                           />
-                          <Ionicons name="chevron-down" size={18} color="#94A3B8" style={styles.dropdownIcon} />
+                          <TouchableOpacity
+                            style={styles.dropdownChevronBtn}
+                            onPress={() => {
+                              setTravelersDropdownOpen(!travelersDropdownOpen);
+                              setDestinationDropdownOpen(false);
+                              setAdventureTypeDropdownOpen(false);
+                            }}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons
+                              name={travelersDropdownOpen ? "chevron-up" : "chevron-down"}
+                              size={18}
+                              color={travelersDropdownOpen ? "#38BDF8" : "#94A3B8"}
+                            />
+                          </TouchableOpacity>
+
+                          {/* Travelers Dropdown Menu */}
+                          {travelersDropdownOpen && (
+                            <View style={styles.dropdownMenu}>
+                              <View style={styles.dropdownHeader}>
+                                <Text style={styles.dropdownSectionTitle}>👥 GROUP SIZE PRESETS</Text>
+                                <TouchableOpacity
+                                  onPress={() => setTravelersDropdownOpen(false)}
+                                  style={styles.dropdownCloseBtn}
+                                >
+                                  <Ionicons name="close" size={16} color="#94A3B8" />
+                                </TouchableOpacity>
+                              </View>
+                              <ScrollView
+                                style={styles.dropdownList}
+                                nestedScrollEnabled={true}
+                                showsVerticalScrollIndicator={true}
+                              >
+                                {travelerPresets.map((opt) => {
+                                  const isSelected =
+                                    formData.travelers?.toLowerCase() === opt.toLowerCase();
+                                  return (
+                                    <TouchableOpacity
+                                      key={opt}
+                                      style={[
+                                        styles.dropdownItem,
+                                        isSelected && styles.dropdownItemSelected,
+                                      ]}
+                                      onPress={() => {
+                                        setFormData({ ...formData, travelers: opt });
+                                        setTravelersDropdownOpen(false);
+                                      }}
+                                      activeOpacity={0.7}
+                                    >
+                                      <Text
+                                        style={[
+                                          styles.dropdownItemText,
+                                          isSelected && styles.dropdownItemTextSelected,
+                                        ]}
+                                      >
+                                        {opt}
+                                      </Text>
+                                      {isSelected && (
+                                        <Ionicons name="checkmark-circle" size={16} color="#38BDF8" />
+                                      )}
+                                    </TouchableOpacity>
+                                  );
+                                })}
+                              </ScrollView>
+
+                              {/* Manual Entry Section */}
+                              <View style={styles.dropdownManualSection}>
+                                <Text style={styles.dropdownManualLabel}>✍️ Or Enter Manually / Custom:</Text>
+                                <View style={styles.dropdownManualRow}>
+                                  <TextInput
+                                    value={customTravelers}
+                                    onChangeText={setCustomTravelers}
+                                    placeholder="e.g. 4 Persons, 2 Families..."
+                                    placeholderTextColor="#64748B"
+                                    style={styles.dropdownManualInput}
+                                    onSubmitEditing={() => {
+                                      if (customTravelers.trim()) {
+                                        setFormData({ ...formData, travelers: customTravelers.trim() });
+                                        setCustomTravelers("");
+                                        setTravelersDropdownOpen(false);
+                                      }
+                                    }}
+                                  />
+                                  <TouchableOpacity
+                                    style={styles.dropdownManualApplyBtn}
+                                    onPress={() => {
+                                      if (customTravelers.trim()) {
+                                        setFormData({ ...formData, travelers: customTravelers.trim() });
+                                        setCustomTravelers("");
+                                        setTravelersDropdownOpen(false);
+                                      }
+                                    }}
+                                  >
+                                    <Text style={styles.dropdownManualApplyText}>Apply</Text>
+                                  </TouchableOpacity>
+                                </View>
+                              </View>
+                            </View>
+                          )}
                         </View>
                       </View>
 
-                      <View style={[(isDesktop || isTablet) && { flex: 1 }]}>
+                      {/* ADVENTURE TYPE WITH DROPDOWN + MANUAL ENTRY */}
+                      <View
+                        style={[
+                          (isDesktop || isTablet) && { flex: 1 },
+                          { zIndex: adventureTypeDropdownOpen ? 400 : 10, position: "relative" },
+                        ]}
+                      >
                         <Text style={styles.label}>ADVENTURE TYPE</Text>
-                        <View style={styles.dropdownInputWrapper}>
+                        <View
+                          style={[
+                            styles.dropdownInputWrapper,
+                            adventureTypeDropdownOpen && styles.dropdownInputWrapperActive,
+                          ]}
+                        >
                           <TextInput
                             value={formData.adventureType}
                             onChangeText={(text) => setFormData({ ...formData, adventureType: text })}
+                            onFocus={() => {
+                              setAdventureTypeDropdownOpen(true);
+                              setDestinationDropdownOpen(false);
+                              setTravelersDropdownOpen(false);
+                            }}
+                            placeholder="Select or enter adventure type..."
                             placeholderTextColor="#94A3B8"
                             style={styles.darkInputDropdown}
                           />
-                          <Ionicons name="chevron-down" size={18} color="#94A3B8" style={styles.dropdownIcon} />
+                          <TouchableOpacity
+                            style={styles.dropdownChevronBtn}
+                            onPress={() => {
+                              setAdventureTypeDropdownOpen(!adventureTypeDropdownOpen);
+                              setDestinationDropdownOpen(false);
+                              setTravelersDropdownOpen(false);
+                            }}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons
+                              name={adventureTypeDropdownOpen ? "chevron-up" : "chevron-down"}
+                              size={18}
+                              color={adventureTypeDropdownOpen ? "#38BDF8" : "#94A3B8"}
+                            />
+                          </TouchableOpacity>
+
+                          {/* Adventure Type Dropdown Menu */}
+                          {adventureTypeDropdownOpen && (
+                            <View style={styles.dropdownMenu}>
+                              <View style={styles.dropdownHeader}>
+                                <Text style={styles.dropdownSectionTitle}>🏔️ ADVENTURE TYPE PRESETS</Text>
+                                <TouchableOpacity
+                                  onPress={() => setAdventureTypeDropdownOpen(false)}
+                                  style={styles.dropdownCloseBtn}
+                                >
+                                  <Ionicons name="close" size={16} color="#94A3B8" />
+                                </TouchableOpacity>
+                              </View>
+                              <ScrollView
+                                style={styles.dropdownList}
+                                nestedScrollEnabled={true}
+                                showsVerticalScrollIndicator={true}
+                              >
+                                {adventureTypePresets.map((type) => {
+                                  const isSelected =
+                                    formData.adventureType?.toLowerCase() === type.toLowerCase();
+                                  return (
+                                    <TouchableOpacity
+                                      key={type}
+                                      style={[
+                                        styles.dropdownItem,
+                                        isSelected && styles.dropdownItemSelected,
+                                      ]}
+                                      onPress={() => {
+                                        setFormData({ ...formData, adventureType: type });
+                                        setAdventureTypeDropdownOpen(false);
+                                      }}
+                                      activeOpacity={0.7}
+                                    >
+                                      <Text
+                                        style={[
+                                          styles.dropdownItemText,
+                                          isSelected && styles.dropdownItemTextSelected,
+                                        ]}
+                                      >
+                                        {type}
+                                      </Text>
+                                      {isSelected && (
+                                        <Ionicons name="checkmark-circle" size={16} color="#38BDF8" />
+                                      )}
+                                    </TouchableOpacity>
+                                  );
+                                })}
+                              </ScrollView>
+
+                              {/* Manual Entry Section */}
+                              <View style={styles.dropdownManualSection}>
+                                <Text style={styles.dropdownManualLabel}>✍️ Or Enter Manually / Custom:</Text>
+                                <View style={styles.dropdownManualRow}>
+                                  <TextInput
+                                    value={customAdventureType}
+                                    onChangeText={setCustomAdventureType}
+                                    placeholder="Type custom adventure type..."
+                                    placeholderTextColor="#64748B"
+                                    style={styles.dropdownManualInput}
+                                    onSubmitEditing={() => {
+                                      if (customAdventureType.trim()) {
+                                        setFormData({ ...formData, adventureType: customAdventureType.trim() });
+                                        setCustomAdventureType("");
+                                        setAdventureTypeDropdownOpen(false);
+                                      }
+                                    }}
+                                  />
+                                  <TouchableOpacity
+                                    style={styles.dropdownManualApplyBtn}
+                                    onPress={() => {
+                                      if (customAdventureType.trim()) {
+                                        setFormData({ ...formData, adventureType: customAdventureType.trim() });
+                                        setCustomAdventureType("");
+                                        setAdventureTypeDropdownOpen(false);
+                                      }
+                                    }}
+                                  >
+                                    <Text style={styles.dropdownManualApplyText}>Apply</Text>
+                                  </TouchableOpacity>
+                                </View>
+                              </View>
+                            </View>
+                          )}
                         </View>
                       </View>
                     </View>
@@ -516,6 +937,13 @@ const styles = StyleSheet.create({
   dropdownInputWrapper: {
     position: "relative",
     justifyContent: "center",
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: "transparent",
+  },
+
+  dropdownInputWrapperActive: {
+    borderColor: "#38BDF8",
   },
 
   darkInputDropdown: {
@@ -523,15 +951,146 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    paddingRight: 36,
+    paddingRight: 40,
     color: "#FFFFFF",
     fontSize: 14,
     fontWeight: "600",
   },
 
-  dropdownIcon: {
+  dropdownChevronBtn: {
     position: "absolute",
-    right: 14,
+    right: 12,
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 4,
+    cursor: "pointer",
+    zIndex: 10,
+  },
+
+  /* DROPDOWN MENU STYLES */
+  dropdownMenu: {
+    position: "absolute",
+    top: "100%",
+    left: 0,
+    right: 0,
+    marginTop: 6,
+    backgroundColor: "#1E293B",
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: "rgba(56, 189, 248, 0.4)",
+    padding: 10,
+    zIndex: 9999,
+    shadowColor: "#000",
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 25,
+  },
+
+  dropdownHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 6,
+    paddingBottom: 8,
+    marginBottom: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255, 255, 255, 0.1)",
+  },
+
+  dropdownSectionTitle: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#38BDF8",
+    letterSpacing: 0.8,
+  },
+
+  dropdownCloseBtn: {
+    padding: 4,
+    cursor: "pointer",
+  },
+
+  dropdownList: {
+    maxHeight: 180,
+  },
+
+  dropdownItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 9,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    cursor: "pointer",
+    marginBottom: 2,
+  },
+
+  dropdownItemSelected: {
+    backgroundColor: "rgba(11, 92, 173, 0.35)",
+    borderLeftWidth: 3,
+    borderLeftColor: "#38BDF8",
+  },
+
+  dropdownItemText: {
+    color: "#E2E8F0",
+    fontSize: 13,
+    fontWeight: "500",
+    flex: 1,
+  },
+
+  dropdownItemTextSelected: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+  },
+
+  dropdownManualSection: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 255, 255, 0.1)",
+  },
+
+  dropdownManualLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#94A3B8",
+    marginBottom: 6,
+    paddingHorizontal: 4,
+  },
+
+  dropdownManualRow: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+  },
+
+  dropdownManualInput: {
+    flex: 1,
+    backgroundColor: "#0F172A",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.15)",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    color: "#FFFFFF",
+    fontSize: 13,
+  },
+
+  dropdownManualApplyBtn: {
+    backgroundColor: "#0B5CAD",
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    justifyContent: "center",
+    alignItems: "center",
+    cursor: "pointer",
+  },
+
+  dropdownManualApplyText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
   },
 
   darkTextArea: {

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
   SafeAreaView,
   ActivityIndicator,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "./firebaseConfig";
@@ -25,6 +25,7 @@ export default function AdminLoginScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const passwordInputRef = useRef(null);
 
   const getAuthErrorMessage = (error) => {
     switch (error?.code) {
@@ -76,10 +77,19 @@ export default function AdminLoginScreen({ navigation }) {
       }
 
       const userData = userDocSnap.data();
-      const role = userData?.role ? String(userData.role).toLowerCase() : "";
+      const rawRole = userData?.role || "";
+      const normalizedRole = String(rawRole).trim().toLowerCase().replace(/[\s-]+/g, "_");
+
+      console.log("[ADMIN_LOGIN_DEBUG] Authenticated UID:", uid);
+      console.log("[ADMIN_LOGIN_DEBUG] Firestore user document ID:", userDocSnap.id);
+      console.log("[ADMIN_LOGIN_DEBUG] Raw Firestore role:", rawRole);
+      console.log("[ADMIN_LOGIN_DEBUG] Normalized role:", normalizedRole);
 
       // Verify role is "admin" or "super_admin"
-      if (role === "admin" || role === "super_admin") {
+      const isAdmin = normalizedRole === "admin" || normalizedRole === "super_admin";
+      console.log("[ADMIN_LOGIN_DEBUG] Is Admin Allowed:", isAdmin);
+
+      if (isAdmin) {
         setLoading(false);
         navigation?.navigate("AdminDashboard");
       } else {
@@ -112,7 +122,13 @@ export default function AdminLoginScreen({ navigation }) {
             </View>
             <TouchableOpacity
               style={styles.exitBtn}
-              onPress={() => navigation?.navigate("Home")}
+              onPress={() => {
+                if (Platform.OS === "web" && typeof window !== "undefined") {
+                  window.open("/", "_blank");
+                } else {
+                  navigation?.navigate("Home");
+                }
+              }}
             >
               <Ionicons name="arrow-back" size={14} color="#94A3B8" style={{ marginRight: 4 }} />
               <Text style={styles.exitBtnText}>Website</Text>
@@ -153,6 +169,8 @@ export default function AdminLoginScreen({ navigation }) {
                   onChangeText={setEmail}
                   autoCapitalize="none"
                   keyboardType="email-address"
+                  returnKeyType="next"
+                  onSubmitEditing={() => passwordInputRef.current?.focus()}
                 />
               </View>
             </View>
@@ -163,12 +181,15 @@ export default function AdminLoginScreen({ navigation }) {
               <View style={styles.inputWrapper}>
                 <Ionicons name="lock-closed-outline" size={18} color="#64748B" style={styles.inputIcon} />
                 <TextInput
+                  ref={passwordInputRef}
                   style={styles.input}
                   placeholder="••••••••"
                   placeholderTextColor="#475569"
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
+                  returnKeyType="go"
+                  onSubmitEditing={handleAdminLogin}
                 />
                 <TouchableOpacity
                   onPress={(e) => {
@@ -210,7 +231,13 @@ export default function AdminLoginScreen({ navigation }) {
             {/* Direct Back to Website */}
             <TouchableOpacity
               style={styles.backHomeBtn}
-              onPress={() => navigation?.navigate("Home")}
+              onPress={() => {
+                if (Platform.OS === "web" && typeof window !== "undefined") {
+                  window.open("/", "_blank");
+                } else {
+                  navigation?.navigate("Home");
+                }
+              }}
             >
               <Text style={styles.backHomeText}>Return to Aces Adventure Public Website ➔</Text>
             </TouchableOpacity>

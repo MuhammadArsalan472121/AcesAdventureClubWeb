@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   SafeAreaView,
   ScrollView,
@@ -14,7 +14,7 @@ import {
   Platform,
   ActivityIndicator,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -31,15 +31,24 @@ export default function SettingsScreen() {
   } = useResponsive();
 
   const isWide = isDesktop || isTablet;
-  const { user, userProfile, updateUserPassword, logout } = useAuth();
+  const { user, userProfile, updateUserProfile, updateUserPassword, logout, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && user && !user.emailVerified) {
+      navigation.navigate("EmailVerification", {
+        email: user.email,
+        requiresVerification: true,
+      });
+    }
+  }, [user, loading, navigation]);
 
   // Active tab in sidebar
   const [activeTab, setActiveTab] = useState("General"); // 'General' | 'Profile' | 'Security'
 
   // Appearance State
-  const [selectedTheme, setSelectedTheme] = useState("light"); // 'dark' | 'light'
-  const [highContrast, setHighContrast] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState(userProfile?.theme || "light"); // 'dark' | 'light'
+  const [highContrast, setHighContrast] = useState(userProfile?.highContrast || false);
+  const [reducedMotion, setReducedMotion] = useState(userProfile?.reducedMotion || false);
 
   // Security State
   const [currentPassword, setCurrentPassword] = useState("");
@@ -50,22 +59,54 @@ export default function SettingsScreen() {
   const [updatingPassword, setUpdatingPassword] = useState(false);
 
   // Notification Settings State
-  const [emailExpeditions, setEmailExpeditions] = useState(true);
-  const [pushAlerts, setPushAlerts] = useState(true);
-  const [smsAlerts, setSmsAlerts] = useState(false);
+  const [emailExpeditions, setEmailExpeditions] = useState(userProfile?.emailExpeditions !== undefined ? userProfile.emailExpeditions : true);
+  const [pushAlerts, setPushAlerts] = useState(userProfile?.pushAlerts !== undefined ? userProfile.pushAlerts : true);
+  const [smsAlerts, setSmsAlerts] = useState(userProfile?.smsAlerts !== undefined ? userProfile.smsAlerts : false);
 
   // Feedback states
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
 
-  const handleSaveChanges = () => {
-    setSavedSuccess(true);
-    if (Platform.OS !== "web") {
-      Alert.alert("Success", "Your account settings have been updated successfully!");
+  React.useEffect(() => {
+    if (userProfile) {
+      if (userProfile.theme) setSelectedTheme(userProfile.theme);
+      if (userProfile.highContrast !== undefined) setHighContrast(userProfile.highContrast);
+      if (userProfile.reducedMotion !== undefined) setReducedMotion(userProfile.reducedMotion);
+      if (userProfile.emailExpeditions !== undefined) setEmailExpeditions(userProfile.emailExpeditions);
+      if (userProfile.pushAlerts !== undefined) setPushAlerts(userProfile.pushAlerts);
+      if (userProfile.smsAlerts !== undefined) setSmsAlerts(userProfile.smsAlerts);
     }
-    setTimeout(() => {
-      setSavedSuccess(false);
-    }, 4000);
+  }, [userProfile]);
+
+  const handleSelectTheme = async (themeName) => {
+    setSelectedTheme(themeName);
+    try {
+      await updateUserProfile({ theme: themeName });
+    } catch (e) {
+      console.warn("Could not save theme:", e);
+    }
+  };
+
+  const handleSaveChanges = async () => {
+    try {
+      await updateUserProfile({
+        theme: selectedTheme,
+        highContrast,
+        reducedMotion,
+        emailExpeditions,
+        pushAlerts,
+        smsAlerts,
+      });
+      setSavedSuccess(true);
+      if (Platform.OS !== "web") {
+        Alert.alert("Success", "Your account settings have been updated successfully!");
+      }
+      setTimeout(() => {
+        setSavedSuccess(false);
+      }, 4000);
+    } catch (err) {
+      console.error("Failed to save settings:", err);
+    }
   };
 
   const handleUpdatePassword = async () => {
@@ -163,8 +204,19 @@ export default function SettingsScreen() {
     }
   };
 
+  const isDark = selectedTheme === "dark";
+  const themeColors = {
+    bg: isDark ? "#0d1b2a" : "#F8FBFF",
+    cardBg: isDark ? "#1b334d" : "#FFFFFF",
+    cardBorder: isDark ? "rgba(255, 255, 255, 0.12)" : "#E2E8F0",
+    textPrimary: isDark ? "#FFFFFF" : "#0F172A",
+    textSecondary: isDark ? "#94a3b8" : "#64748B",
+    inputBg: isDark ? "#122336" : "#F8FAFC",
+    divider: isDark ? "rgba(255, 255, 255, 0.08)" : "#F1F5F9",
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: themeColors.bg }]}>
       <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -194,7 +246,7 @@ export default function SettingsScreen() {
         </ImageBackground>
 
         {/* ================= MAIN CONTAINER ================= */}
-        <View style={styles.mainContainer}>
+        <View style={[styles.mainContainer, { backgroundColor: themeColors.bg }]}>
           <View
             style={[
               styles.contentWrapper,
@@ -228,23 +280,23 @@ export default function SettingsScreen() {
             <View style={[styles.settingsLayout, { flexDirection: isDesktop ? "row" : "column" }]}>
               {/* ================= LEFT SIDEBAR ================= */}
               <View style={[styles.sidebarColumn, { width: isDesktop ? 280 : "100%" }]}>
-                <View style={styles.sidebarCard}>
+                <View style={[styles.sidebarCard, { backgroundColor: themeColors.cardBg, borderColor: themeColors.cardBorder }]}>
                   {/* User Mini Header */}
                   <View style={styles.userMiniProfile}>
                     <View style={styles.miniAvatarContainer}>
                       <Ionicons name="person" size={24} color="#0B5CAD" />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.miniUserName}>
+                      <Text style={[styles.miniUserName, { color: themeColors.textPrimary }]}>
                         {userProfile?.fullName || user?.displayName || (user ? "Adventurer" : "Guest Explorer")}
                       </Text>
-                      <Text style={styles.miniUserTier}>
+                      <Text style={[styles.miniUserTier, { color: themeColors.textSecondary }]}>
                         {user ? (userProfile?.membershipTier || "Aces Gold Member") : "Not Logged In"}
                       </Text>
                     </View>
                   </View>
 
-                  <View style={styles.sidebarDivider} />
+                  <View style={[styles.sidebarDivider, { backgroundColor: themeColors.divider }]} />
 
                   {/* Navigation Tabs */}
                   <View style={styles.sidebarNav}>
@@ -334,45 +386,45 @@ export default function SettingsScreen() {
               {/* ================= MAIN CONTENT PANELS ================= */}
               <View style={[styles.mainPanelsColumn, { flex: 1 }]}>
                 {/* ================= 1. APPEARANCE CARD ================= */}
-                <View style={styles.sectionCard}>
+                <View style={[styles.sectionCard, { backgroundColor: themeColors.cardBg, borderColor: themeColors.cardBorder }]}>
                   <View style={styles.cardHeader}>
                     <View style={[styles.cardHeaderIcon, { backgroundColor: "#EDE9FE" }]}>
                       <Ionicons name="color-palette" size={22} color="#7C3AED" />
                     </View>
                     <View>
-                      <Text style={styles.cardHeaderTitle}>Appearance</Text>
-                      <Text style={styles.cardHeaderSubtitle}>
+                      <Text style={[styles.cardHeaderTitle, { color: themeColors.textPrimary }]}>Appearance</Text>
+                      <Text style={[styles.cardHeaderSubtitle, { color: themeColors.textSecondary }]}>
                         Customize the visual interface and accessibility settings
                       </Text>
                     </View>
                   </View>
 
-                  <View style={styles.cardDivider} />
+                  <View style={[styles.cardDivider, { backgroundColor: themeColors.divider }]} />
 
                   {/* Theme Mode Selector (Dark Theme / Light Theme) */}
-                  <Text style={styles.subsectionLabel}>Interface Theme</Text>
+                  <Text style={[styles.subsectionLabel, { color: isDark ? "#38BDF8" : "#1E293B" }]}>Interface Theme</Text>
                   <View style={[styles.themeSelectorRow, { flexDirection: isWide ? "row" : "column", gap: 16 }]}>
                     {/* Light Theme Option */}
                     <TouchableOpacity
                       style={[
                         styles.themeOptionCard,
                         selectedTheme === "light" && styles.themeOptionCardSelected,
-                        { flex: 1 },
+                        { flex: 1, backgroundColor: isDark ? "#122336" : "#F8FAFC", borderColor: selectedTheme === "light" ? "#0B5CAD" : themeColors.cardBorder },
                       ]}
                       activeOpacity={0.85}
-                      onPress={() => setSelectedTheme("light")}
+                      onPress={() => handleSelectTheme("light")}
                     >
                       <View style={styles.themeIconPreview}>
                         <Ionicons name="sunny" size={24} color="#D97706" />
                       </View>
                       <View style={{ flex: 1 }}>
                         <View style={styles.themeTitleRow}>
-                          <Text style={styles.themeOptionTitle}>Light Theme</Text>
+                          <Text style={[styles.themeOptionTitle, { color: themeColors.textPrimary }]}>Light Theme</Text>
                           {selectedTheme === "light" && (
                             <Ionicons name="checkmark-circle" size={18} color="#0B5CAD" />
                           )}
                         </View>
-                        <Text style={styles.themeOptionDesc}>Crisp, high-clarity daylight mode</Text>
+                        <Text style={[styles.themeOptionDesc, { color: themeColors.textSecondary }]}>Crisp, high-clarity daylight mode</Text>
                       </View>
                     </TouchableOpacity>
 
@@ -382,22 +434,22 @@ export default function SettingsScreen() {
                         styles.themeOptionCard,
                         styles.themeOptionDarkCard,
                         selectedTheme === "dark" && styles.themeOptionCardSelected,
-                        { flex: 1 },
+                        { flex: 1, backgroundColor: isDark ? "#122336" : "#0F172A", borderColor: selectedTheme === "dark" ? "#38BDF8" : themeColors.cardBorder },
                       ]}
                       activeOpacity={0.85}
-                      onPress={() => setSelectedTheme("dark")}
+                      onPress={() => handleSelectTheme("dark")}
                     >
                       <View style={[styles.themeIconPreview, { backgroundColor: "#1E293B" }]}>
                         <Ionicons name="moon" size={24} color="#38BDF8" />
                       </View>
                       <View style={{ flex: 1 }}>
                         <View style={styles.themeTitleRow}>
-                          <Text style={[styles.themeOptionTitle, { color: "#0F172A" }]}>Dark Theme</Text>
+                          <Text style={[styles.themeOptionTitle, { color: "#FFFFFF" }]}>Dark Theme</Text>
                           {selectedTheme === "dark" && (
-                            <Ionicons name="checkmark-circle" size={18} color="#0B5CAD" />
+                            <Ionicons name="checkmark-circle" size={18} color="#38BDF8" />
                           )}
                         </View>
-                        <Text style={styles.themeOptionDesc}>Sleek, low-light alpine exploration theme</Text>
+                        <Text style={[styles.themeOptionDesc, { color: "#94A3B8" }]}>Sleek, low-light alpine exploration theme</Text>
                       </View>
                     </TouchableOpacity>
                   </View>
@@ -407,8 +459,8 @@ export default function SettingsScreen() {
                     {/* High Contrast */}
                     <View style={styles.toggleRow}>
                       <View style={{ flex: 1, paddingRight: 16 }}>
-                        <Text style={styles.toggleLabel}>High Contrast</Text>
-                        <Text style={styles.toggleSubtext}>
+                        <Text style={[styles.toggleLabel, { color: themeColors.textPrimary }]}>High Contrast</Text>
+                        <Text style={[styles.toggleSubtext, { color: themeColors.textSecondary }]}>
                           Enhance text legibility and outline contrast across borders
                         </Text>
                       </View>
@@ -420,13 +472,13 @@ export default function SettingsScreen() {
                       />
                     </View>
 
-                    <View style={styles.innerDivider} />
+                    <View style={[styles.innerDivider, { backgroundColor: themeColors.divider }]} />
 
                     {/* Reduced Motion */}
                     <View style={styles.toggleRow}>
                       <View style={{ flex: 1, paddingRight: 16 }}>
-                        <Text style={styles.toggleLabel}>Reduced Motion</Text>
-                        <Text style={styles.toggleSubtext}>
+                        <Text style={[styles.toggleLabel, { color: themeColors.textPrimary }]}>Reduced Motion</Text>
+                        <Text style={[styles.toggleSubtext, { color: themeColors.textSecondary }]}>
                           Minimize parallax motion effects and smooth animations
                         </Text>
                       </View>
@@ -441,29 +493,29 @@ export default function SettingsScreen() {
                 </View>
 
                 {/* ================= 2. SECURITY CARD ================= */}
-                <View style={styles.sectionCard}>
+                <View style={[styles.sectionCard, { backgroundColor: themeColors.cardBg, borderColor: themeColors.cardBorder }]}>
                   <View style={styles.cardHeader}>
                     <View style={[styles.cardHeaderIcon, { backgroundColor: "#FEF2F2" }]}>
                       <Ionicons name="shield-checkmark" size={22} color="#EF4444" />
                     </View>
                     <View>
-                      <Text style={styles.cardHeaderTitle}>Security & Credentials</Text>
-                      <Text style={styles.cardHeaderSubtitle}>
+                      <Text style={[styles.cardHeaderTitle, { color: themeColors.textPrimary }]}>Security & Credentials</Text>
+                      <Text style={[styles.cardHeaderSubtitle, { color: themeColors.textSecondary }]}>
                         Update your password and enhance authentication security
                       </Text>
                     </View>
                   </View>
 
-                  <View style={styles.cardDivider} />
+                  <View style={[styles.cardDivider, { backgroundColor: themeColors.divider }]} />
 
                   <View style={styles.formGrid}>
                     {/* Current Password */}
                     <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>Current Password</Text>
-                      <View style={styles.inputWrapper}>
+                      <Text style={[styles.inputLabel, { color: themeColors.textPrimary }]}>Current Password</Text>
+                      <View style={[styles.inputWrapper, { backgroundColor: themeColors.inputBg, borderColor: themeColors.cardBorder }]}>
                         <Ionicons name="key-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
                         <TextInput
-                          style={styles.textInput}
+                          style={[styles.textInput, { color: themeColors.textPrimary }]}
                           value={currentPassword}
                           onChangeText={setCurrentPassword}
                           placeholder="Enter your existing password"
@@ -486,11 +538,11 @@ export default function SettingsScreen() {
                     {/* New Password & Confirm Password */}
                     <View style={[styles.inputRow, { flexDirection: isWide ? "row" : "column", gap: 16 }]}>
                       <View style={[styles.inputGroup, { flex: 1 }]}>
-                        <Text style={styles.inputLabel}>New Password</Text>
-                        <View style={styles.inputWrapper}>
+                        <Text style={[styles.inputLabel, { color: themeColors.textPrimary }]}>New Password</Text>
+                        <View style={[styles.inputWrapper, { backgroundColor: themeColors.inputBg, borderColor: themeColors.cardBorder }]}>
                           <Ionicons name="lock-closed-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
                           <TextInput
-                            style={styles.textInput}
+                            style={[styles.textInput, { color: themeColors.textPrimary }]}
                             value={newPassword}
                             onChangeText={setNewPassword}
                             placeholder="Min. 8 characters"
@@ -501,11 +553,11 @@ export default function SettingsScreen() {
                       </View>
 
                       <View style={[styles.inputGroup, { flex: 1 }]}>
-                        <Text style={styles.inputLabel}>Confirm New Password</Text>
-                        <View style={styles.inputWrapper}>
+                        <Text style={[styles.inputLabel, { color: themeColors.textPrimary }]}>Confirm New Password</Text>
+                        <View style={[styles.inputWrapper, { backgroundColor: themeColors.inputBg, borderColor: themeColors.cardBorder }]}>
                           <Ionicons name="lock-closed-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
                           <TextInput
-                            style={styles.textInput}
+                            style={[styles.textInput, { color: themeColors.textPrimary }]}
                             value={confirmPassword}
                             onChangeText={setConfirmPassword}
                             placeholder="Re-type new password"
@@ -535,13 +587,13 @@ export default function SettingsScreen() {
                       </TouchableOpacity>
                     </View>
 
-                    <View style={styles.innerDivider} />
+                    <View style={[styles.innerDivider, { backgroundColor: themeColors.divider }]} />
 
                     {/* Two-Factor Authentication */}
                     <View style={styles.toggleRow}>
                       <View style={{ flex: 1, paddingRight: 16 }}>
-                        <Text style={styles.toggleLabel}>Two-Factor Authentication (2FA)</Text>
-                        <Text style={styles.toggleSubtext}>
+                        <Text style={[styles.toggleLabel, { color: themeColors.textPrimary }]}>Two-Factor Authentication (2FA)</Text>
+                        <Text style={[styles.toggleSubtext, { color: themeColors.textSecondary }]}>
                           Require an authentication code via email/SMS when signing in
                         </Text>
                       </View>
@@ -556,27 +608,27 @@ export default function SettingsScreen() {
                 </View>
 
                 {/* ================= 3. NOTIFICATION SETTINGS ================= */}
-                <View style={styles.sectionCard}>
+                <View style={[styles.sectionCard, { backgroundColor: themeColors.cardBg, borderColor: themeColors.cardBorder }]}>
                   <View style={styles.cardHeader}>
                     <View style={[styles.cardHeaderIcon, { backgroundColor: "#FEF3C7" }]}>
                       <Ionicons name="notifications" size={22} color="#D97706" />
                     </View>
                     <View>
-                      <Text style={styles.cardHeaderTitle}>Notification Settings</Text>
-                      <Text style={styles.cardHeaderSubtitle}>
+                      <Text style={[styles.cardHeaderTitle, { color: themeColors.textPrimary }]}>Notification Settings</Text>
+                      <Text style={[styles.cardHeaderSubtitle, { color: themeColors.textSecondary }]}>
                         Control which trip updates, expedition notices, and club emails you receive
                       </Text>
                     </View>
                   </View>
 
-                  <View style={styles.cardDivider} />
+                  <View style={[styles.cardDivider, { backgroundColor: themeColors.divider }]} />
 
                   <View style={styles.toggleList}>
                     {/* Email Expeditions */}
                     <View style={styles.toggleRow}>
                       <View style={{ flex: 1, paddingRight: 16 }}>
-                        <Text style={styles.toggleLabel}>Email Expeditions & Newsletters</Text>
-                        <Text style={styles.toggleSubtext}>
+                        <Text style={[styles.toggleLabel, { color: themeColors.textPrimary }]}>Email Expeditions & Newsletters</Text>
+                        <Text style={[styles.toggleSubtext, { color: themeColors.textSecondary }]}>
                           Receive announcements for upcoming trips, member discounts, and early-bird tickets
                         </Text>
                       </View>
@@ -588,13 +640,13 @@ export default function SettingsScreen() {
                       />
                     </View>
 
-                    <View style={styles.innerDivider} />
+                    <View style={[styles.innerDivider, { backgroundColor: themeColors.divider }]} />
 
                     {/* Push Alerts */}
                     <View style={styles.toggleRow}>
                       <View style={{ flex: 1, paddingRight: 16 }}>
-                        <Text style={styles.toggleLabel}>Push Alerts & Live Weather Notices</Text>
-                        <Text style={styles.toggleSubtext}>
+                        <Text style={[styles.toggleLabel, { color: themeColors.textPrimary }]}>Push Alerts & Live Weather Notices</Text>
+                        <Text style={[styles.toggleSubtext, { color: themeColors.textSecondary }]}>
                           Real-time alerts regarding booked route departures, weather updates, and guide communications
                         </Text>
                       </View>
@@ -606,13 +658,13 @@ export default function SettingsScreen() {
                       />
                     </View>
 
-                    <View style={styles.innerDivider} />
+                    <View style={[styles.innerDivider, { backgroundColor: themeColors.divider }]} />
 
                     {/* SMS Alerts */}
                     <View style={styles.toggleRow}>
                       <View style={{ flex: 1, paddingRight: 16 }}>
-                        <Text style={styles.toggleLabel}>SMS Critical Updates</Text>
-                        <Text style={styles.toggleSubtext}>
+                        <Text style={[styles.toggleLabel, { color: themeColors.textPrimary }]}>SMS Critical Updates</Text>
+                        <Text style={[styles.toggleSubtext, { color: themeColors.textSecondary }]}>
                           Urgent emergency and transit notifications sent directly to your phone
                         </Text>
                       </View>
@@ -627,7 +679,7 @@ export default function SettingsScreen() {
                 </View>
 
                 {/* ================= BOTTOM ACTION BAR ================= */}
-                <View style={styles.bottomActionBar}>
+                <View style={[styles.bottomActionBar, { backgroundColor: themeColors.cardBg, borderColor: themeColors.cardBorder }]}>
                   <TouchableOpacity
                     style={styles.logoutBtn}
                     activeOpacity={0.8}

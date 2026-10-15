@@ -17,7 +17,7 @@ import { useNavigation } from "@react-navigation/native";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import useResponsive from "../hooks/useResponsive";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useData, resolveAsset } from "../context/DataContext";
 
 const { height, width } = Dimensions.get("window");

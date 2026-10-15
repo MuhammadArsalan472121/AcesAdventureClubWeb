@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   ScrollView,
@@ -12,9 +12,21 @@ import {
 import Sidebar from '../components/Sidebar';
 import TopBar from '../components/TopBar';
 import { useData } from '../context/DataContext';
+import { useNavigation } from '@react-navigation/native';
+import { auth } from './firebaseConfig';
 
 export default function UserManagementScreen() {
+  const navigation = useNavigation<any>();
   const { users, addUser, updateUser, deleteUser } = useData();
+
+  useEffect(() => {
+    if (!auth.currentUser) {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'AdminLogin' }],
+      });
+    }
+  }, [navigation]);
 
   console.log('[USERS_DEBUG] UserManagementScreen rendered. users count:', users?.length, users);
 

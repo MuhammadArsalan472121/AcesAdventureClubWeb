@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { auth } from './firebaseConfig';
 
 import Sidebar from '../components/Sidebar';
 import TopBar from '../components/TopBar';
@@ -10,7 +12,17 @@ import UsersTable from '../components/UsersTable';
 import { useData } from '../context/DataContext';
 
 export default function AdminDashboardScreen() {
+  const navigation = useNavigation<any>();
   const { trips, users, sponsors, gallery, inquiries } = useData();
+
+  useEffect(() => {
+    if (!auth.currentUser) {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'AdminLogin' }],
+      });
+    }
+  }, [navigation]);
 
   console.log('[ADMIN_USERS_READ_DEBUG] AdminDashboardScreen useData().users count:', users?.length, users);
 
@@ -147,6 +159,7 @@ const styles = StyleSheet.create({
 
   middleSection: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 16,
     marginBottom: 24,
   },

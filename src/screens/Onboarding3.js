@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import useResponsive from "../hooks/useResponsive";
 import { useData, resolveAsset } from "../context/DataContext";
+import { getOnboardingCompleted, setOnboardingCompleted } from "../utils/onboardingStorage";
 
 export default function Onboarding3() {
   const navigation = useNavigation();
@@ -28,6 +29,11 @@ export default function Onboarding3() {
   const slide = useRef(new Animated.Value(40)).current;
 
   useEffect(() => {
+    if (getOnboardingCompleted()) {
+      navigation.replace("Home");
+      return;
+    }
+
     Animated.parallel([
       Animated.timing(fade, {
         toValue: 1,
@@ -64,7 +70,10 @@ export default function Onboarding3() {
 
           <TouchableOpacity
             style={styles.skipButton}
-            onPress={() => navigation.replace("Home")}
+            onPress={() => {
+              setOnboardingCompleted();
+              navigation.replace("Home");
+            }}
           >
             <Text style={styles.skipText}>Skip</Text>
           </TouchableOpacity>
@@ -108,7 +117,10 @@ export default function Onboarding3() {
           <View style={[styles.buttonWrapper, !isDesktop && { marginTop: 20, width: "100%", marginBottom: 10 }]}>
             <TouchableOpacity
               style={[styles.nextButton, !isDesktop && { width: "100%", alignItems: "center" }]}
-              onPress={() => navigation.replace("Home")}
+              onPress={() => {
+                setOnboardingCompleted();
+                navigation.replace("Home");
+              }}
             >
               <Text style={styles.nextButtonText}>Get Started</Text>
             </TouchableOpacity>

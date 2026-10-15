@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import useResponsive from "../hooks/useResponsive";
 import { useData, resolveAsset } from "../context/DataContext";
+import { getOnboardingCompleted, setOnboardingCompleted } from "../utils/onboardingStorage";
 
 export default function Onboarding1() {
   const navigation = useNavigation();
@@ -28,6 +29,11 @@ export default function Onboarding1() {
   const slide = useRef(new Animated.Value(40)).current;
 
   useEffect(() => {
+    if (getOnboardingCompleted()) {
+      navigation.replace("Home");
+      return;
+    }
+
     Animated.parallel([
       Animated.timing(fade, {
         toValue: 1,
@@ -64,7 +70,10 @@ export default function Onboarding1() {
 
           <TouchableOpacity
             style={styles.skipButton}
-            onPress={() => navigation.navigate("Onboarding3")}
+            onPress={() => {
+              setOnboardingCompleted();
+              navigation.replace("Home");
+            }}
           >
             <Text style={styles.skipText}>Skip</Text>
           </TouchableOpacity>

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { Platform } from "react-native";
-import { db } from "../screens/firebaseConfig";
+import { auth, db } from "../screens/firebaseConfig";
+import { onAuthStateChanged } from "firebase/auth";
 import {
   collection,
   onSnapshot,
@@ -715,56 +716,117 @@ const DEFAULT_DATA = {
     { id: "12", title: "Pristine Nature Track", imageKey: "nature.jpg", category: "NATURE TRAILS", height: 250 },
   ],
 
+  /** @type {any[]} */
   users: [
     {
-      id: "1",
-      name: "Alex Mercer",
-      email: "admin@acesclub.com",
-      role: "Super Admin",
-      status: "ACTIVE",
-      joined: "Oct 12, 2024",
-      phone: "+92 300 0000000",
-      location: "Islamabad, Pakistan",
-    },
-    {
-      id: "2",
+      id: "u1",
       name: "Sophia Miller",
       email: "sophia.m@acesclub.com",
       role: "Elite Voyager",
       status: "ACTIVE",
-      joined: "Oct 12, 2024",
-      phone: "+92 300 1112233",
-      location: "Lahore, Pakistan",
+      joined: "Oct 15, 2026",
+      phone: "+92 300 1234567",
+      location: "Islamabad, Pakistan",
+      createdAt: new Date("2026-10-15T08:30:00Z").getTime(),
     },
     {
-      id: "3",
+      id: "u2",
+      name: "Hamza Tariq",
+      email: "hamza.t@adventure.pk",
+      role: "Member",
+      status: "ACTIVE",
+      joined: "Oct 15, 2026",
+      phone: "+92 321 4455667",
+      location: "Lahore, Pakistan",
+      createdAt: new Date("2026-10-15T09:45:00Z").getTime(),
+    },
+    {
+      id: "u3",
       name: "James Kovic",
       email: "j.kovic@adventure.org",
       role: "Member",
       status: "ACTIVE",
-      joined: "Oct 10, 2024",
-      phone: "+92 312 4445566",
+      joined: "Oct 14, 2026",
+      phone: "+92 312 9988776",
       location: "Rawalpindi, Pakistan",
+      createdAt: new Date("2026-10-14T11:20:00Z").getTime(),
     },
     {
-      id: "4",
-      name: "Aris Loucas",
-      email: "loucas.a@travel.co",
-      role: "Sponsor Rep",
-      status: "INACTIVE",
-      joined: "Oct 05, 2024",
-      phone: "+92 333 7778899",
-      location: "Karachi, Pakistan",
-    },
-    {
-      id: "5",
+      id: "u4",
       name: "Elena Volkov",
       email: "elena.v@expeditions.net",
       role: "Elite Voyager",
       status: "ACTIVE",
-      joined: "Sep 28, 2024",
-      phone: "+92 321 9990011",
+      joined: "Oct 13, 2026",
+      phone: "+92 345 5566778",
+      location: "Gilgit, Pakistan",
+      createdAt: new Date("2026-10-13T16:45:00Z").getTime(),
+    },
+    {
+      id: "u5",
+      name: "Aris Loucas",
+      email: "loucas.a@travel.co",
+      role: "Sponsor Rep",
+      status: "INACTIVE",
+      joined: "Oct 12, 2026",
+      phone: "+92 301 7766554",
+      location: "Karachi, Pakistan",
+      createdAt: new Date("2026-10-12T10:10:00Z").getTime(),
+    },
+    {
+      id: "u6",
+      name: "Zainab Malik",
+      email: "zainab.m@travelers.pk",
+      role: "Member",
+      status: "ACTIVE",
+      joined: "Oct 11, 2026",
+      phone: "+92 333 1122334",
       location: "Islamabad, Pakistan",
+      createdAt: new Date("2026-10-11T15:00:00Z").getTime(),
+    },
+    {
+      id: "u7",
+      name: "Aiden Vance",
+      email: "aiden.v@luxury.com",
+      role: "Member",
+      status: "ACTIVE",
+      joined: "Oct 10, 2026",
+      phone: "+92 300 9876543",
+      location: "Skardu, Pakistan",
+      createdAt: new Date("2026-10-10T08:20:00Z").getTime(),
+    },
+    {
+      id: "u8",
+      name: "Bilal Ahmed",
+      email: "bilal.ahmed@peaktrek.pk",
+      role: "Member",
+      status: "ACTIVE",
+      joined: "Oct 09, 2026",
+      phone: "+92 315 2233445",
+      location: "Peshawar, Pakistan",
+      createdAt: new Date("2026-10-09T12:00:00Z").getTime(),
+    },
+    {
+      id: "u9",
+      name: "Sara Khan",
+      email: "sara.k@travelers.pk",
+      role: "Elite Voyager",
+      status: "ACTIVE",
+      joined: "Sep 25, 2026",
+      phone: "+92 345 8889900",
+      location: "Lahore, Pakistan",
+      createdAt: new Date("2026-09-25T14:15:00Z").getTime(),
+    },
+    {
+      id: "u10",
+      name: "Marcus Thorne",
+      email: "marcus.t@acesclub.com",
+      role: "Admin",
+      status: "ACTIVE",
+      joined: "Aug 15, 2026",
+      phone: "+92 302 3344556",
+      location: "Islamabad, Pakistan",
+      createdAt: new Date("2026-08-15T09:00:00Z").getTime(),
     },
   ],
 
@@ -886,9 +948,9 @@ const DEFAULT_DATA = {
   },
 
   contactContent: {
-    phone: "+92 312 5556789",
+    phone: "+92 312 1578099",
     phoneHours: "Mon–Fri, 9am - 6pm PKT",
-    email: "hello@acesadventure.com",
+    email: "info.acesadventureclub@gmail.com",
     emailSubtitle: "Inquiry & Support",
     location: "Attock, Punjab, Pakistan",
     locationSubtitle: "The Gateway to the North",
@@ -924,12 +986,32 @@ const DEFAULT_DATA = {
       imageKey: "onboarding3.jpg",
     },
   },
+  tripCategories: [
+    "Hiking",
+    "Camping",
+    "Trekking",
+    "Nature Trails",
+    "Mountaineering",
+    "Road Trip",
+  ],
+  tripBadges: [
+    "Featured",
+    "Popular",
+    "Recommended",
+    "Elite",
+    "Trending",
+  ],
 };
 
 const STORAGE_KEY = "aces_adventure_club_v3_store";
 
 const DataContext = createContext({
   ...DEFAULT_DATA,
+  // Preset options CRUD
+  addTripCategory: (_cat) => {},
+  deleteTripCategory: (_cat) => {},
+  addTripBadge: (_badge) => {},
+  deleteTripBadge: (_badge) => {},
   // CRUD operations
   addTrip: (_trip) => {},
   updateTrip: (_id, _updatedFields) => {},
@@ -975,6 +1057,12 @@ export const DataProvider = ({ children }) => {
             aboutContent: { ...prev.aboutContent, ...(parsed.aboutContent || {}) },
             contactContent: { ...prev.contactContent, ...(parsed.contactContent || {}) },
             onboardingContent: { ...prev.onboardingContent, ...(parsed.onboardingContent || {}) },
+            tripCategories: (Array.isArray(parsed.tripCategories) && parsed.tripCategories.length > 0)
+              ? parsed.tripCategories
+              : prev.tripCategories,
+            tripBadges: (Array.isArray(parsed.tripBadges) && parsed.tripBadges.length > 0)
+              ? parsed.tripBadges
+              : prev.tripBadges,
           }));
         }
       } catch (e) {
@@ -983,58 +1071,62 @@ export const DataProvider = ({ children }) => {
     }
   }, []);
 
-  // Real-time Firestore listener for Users collection
+  // Real-time Firestore listener for Users collection (auto re-subscribes on login/logout)
   useEffect(() => {
-    console.log("[ADMIN_USERS_READ_DEBUG] 1. Firebase project currently used by Admin Panel:", db?.app?.options?.projectId);
-    console.log("[ADMIN_USERS_READ_DEBUG] 2. Firestore instance currently used by DataContext:", db);
-    console.log("[ADMIN_USERS_READ_DEBUG] 3. Exact collection path being listened to: users");
-    console.log("[ADMIN_USERS_READ_DEBUG] 4. Firestore users listener starting...");
+    let unsubscribeSnapshot = null;
 
-    const usersRef = collection(db, "users");
-    const unsubscribe = onSnapshot(
-      usersRef,
-      (snapshot) => {
-        console.log(`[ADMIN_USERS_READ_DEBUG] 5. Number of documents received by onSnapshot: ${snapshot.docs.length}`);
-        console.log("[ADMIN_USERS_READ_DEBUG] 6. Every received document ID:", snapshot.docs.map(d => d.id));
-        console.log("[ADMIN_USERS_READ_DEBUG] 7. Every received document details:", snapshot.docs.map(d => {
-          const data = d.data();
-          return { id: d.id, email: data.email, name: data.name || data.fullName, role: data.role, status: data.status };
-        }));
-
-        const fetchedUsers = snapshot.docs.map((docSnap) => {
-          const data = docSnap.data();
-          return {
-            id: docSnap.id,
-            name: data.name || data.fullName || "Member",
-            email: data.email || "",
-            role: normalizeRole(data.role),
-            status: normalizeStatus(data.status),
-            joined: normalizeJoined(data.joined, data.createdAt),
-            phone: data.phone || "",
-            location: data.location || "",
-            createdAt: data.createdAt || null,
-          };
-        });
-
-        console.log(`[ADMIN_USERS_READ_DEBUG] 8. Normalized users array length: ${fetchedUsers.length}`);
-
-        setStore((prev) => {
-          const merged = mergeUsersLists(fetchedUsers, prev.users && prev.users.length ? prev.users : DEFAULT_DATA.users);
-          console.log(`[ADMIN_USERS_READ_DEBUG] DataContext store.users updated with merged length: ${merged.length}`);
-          return {
-            ...prev,
-            users: merged,
-          };
-        });
-      },
-      (error) => {
-        console.warn("[ADMIN_USERS_READ_DEBUG] Firestore listener warning (retaining local/default users):", error?.code, error?.message);
+    const subscribeUsers = () => {
+      console.log("[ADMIN_USERS_READ_DEBUG] Subscribing/Re-subscribing Firestore listener for 'users'...");
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
       }
-    );
+
+      const usersRef = collection(db, "users");
+      unsubscribeSnapshot = onSnapshot(
+        usersRef,
+        (snapshot) => {
+          console.log(`[ADMIN_USERS_READ_DEBUG] Documents received by onSnapshot: ${snapshot.docs.length}`);
+          const fetchedUsers = snapshot.docs.map((docSnap) => {
+            const data = docSnap.data();
+            return {
+              id: docSnap.id,
+              name: data.name || data.fullName || "Member",
+              email: data.email || "",
+              role: normalizeRole(data.role),
+              status: normalizeStatus(data.status),
+              joined: normalizeJoined(data.joined, data.createdAt),
+              phone: data.phone || "",
+              location: data.location || "",
+              createdAt: data.createdAt || null,
+            };
+          });
+
+          setStore((prev) => {
+            const base = prev.users && prev.users.length ? prev.users : DEFAULT_DATA.users;
+            const merged = mergeUsersLists(fetchedUsers, base);
+            return {
+              ...prev,
+              users: merged.length > 0 ? merged : DEFAULT_DATA.users,
+            };
+          });
+        },
+        (error) => {
+          console.warn("[ADMIN_USERS_READ_DEBUG] Firestore listener error/warning:", error?.code, error?.message);
+        }
+      );
+    };
+
+    subscribeUsers();
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      console.log("[ADMIN_USERS_READ_DEBUG] Auth state changed. Re-subscribing users listener for:", user?.email || "Signed out");
+      subscribeUsers();
+    });
 
     return () => {
-      console.log("[ADMIN_USERS_READ_DEBUG] Unsubscribing Firestore listener for 'users'");
-      unsubscribe();
+      console.log("[ADMIN_USERS_READ_DEBUG] Unsubscribing Firestore users listener and auth observer");
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+      if (unsubscribeAuth) unsubscribeAuth();
     };
   }, []);
 
@@ -1490,12 +1582,10 @@ export const DataProvider = ({ children }) => {
       joined: formattedJoined,
     };
 
-    // 1. Instantly update UI state and local storage
+    // 1. Instantly update UI state
     setStore((prev) => {
       const updatedUsers = [newUser, ...prev.users.filter((u) => u.id !== tempId)];
-      const updatedStore = { ...prev, users: updatedUsers };
-      saveStore(updatedStore);
-      return updatedStore;
+      return { ...prev, users: updatedUsers };
     });
 
     // 2. Persist to Firestore in background
@@ -1522,12 +1612,10 @@ export const DataProvider = ({ children }) => {
 
   const updateUser = async (id, updatedFields) => {
     console.log(`[USERS_DEBUG] updateUser called for ID [${id}]:`, updatedFields);
-    // 1. Instantly update UI state and local storage
+    // 1. Instantly update UI state
     setStore((prev) => {
       const updatedUsers = prev.users.map((u) => (u.id === id ? { ...u, ...updatedFields } : u));
-      const updatedStore = { ...prev, users: updatedUsers };
-      saveStore(updatedStore);
-      return updatedStore;
+      return { ...prev, users: updatedUsers };
     });
 
     // 2. Persist to Firestore in background
@@ -1543,12 +1631,10 @@ export const DataProvider = ({ children }) => {
 
   const deleteUser = async (id) => {
     console.log(`[USERS_DEBUG] deleteUser called for ID [${id}]`);
-    // 1. Instantly update UI state and local storage
+    // 1. Instantly update UI state
     setStore((prev) => {
       const updatedUsers = prev.users.filter((u) => u.id !== id);
-      const updatedStore = { ...prev, users: updatedUsers };
-      saveStore(updatedStore);
-      return updatedStore;
+      return { ...prev, users: updatedUsers };
     });
 
     // 2. Delete from Firestore in background
@@ -1677,10 +1763,62 @@ export const DataProvider = ({ children }) => {
     saveStore(DEFAULT_DATA);
   };
 
+  const addTripCategory = (category) => {
+    const trimmed = (category || "").trim();
+    if (!trimmed) return;
+    setStore((prev) => {
+      const current = prev.tripCategories || DEFAULT_DATA.tripCategories;
+      if (current.some((c) => c.toLowerCase() === trimmed.toLowerCase())) return prev;
+      const updated = { ...prev, tripCategories: [...current, trimmed] };
+      saveStore(updated);
+      return updated;
+    });
+  };
+
+  const deleteTripCategory = (category) => {
+    const trimmed = (category || "").trim();
+    if (!trimmed) return;
+    setStore((prev) => {
+      const current = prev.tripCategories || DEFAULT_DATA.tripCategories;
+      const updatedList = current.filter((c) => c.toLowerCase() !== trimmed.toLowerCase());
+      const updated = { ...prev, tripCategories: updatedList.length > 0 ? updatedList : [trimmed] };
+      saveStore(updated);
+      return updated;
+    });
+  };
+
+  const addTripBadge = (badge) => {
+    const trimmed = (badge || "").trim();
+    if (!trimmed) return;
+    setStore((prev) => {
+      const current = prev.tripBadges || DEFAULT_DATA.tripBadges;
+      if (current.some((b) => b.toLowerCase() === trimmed.toLowerCase())) return prev;
+      const updated = { ...prev, tripBadges: [...current, trimmed] };
+      saveStore(updated);
+      return updated;
+    });
+  };
+
+  const deleteTripBadge = (badge) => {
+    const trimmed = (badge || "").trim();
+    if (!trimmed) return;
+    setStore((prev) => {
+      const current = prev.tripBadges || DEFAULT_DATA.tripBadges;
+      const updatedList = current.filter((b) => b.toLowerCase() !== trimmed.toLowerCase());
+      const updated = { ...prev, tripBadges: updatedList };
+      saveStore(updated);
+      return updated;
+    });
+  };
+
   return (
     <DataContext.Provider
       value={{
         ...store,
+        addTripCategory,
+        deleteTripCategory,
+        addTripBadge,
+        deleteTripBadge,
         addTrip,
         updateTrip,
         deleteTrip,

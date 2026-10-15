@@ -28,12 +28,54 @@ const PRESET_IMAGES = [
 ];
 
 export default function ManageTripsScreen() {
-  const { trips, addTrip, updateTrip, deleteTrip } = useData() as any;
+  const {
+    trips,
+    addTrip,
+    updateTrip,
+    deleteTrip,
+    tripCategories = [],
+    tripBadges = [],
+    addTripCategory,
+    deleteTripCategory,
+    addTripBadge,
+    deleteTripBadge,
+  } = useData() as any;
+
+  const DEFAULT_CATEGORIES = [
+    'Hiking',
+    'Camping',
+    'Trekking',
+    'Nature Trails',
+    'Mountaineering',
+    'Road Trip',
+  ];
+
+  const DEFAULT_BADGES = [
+    'Featured',
+    'Popular',
+    'Recommended',
+    'Elite',
+    'Trending',
+  ];
+
+  const activeCategories = Array.isArray(tripCategories) && tripCategories.length > 0 ? tripCategories : DEFAULT_CATEGORIES;
+  const activeBadges = Array.isArray(tripBadges) && tripBadges.length > 0 ? tripBadges : DEFAULT_BADGES;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [modalVisible, setModalVisible] = useState(false);
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
+
+  // Dropdown states for Add / Edit Modal
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const [badgeDropdownOpen, setBadgeDropdownOpen] = useState(false);
+  const [newCategoryInput, setNewCategoryInput] = useState('');
+  const [newBadgeInput, setNewBadgeInput] = useState('');
+
+  // Standalone Presets Manager Modal state
+  const [managePresetsModalVisible, setManagePresetsModalVisible] = useState(false);
+  const [standaloneCategoryInput, setStandaloneCategoryInput] = useState('');
+  const [standaloneBadgeInput, setStandaloneBadgeInput] = useState('');
 
   // Form state
   const [formData, setFormData] = useState({
@@ -56,14 +98,18 @@ export default function ManageTripsScreen() {
 
   const handleOpenAddModal = () => {
     setEditingTripId(null);
+    setCategoryDropdownOpen(false);
+    setBadgeDropdownOpen(false);
+    setNewCategoryInput('');
+    setNewBadgeInput('');
     setFormData({
       title: '',
       location: 'Northern Areas, Pakistan',
       duration: '5 Days',
       difficulty: 'Moderate',
       price: 'PKR 45,000',
-      badge: 'Featured',
-      category: 'Hiking',
+      badge: activeBadges[0] || 'Featured',
+      category: activeCategories[0] || 'Hiking',
       status: 'UPCOMING',
       members: '20',
       description: 'Experience scenic mountain views and guided nature expeditions with ACES Adventure Club.',
@@ -78,14 +124,18 @@ export default function ManageTripsScreen() {
 
   const handleOpenEditModal = (trip: any) => {
     setEditingTripId(trip.id);
+    setCategoryDropdownOpen(false);
+    setBadgeDropdownOpen(false);
+    setNewCategoryInput('');
+    setNewBadgeInput('');
     setFormData({
       title: trip.title || '',
       location: trip.location || '',
       duration: trip.duration || '5 Days',
       difficulty: trip.difficulty || 'Easy',
       price: trip.price || 'PKR 40,000',
-      badge: trip.badge || 'Featured',
-      category: trip.category || 'Hiking',
+      badge: trip.badge || '',
+      category: trip.category || activeCategories[0] || 'Hiking',
       status: trip.status || 'UPCOMING',
       members: trip.members ? trip.members.toString() : '20',
       description: trip.description || '',
@@ -160,9 +210,18 @@ export default function ManageTripsScreen() {
               </Text>
             </View>
 
-            <TouchableOpacity style={styles.addBtn} onPress={handleOpenAddModal}>
-              <Text style={styles.addBtnText}>+ ADD NEW EXPEDITION</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+              <TouchableOpacity
+                style={styles.managePresetsBtn}
+                onPress={() => setManagePresetsModalVisible(true)}
+              >
+                <Text style={styles.managePresetsBtnText}>🏷️ Manage Presets</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.addBtn} onPress={handleOpenAddModal}>
+                <Text style={styles.addBtnText}>+ ADD NEW EXPEDITION</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Filters & Search Bar */}
@@ -391,28 +450,277 @@ export default function ManageTripsScreen() {
                   </View>
                 </View>
 
-                {/* Category & Badge */}
-                <View style={styles.formRow}>
+                {/* Category & Badge Dropdowns */}
+                <View style={[styles.formRow, { alignItems: 'flex-start' }]}>
+                  {/* Category Dropdown */}
                   <View style={[styles.formGroup, { flex: 1, marginRight: 14 }]}>
-                    <Text style={styles.formLabel}>CATEGORY</Text>
-                    <TextInput
-                      style={styles.formInput}
-                      placeholder="Hiking, Camping, Trekking, Nature Trails"
-                      placeholderTextColor="#94A3B8"
-                      value={formData.category}
-                      onChangeText={(t) => setFormData({ ...formData, category: t })}
-                    />
+                    <View style={styles.formLabelRow}>
+                      <Text style={styles.formLabel}>CATEGORY *</Text>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setCategoryDropdownOpen(!categoryDropdownOpen);
+                          setBadgeDropdownOpen(false);
+                        }}
+                        style={styles.miniManageBtn}
+                      >
+                        <Text style={styles.miniManageBtnText}>
+                          {categoryDropdownOpen ? 'Done' : '+ Add / Manage'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.dropdownTrigger,
+                        categoryDropdownOpen && styles.dropdownTriggerActive,
+                      ]}
+                      onPress={() => {
+                        setCategoryDropdownOpen(!categoryDropdownOpen);
+                        setBadgeDropdownOpen(false);
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Text
+                        style={[
+                          styles.dropdownTriggerText,
+                          !formData.category && styles.dropdownPlaceholderText,
+                        ]}
+                      >
+                        {formData.category || 'Select Category...'}
+                      </Text>
+                      <Text style={styles.dropdownChevron}>
+                        {categoryDropdownOpen ? '▲' : '▼'}
+                      </Text>
+                    </TouchableOpacity>
+
+                    {/* Category Dropdown Menu */}
+                    {categoryDropdownOpen && (
+                      <View style={styles.dropdownMenu}>
+                        <Text style={styles.dropdownSectionTitle}>SELECT PRESET CATEGORY</Text>
+                        <ScrollView style={{ maxHeight: 180 }} nestedScrollEnabled showsVerticalScrollIndicator={true}>
+                          {activeCategories.map((cat: string) => {
+                            const isSelected = formData.category?.toLowerCase() === cat.toLowerCase();
+                            return (
+                              <View
+                                key={cat}
+                                style={[
+                                  styles.dropdownItemRow,
+                                  isSelected && styles.dropdownItemRowSelected,
+                                ]}
+                              >
+                                <TouchableOpacity
+                                  style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}
+                                  onPress={() => {
+                                    setFormData({ ...formData, category: cat });
+                                    setCategoryDropdownOpen(false);
+                                  }}
+                                >
+                                  <Text
+                                    style={[
+                                      styles.dropdownItemText,
+                                      isSelected && styles.dropdownItemTextSelected,
+                                    ]}
+                                  >
+                                    {isSelected ? '✓  ' : '   '}{cat}
+                                  </Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                  style={styles.deleteOptionBtn}
+                                  onPress={() => {
+                                    deleteTripCategory(cat);
+                                    if (formData.category?.toLowerCase() === cat.toLowerCase()) {
+                                      const next = activeCategories.find((c: string) => c.toLowerCase() !== cat.toLowerCase());
+                                      setFormData({ ...formData, category: next || '' });
+                                    }
+                                  }}
+                                >
+                                  <Text style={styles.deleteOptionBtnText}>✕</Text>
+                                </TouchableOpacity>
+                              </View>
+                            );
+                          })}
+                        </ScrollView>
+
+                        {/* Add New Category Inline */}
+                        <View style={styles.dropdownAddRow}>
+                          <TextInput
+                            style={styles.dropdownAddInput}
+                            placeholder="New category..."
+                            placeholderTextColor="#94A3B8"
+                            value={newCategoryInput}
+                            onChangeText={setNewCategoryInput}
+                            onSubmitEditing={() => {
+                              if (newCategoryInput.trim()) {
+                                addTripCategory(newCategoryInput.trim());
+                                setFormData({ ...formData, category: newCategoryInput.trim() });
+                                setNewCategoryInput('');
+                              }
+                            }}
+                          />
+                          <TouchableOpacity
+                            style={styles.dropdownAddBtn}
+                            onPress={() => {
+                              if (newCategoryInput.trim()) {
+                                addTripCategory(newCategoryInput.trim());
+                                setFormData({ ...formData, category: newCategoryInput.trim() });
+                                setNewCategoryInput('');
+                              }
+                            }}
+                          >
+                            <Text style={styles.dropdownAddBtnText}>+ Add</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    )}
                   </View>
 
+                  {/* Badge Tag Dropdown */}
                   <View style={[styles.formGroup, { flex: 1 }]}>
-                    <Text style={styles.formLabel}>BADGE TAG</Text>
-                    <TextInput
-                      style={styles.formInput}
-                      placeholder="Featured, Popular, Recommended, Elite"
-                      placeholderTextColor="#94A3B8"
-                      value={formData.badge}
-                      onChangeText={(t) => setFormData({ ...formData, badge: t })}
-                    />
+                    <View style={styles.formLabelRow}>
+                      <Text style={styles.formLabel}>BADGE TAG</Text>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setBadgeDropdownOpen(!badgeDropdownOpen);
+                          setCategoryDropdownOpen(false);
+                        }}
+                        style={styles.miniManageBtn}
+                      >
+                        <Text style={styles.miniManageBtnText}>
+                          {badgeDropdownOpen ? 'Done' : '+ Add / Manage'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.dropdownTrigger,
+                        badgeDropdownOpen && styles.dropdownTriggerActive,
+                      ]}
+                      onPress={() => {
+                        setBadgeDropdownOpen(!badgeDropdownOpen);
+                        setCategoryDropdownOpen(false);
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
+                        {formData.badge ? (
+                          <View style={styles.miniBadgePreview}>
+                            <Text style={styles.miniBadgePreviewText}>{formData.badge}</Text>
+                          </View>
+                        ) : (
+                          <Text style={styles.dropdownPlaceholderText}>None (No Badge)</Text>
+                        )}
+                      </View>
+                      <Text style={styles.dropdownChevron}>
+                        {badgeDropdownOpen ? '▲' : '▼'}
+                      </Text>
+                    </TouchableOpacity>
+
+                    {/* Badge Dropdown Menu */}
+                    {badgeDropdownOpen && (
+                      <View style={styles.dropdownMenu}>
+                        <Text style={styles.dropdownSectionTitle}>SELECT PRESET BADGE</Text>
+                        <ScrollView style={{ maxHeight: 180 }} nestedScrollEnabled showsVerticalScrollIndicator={true}>
+                          {/* Option: None / Clear Badge */}
+                          <TouchableOpacity
+                            style={[
+                              styles.dropdownItemRow,
+                              !formData.badge && styles.dropdownItemRowSelected,
+                            ]}
+                            onPress={() => {
+                              setFormData({ ...formData, badge: '' });
+                              setBadgeDropdownOpen(false);
+                            }}
+                          >
+                            <Text
+                              style={[
+                                styles.dropdownItemText,
+                                !formData.badge && styles.dropdownItemTextSelected,
+                                { color: !formData.badge ? '#0B5CAD' : '#64748B' },
+                              ]}
+                            >
+                              {!formData.badge ? '✓  ' : '   '}(None / Clear Badge)
+                            </Text>
+                          </TouchableOpacity>
+
+                          {activeBadges.map((bg: string) => {
+                            const isSelected = formData.badge?.toLowerCase() === bg.toLowerCase();
+                            return (
+                              <View
+                                key={bg}
+                                style={[
+                                  styles.dropdownItemRow,
+                                  isSelected && styles.dropdownItemRowSelected,
+                                ]}
+                              >
+                                <TouchableOpacity
+                                  style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}
+                                  onPress={() => {
+                                    setFormData({ ...formData, badge: bg });
+                                    setBadgeDropdownOpen(false);
+                                  }}
+                                >
+                                  <Text
+                                    style={[
+                                      styles.dropdownItemText,
+                                      isSelected && styles.dropdownItemTextSelected,
+                                    ]}
+                                  >
+                                    {isSelected ? '✓ ' : '  '}
+                                  </Text>
+                                  <View style={styles.miniBadgeOptionChip}>
+                                    <Text style={styles.miniBadgeOptionChipText}>{bg}</Text>
+                                  </View>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                  style={styles.deleteOptionBtn}
+                                  onPress={() => {
+                                    deleteTripBadge(bg);
+                                    if (formData.badge?.toLowerCase() === bg.toLowerCase()) {
+                                      setFormData({ ...formData, badge: '' });
+                                    }
+                                  }}
+                                >
+                                  <Text style={styles.deleteOptionBtnText}>✕</Text>
+                                </TouchableOpacity>
+                              </View>
+                            );
+                          })}
+                        </ScrollView>
+
+                        {/* Add New Badge Inline */}
+                        <View style={styles.dropdownAddRow}>
+                          <TextInput
+                            style={styles.dropdownAddInput}
+                            placeholder="New badge..."
+                            placeholderTextColor="#94A3B8"
+                            value={newBadgeInput}
+                            onChangeText={setNewBadgeInput}
+                            onSubmitEditing={() => {
+                              if (newBadgeInput.trim()) {
+                                addTripBadge(newBadgeInput.trim());
+                                setFormData({ ...formData, badge: newBadgeInput.trim() });
+                                setNewBadgeInput('');
+                              }
+                            }}
+                          />
+                          <TouchableOpacity
+                            style={styles.dropdownAddBtn}
+                            onPress={() => {
+                              if (newBadgeInput.trim()) {
+                                addTripBadge(newBadgeInput.trim());
+                                setFormData({ ...formData, badge: newBadgeInput.trim() });
+                                setNewBadgeInput('');
+                              }
+                            }}
+                          >
+                            <Text style={styles.dropdownAddBtnText}>+ Add</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    )}
                   </View>
                 </View>
 
@@ -590,6 +898,158 @@ export default function ManageTripsScreen() {
                 <Text style={styles.saveBtnText}>
                   {editingTripId ? 'Save & Publish Changes' : 'Create & Publish Expedition'}
                 </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Standalone Presets Manager Modal */}
+      <Modal visible={managePresetsModalVisible} transparent animationType="fade">
+        <View style={styles.modalBackdrop}>
+          <View style={[styles.modalContent, { maxWidth: 760 }]}>
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalTitle}>Expedition Presets Manager</Text>
+                <Text style={styles.modalSubTitle}>
+                  Add or delete Category and Badge Tag options available in the expedition dropdowns.
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setManagePresetsModalVisible(false)} style={styles.closeBtn}>
+                <Text style={styles.closeBtnText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.presetsManagerColumns}>
+              {/* Categories Column */}
+              <View style={styles.presetsManagerCol}>
+                <View style={styles.presetsColHeader}>
+                  <Text style={styles.presetsColTitle}>📂 Categories ({activeCategories.length})</Text>
+                  <Text style={styles.presetsColDesc}>Options available in the Category dropdown</Text>
+                </View>
+
+                {/* Add Category Form */}
+                <View style={styles.presetsAddRow}>
+                  <TextInput
+                    style={styles.presetsAddInput}
+                    placeholder="Enter new category name..."
+                    placeholderTextColor="#94A3B8"
+                    value={standaloneCategoryInput}
+                    onChangeText={setStandaloneCategoryInput}
+                    onSubmitEditing={() => {
+                      if (standaloneCategoryInput.trim()) {
+                        addTripCategory(standaloneCategoryInput.trim());
+                        setStandaloneCategoryInput('');
+                      }
+                    }}
+                  />
+                  <TouchableOpacity
+                    style={styles.presetsAddBtn}
+                    onPress={() => {
+                      if (standaloneCategoryInput.trim()) {
+                        addTripCategory(standaloneCategoryInput.trim());
+                        setStandaloneCategoryInput('');
+                      }
+                    }}
+                  >
+                    <Text style={styles.presetsAddBtnText}>+ Add</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* List of Categories */}
+                <ScrollView style={{ maxHeight: 280 }} showsVerticalScrollIndicator={false}>
+                  <View style={styles.presetsItemList}>
+                    {activeCategories.map((cat: string) => {
+                      const tripCount = trips.filter((t: any) => t.category?.toLowerCase() === cat.toLowerCase()).length;
+                      return (
+                        <View key={cat} style={styles.presetsItemCard}>
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.presetsItemName}>{cat}</Text>
+                            <Text style={styles.presetsItemMeta}>{tripCount} expedition{tripCount !== 1 ? 's' : ''}</Text>
+                          </View>
+                          <TouchableOpacity
+                            style={styles.presetsItemDeleteBtn}
+                            onPress={() => deleteTripCategory(cat)}
+                          >
+                            <Text style={styles.presetsItemDeleteBtnText}>✕ Delete</Text>
+                          </TouchableOpacity>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </ScrollView>
+              </View>
+
+              {/* Badges Column */}
+              <View style={styles.presetsManagerCol}>
+                <View style={styles.presetsColHeader}>
+                  <Text style={styles.presetsColTitle}>🏷️ Badge Tags ({activeBadges.length})</Text>
+                  <Text style={styles.presetsColDesc}>Options available in the Badge Tag dropdown</Text>
+                </View>
+
+                {/* Add Badge Form */}
+                <View style={styles.presetsAddRow}>
+                  <TextInput
+                    style={styles.presetsAddInput}
+                    placeholder="Enter new badge tag..."
+                    placeholderTextColor="#94A3B8"
+                    value={standaloneBadgeInput}
+                    onChangeText={setStandaloneBadgeInput}
+                    onSubmitEditing={() => {
+                      if (standaloneBadgeInput.trim()) {
+                        addTripBadge(standaloneBadgeInput.trim());
+                        setStandaloneBadgeInput('');
+                      }
+                    }}
+                  />
+                  <TouchableOpacity
+                    style={styles.presetsAddBtn}
+                    onPress={() => {
+                      if (standaloneBadgeInput.trim()) {
+                        addTripBadge(standaloneBadgeInput.trim());
+                        setStandaloneBadgeInput('');
+                      }
+                    }}
+                  >
+                    <Text style={styles.presetsAddBtnText}>+ Add</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* List of Badges */}
+                <ScrollView style={{ maxHeight: 280 }} showsVerticalScrollIndicator={false}>
+                  <View style={styles.presetsItemList}>
+                    {activeBadges.map((bg: string) => {
+                      const tripCount = trips.filter((t: any) => t.badge?.toLowerCase() === bg.toLowerCase()).length;
+                      return (
+                        <View key={bg} style={styles.presetsItemCard}>
+                          <View style={{ flex: 1 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <View style={styles.miniBadgeOptionChip}>
+                                <Text style={styles.miniBadgeOptionChipText}>{bg}</Text>
+                              </View>
+                            </View>
+                            <Text style={styles.presetsItemMeta}>{tripCount} expedition{tripCount !== 1 ? 's' : ''}</Text>
+                          </View>
+                          <TouchableOpacity
+                            style={styles.presetsItemDeleteBtn}
+                            onPress={() => deleteTripBadge(bg)}
+                          >
+                            <Text style={styles.presetsItemDeleteBtnText}>✕ Delete</Text>
+                          </TouchableOpacity>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </ScrollView>
+              </View>
+            </View>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.saveBtn}
+                onPress={() => setManagePresetsModalVisible(false)}
+              >
+                <Text style={styles.saveBtnText}>Done / Close</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1082,5 +1542,308 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     color: '#FFFFFF',
+  },
+
+  /* Preset Management & Dropdown Styles */
+  managePresetsBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+
+  managePresetsBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0B5CAD',
+  },
+
+  formLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+
+  miniManageBtn: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    backgroundColor: '#EFF6FF',
+  },
+
+  miniManageBtnText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#0B5CAD',
+  },
+
+  dropdownTrigger: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    height: 46,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  dropdownTriggerActive: {
+    borderColor: '#0B5CAD',
+    backgroundColor: '#FFFFFF',
+  },
+
+  dropdownTriggerText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#0F172A',
+  },
+
+  dropdownPlaceholderText: {
+    fontSize: 14,
+    color: '#94A3B8',
+  },
+
+  dropdownChevron: {
+    fontSize: 10,
+    color: '#64748B',
+    fontWeight: '800',
+    marginLeft: 8,
+  },
+
+  dropdownMenu: {
+    marginTop: 6,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 12,
+    padding: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
+
+  dropdownSectionTitle: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#64748B',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+    paddingHorizontal: 4,
+  },
+
+  dropdownItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 7,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    marginBottom: 3,
+  },
+
+  dropdownItemRowSelected: {
+    backgroundColor: '#EFF6FF',
+  },
+
+  dropdownItemText: {
+    fontSize: 13,
+    color: '#334155',
+    fontWeight: '500',
+  },
+
+  dropdownItemTextSelected: {
+    color: '#0B5CAD',
+    fontWeight: '800',
+  },
+
+  deleteOptionBtn: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    backgroundColor: '#FEE2E2',
+    marginLeft: 6,
+  },
+
+  deleteOptionBtnText: {
+    fontSize: 11,
+    color: '#EF4444',
+    fontWeight: '800',
+  },
+
+  dropdownAddRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+  },
+
+  dropdownAddInput: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    height: 36,
+    fontSize: 12,
+    color: '#0F172A',
+  },
+
+  dropdownAddBtn: {
+    backgroundColor: '#0B5CAD',
+    paddingHorizontal: 12,
+    height: 36,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  dropdownAddBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
+  miniBadgePreview: {
+    backgroundColor: '#0B5CAD',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+
+  miniBadgePreviewText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+
+  miniBadgeOptionChip: {
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+
+  miniBadgeOptionChipText: {
+    color: '#0B5CAD',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+
+  /* Standalone Presets Modal Styles */
+  presetsManagerColumns: {
+    flexDirection: 'row',
+    gap: 20,
+    marginVertical: 10,
+  },
+
+  presetsManagerCol: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+
+  presetsColHeader: {
+    marginBottom: 12,
+  },
+
+  presetsColTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+
+  presetsColDesc: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
+  },
+
+  presetsAddRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 14,
+  },
+
+  presetsAddInput: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    height: 38,
+    fontSize: 13,
+    color: '#0F172A',
+  },
+
+  presetsAddBtn: {
+    backgroundColor: '#0B5CAD',
+    paddingHorizontal: 14,
+    height: 38,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  presetsAddBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
+  presetsItemList: {
+    gap: 8,
+  },
+
+  presetsItemCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
+    padding: 10,
+  },
+
+  presetsItemName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+
+  presetsItemMeta: {
+    fontSize: 11,
+    color: '#94A3B8',
+    marginTop: 2,
+  },
+
+  presetsItemDeleteBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: '#FEE2E2',
+  },
+
+  presetsItemDeleteBtnText: {
+    fontSize: 11,
+    color: '#DC2626',
+    fontWeight: '700',
   },
 });

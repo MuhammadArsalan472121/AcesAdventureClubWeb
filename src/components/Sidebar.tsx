@@ -1,6 +1,8 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { signOut } from 'firebase/auth';
+import { auth } from '../screens/firebaseConfig';
 
 type SidebarProps = {
   activeScreen?: string;
@@ -24,8 +26,16 @@ export default function Sidebar({
     navigation.navigate(screenName);
   };
 
-  const handleLogout = () => {
-    navigation.navigate('Home');
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.warn('[ADMIN_LOGOUT] Error during sign out:', err);
+    }
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'AdminLogin' }],
+    });
   };
 
   return (
@@ -81,7 +91,13 @@ export default function Sidebar({
       <View style={styles.footerSection}>
         <Pressable
           style={styles.websiteLink}
-          onPress={() => navigation.navigate('Home')}
+          onPress={() => {
+            if (Platform.OS === 'web' && typeof window !== 'undefined') {
+              window.open('/', '_blank');
+            } else {
+              navigation.navigate('Home');
+            }
+          }}
         >
           <Text style={styles.websiteLinkText}>← Public Website</Text>
         </Pressable>

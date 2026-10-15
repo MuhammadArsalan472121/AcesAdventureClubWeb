@@ -11,20 +11,32 @@ import {
   Image,
   Dimensions,
   TouchableOpacity,
+  Modal,
+  ActivityIndicator,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import useResponsive from "../hooks/useResponsive";
 import { useData, resolveAsset } from "../context/DataContext";
+import { pickImageFromDevice } from "../utils/imageUpload";
 
 const { height, width } = Dimensions.get("window");
 
 export default function GalleryScreen() {
   const navigation = useNavigation();
-  const { gallery, trips } = useData();
-  const [selectedCategory, setSelectedCategory] = useState("ALL");
+  const { gallery = [], trips = [], addGalleryItem } = useData();
+  const [selectedCategory, setSelectedCategory] = useState("All");
+
+  // Device upload modal state
+  const [uploadModalVisible, setUploadModalVisible] = useState(false);
+  const [uploadTitle, setUploadTitle] = useState("");
+  const [uploadCategory, setUploadCategory] = useState("MOUNTAINS");
+  const [deviceImage, setDeviceImage] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+
   const {
     isMobile,
     isDesktop,
@@ -34,12 +46,25 @@ export default function GalleryScreen() {
     paddingHorizontal,
   } = useResponsive();
 
-  const categories = ["ALL", "MOUNTAINS", "LAKES", "CAMPING", "TREKKING", "NATURE TRAILS"];
+  // Base preset categories with "All" first
+  const baseCategories = ["All", "Mountains", "Lakes", "Camping", "Trekking", "Nature Trails"];
+  const dynamicCategories = (gallery || [])
+    .map((item) => (item.category ? item.category.trim() : ""))
+    .filter((c) => c && !baseCategories.some((b) => b.toLowerCase() === c.toLowerCase()));
+  const categories = [
+    "All",
+    ...baseCategories.slice(1),
+    ...Array.from(new Set(dynamicCategories)),
+  ];
 
-  const filteredGallery =
-    selectedCategory === "ALL"
-      ? gallery
-      : gallery.filter((item) => item.category === selectedCategory);
+  // Filtering: "All" returns all gallery items, each category returns ONLY items belonging to that category
+  const isAllSelected = !selectedCategory || selectedCategory.trim().toLowerCase() === "all";
+  const filteredGallery = isAllSelected
+    ? (gallery || [])
+    : (gallery || []).filter((item) => {
+        if (!item || !item.category) return false;
+        return item.category.trim().toLowerCase() === selectedCategory.trim().toLowerCase();
+      });
 
   // Distribute items across 3 columns for desktop masonry
   const col1 = filteredGallery.filter((_, idx) => idx % 3 === 0);
@@ -47,6 +72,50 @@ export default function GalleryScreen() {
   const col3 = filteredGallery.filter((_, idx) => idx % 3 === 2);
 
   const signatureDestinations = trips.slice(0, 3);
+
+  const handlePickImage = async () => {
+    try {
+      const result = await pickImageFromDevice();
+      if (result) {
+        setDeviceImage(result);
+      }
+    } catch (err) {
+      console.warn("Image picker error:", err);
+    }
+  };
+
+  const handlePublishPhoto = async () => {
+    if (!uploadTitle.trim()) {
+      alert("Please enter a photo caption / title");
+      return;
+    }
+    if (!deviceImage?.dataUrl) {
+      alert("Please select an image from your device");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      if (addGalleryItem) {
+        await addGalleryItem({
+          title: uploadTitle.trim(),
+          category: uploadCategory.toUpperCase(),
+          imageKey: deviceImage.dataUrl,
+          height: 260,
+        });
+      }
+      setUploadModalVisible(false);
+      setUploadTitle("");
+      setDeviceImage(null);
+      setToastMessage("Photo uploaded to Gallery successfully!");
+      setTimeout(() => setToastMessage(""), 4000);
+    } catch (error) {
+      console.error("Failed to upload photo:", error);
+      alert("Failed to upload photo. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -87,21 +156,45 @@ export default function GalleryScreen() {
           </View>
         </ImageBackground>
 
-        {/* ================= DYNAMIC CATEGORY FILTERS ================= */}
+        {/* ================= DYNAMIC CATEGORY FILTERS & UPLOAD ACTION ================= */}
         <View style={[styles.filterSectionWrapper, { backgroundColor: "#F8FAFC", paddingVertical: 24 }]}>
           <View style={{ maxWidth: contentMaxWidth, width: "100%", alignSelf: "center", paddingHorizontal: paddingHorizontal }}>
-            <View style={[styles.filterContainer, { justifyContent: "center" }]}>
-              {categories.map((cat) => (
-                <TouchableOpacity
-                  key={cat}
-                  style={[styles.filterChip, selectedCategory === cat && styles.activeFilterChip]}
-                  onPress={() => setSelectedCategory(cat)}
-                >
-                  <Text style={[styles.filterChipText, selectedCategory === cat && styles.activeFilterText]}>
-                    {cat}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+            {toastMessage ? (
+              <View style={styles.toastCard}>
+                <Ionicons name="checkmark-circle" size={18} color="#16A34A" style={{ marginRight: 8 }} />
+                <Text style={styles.toastText}>{toastMessage}</Text>
+              </View>
+            ) : null}
+
+            <View style={[styles.filterBarRow, isDesktop ? { flexDirection: "row", justifyContent: "space-between", alignItems: "center" } : { flexDirection: "column", gap: 16 }]}>
+              {/* Category Filters with All button and Clear Active State */}
+              <View style={[styles.filterContainer, { flex: 1 }]}>
+                {categories.map((cat) => {
+                  const isCatActive = selectedCategory.trim().toLowerCase() === cat.trim().toLowerCase();
+                  return (
+                    <TouchableOpacity
+                      key={cat}
+                      style={[styles.filterChip, isCatActive && styles.activeFilterChip]}
+                      onPress={() => setSelectedCategory(cat)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.filterChipText, isCatActive && styles.activeFilterText]}>
+                        {cat}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* Upload Image From Device Button */}
+              <TouchableOpacity
+                style={styles.uploadPhotoBtn}
+                onPress={() => setUploadModalVisible(true)}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="cloud-upload-outline" size={17} color="#FFFFFF" style={{ marginRight: 8 }} />
+                <Text style={styles.uploadPhotoBtnText}>Upload Image → From Your Device</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -120,7 +213,21 @@ export default function GalleryScreen() {
               },
             ]}
           >
-            {isDesktop ? (
+            {filteredGallery.length === 0 ? (
+              <View style={styles.emptyGalleryBox}>
+                <Ionicons name="images-outline" size={44} color="#94A3B8" style={{ marginBottom: 12 }} />
+                <Text style={styles.emptyGalleryTitle}>No photos found in "{selectedCategory}"</Text>
+                <Text style={styles.emptyGallerySub}>
+                  There are no photos currently tagged with this category.
+                </Text>
+                <TouchableOpacity
+                  style={styles.emptyResetBtn}
+                  onPress={() => setSelectedCategory("All")}
+                >
+                  <Text style={styles.emptyResetBtnText}>View All Photos ({gallery.length})</Text>
+                </TouchableOpacity>
+              </View>
+            ) : isDesktop ? (
               <View style={[styles.masonryGrid, { flexDirection: "row", justifyContent: "space-between" }]}>
                 {/* Column 1 */}
                 <View style={[styles.masonryColumn, { width: "32%" }]}>
@@ -296,6 +403,132 @@ export default function GalleryScreen() {
         {/* ================= FOOTER ================= */}
         <Footer />
       </ScrollView>
+
+      {/* ================= UPLOAD FROM DEVICE MODAL ================= */}
+      <Modal visible={uploadModalVisible} transparent animationType="fade">
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalTitle}>Upload Photo to Gallery</Text>
+                <Text style={styles.modalSubtitle}>
+                  Select an image from your device to showcase in the community gallery.
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setUploadModalVisible(false)} style={styles.closeBtn}>
+                <Ionicons name="close" size={22} color="#64748B" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ maxHeight: 460 }} showsVerticalScrollIndicator={false}>
+              <View style={styles.modalForm}>
+                {/* Title */}
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel}>PHOTO CAPTION / TITLE *</Text>
+                  <TextInput
+                    style={styles.formInput}
+                    placeholder="e.g. Hunza Sunset, Passu Cones Expedition"
+                    placeholderTextColor="#94A3B8"
+                    value={uploadTitle}
+                    onChangeText={setUploadTitle}
+                  />
+                </View>
+
+                {/* Category Selection */}
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel}>CATEGORY *</Text>
+                  <View style={styles.pillRow}>
+                    {["MOUNTAINS", "LAKES", "CAMPING", "TREKKING", "NATURE TRAILS"].map((cat) => (
+                      <TouchableOpacity
+                        key={cat}
+                        style={[
+                          styles.categoryPill,
+                          uploadCategory.toUpperCase() === cat && styles.activeCategoryPill,
+                        ]}
+                        onPress={() => setUploadCategory(cat)}
+                      >
+                        <Text
+                          style={[
+                            styles.categoryPillText,
+                            uploadCategory.toUpperCase() === cat && styles.activeCategoryPillText,
+                          ]}
+                        >
+                          {cat}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                {/* Upload Image From Your Device Button / Preview */}
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel}>IMAGE ATTACHMENT *</Text>
+
+                  {deviceImage?.dataUrl ? (
+                    <View style={styles.uploadedPreviewCard}>
+                      <Image source={{ uri: deviceImage.dataUrl }} style={styles.previewThumbnail} />
+                      <View style={{ flex: 1 }}>
+                        <View style={styles.loadedSuccessBadge}>
+                          <Text style={styles.loadedSuccessBadgeText}>✓ Ready to Upload</Text>
+                        </View>
+                        <Text style={styles.previewFileName} numberOfLines={1}>
+                          {deviceImage.fileName || "Device Image"}
+                        </Text>
+                        <Text style={styles.previewFileSize}>{deviceImage.fileSize}</Text>
+                        <TouchableOpacity style={styles.changeImageBtn} onPress={handlePickImage}>
+                          <Text style={styles.changeImageBtnText}>Change Photo</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.deviceUploadCard}
+                      onPress={handlePickImage}
+                      activeOpacity={0.8}
+                    >
+                      <View style={styles.uploadIconCircle}>
+                        <Ionicons name="cloud-upload" size={28} color="#0B5CAD" />
+                      </View>
+                      <Text style={styles.deviceUploadTitle}>Upload Image → From Your Device</Text>
+                      <Text style={styles.deviceUploadSubtitle}>
+                        Tap to browse JPG, PNG, or WebP files from your phone or PC
+                      </Text>
+                      <View style={styles.browsePill}>
+                        <Text style={styles.browsePillText}>Browse Device Files</Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            </ScrollView>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={() => setUploadModalVisible(false)}
+                disabled={isUploading}
+              >
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.publishBtn, isUploading && { opacity: 0.6 }]}
+                onPress={handlePublishPhoto}
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 8 }} />
+                ) : (
+                  <Ionicons name="checkmark-sharp" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                )}
+                <Text style={styles.publishBtnText}>
+                  {isUploading ? "Uploading..." : "Publish to Gallery"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -373,13 +606,18 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
 
-  /* FILTER CHIPS */
+  /* FILTER CHIPS & UPLOAD BAR */
   filterSectionWrapper: {},
+
+  filterBarRow: {
+    alignItems: "center",
+  },
 
   filterContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 10,
+    alignItems: "center",
   },
 
   filterChip: {
@@ -393,19 +631,102 @@ const styles = StyleSheet.create({
   },
 
   activeFilterChip: {
-    backgroundColor: "#0F172A",
-    borderColor: "#0F172A",
+    backgroundColor: "#0B5CAD",
+    borderColor: "#0B5CAD",
+    shadowColor: "#0B5CAD",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
   },
 
   filterChipText: {
-    color: "#64748B",
-    fontSize: 12,
+    color: "#475569",
+    fontSize: 13,
     fontWeight: "700",
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
 
   activeFilterText: {
     color: "#FFFFFF",
+    fontWeight: "800",
+  },
+
+  uploadPhotoBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#0B5CAD",
+    paddingHorizontal: 18,
+    paddingVertical: 11,
+    borderRadius: 22,
+    shadowColor: "#0B5CAD",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
+    cursor: "pointer",
+  },
+
+  uploadPhotoBtnText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
+    letterSpacing: 0.4,
+  },
+
+  toastCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#DCFCE7",
+    borderWidth: 1,
+    borderColor: "#86EFAC",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+
+  toastText: {
+    color: "#15803D",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+
+  emptyGalleryBox: {
+    paddingVertical: 60,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F8FAFC",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    marginVertical: 20,
+  },
+
+  emptyGalleryTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#0F172A",
+    marginBottom: 6,
+  },
+
+  emptyGallerySub: {
+    fontSize: 13,
+    color: "#64748B",
+    marginBottom: 18,
+  },
+
+  emptyResetBtn: {
+    backgroundColor: "#0B5CAD",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+
+  emptyResetBtnText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
   },
 
   /* MASONRY GALLERY GRID */
@@ -707,5 +1028,254 @@ const styles = StyleSheet.create({
     color: "#0F172A",
     fontSize: 16,
     fontWeight: "700",
+  },
+
+  /* MODAL STYLES */
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+
+  modalContent: {
+    width: "100%",
+    maxWidth: 560,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 24,
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 25,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
+  },
+
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 16,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E2E8F0",
+  },
+
+  modalTitle: {
+    fontSize: 19,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
+
+  modalSubtitle: {
+    fontSize: 13,
+    color: "#64748B",
+    marginTop: 3,
+  },
+
+  closeBtn: {
+    padding: 4,
+  },
+
+  modalForm: {
+    gap: 16,
+    paddingVertical: 8,
+  },
+
+  formGroup: {
+    gap: 6,
+  },
+
+  formLabel: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#334155",
+    letterSpacing: 0.5,
+  },
+
+  formInput: {
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    height: 44,
+    fontSize: 14,
+    color: "#0F172A",
+  },
+
+  pillRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+
+  categoryPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
+    backgroundColor: "#F1F5F9",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+
+  activeCategoryPill: {
+    backgroundColor: "#0B5CAD",
+    borderColor: "#0B5CAD",
+  },
+
+  categoryPillText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#475569",
+  },
+
+  activeCategoryPillText: {
+    color: "#FFFFFF",
+    fontWeight: "800",
+  },
+
+  deviceUploadCard: {
+    borderWidth: 2,
+    borderColor: "#BFDBFE",
+    borderStyle: "dashed",
+    borderRadius: 14,
+    padding: 24,
+    alignItems: "center",
+    backgroundColor: "#F8FAFC",
+    cursor: "pointer",
+  },
+
+  uploadIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#EFF6FF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+
+  deviceUploadTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#0B5CAD",
+    marginBottom: 4,
+  },
+
+  deviceUploadSubtitle: {
+    fontSize: 12,
+    color: "#64748B",
+    textAlign: "center",
+    marginBottom: 12,
+  },
+
+  browsePill: {
+    backgroundColor: "#0B5CAD",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 18,
+  },
+
+  browsePillText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+
+  uploadedPreviewCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    borderRadius: 12,
+    padding: 12,
+  },
+
+  previewThumbnail: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    backgroundColor: "#E2E8F0",
+  },
+
+  loadedSuccessBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#DCFCE7",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginBottom: 4,
+  },
+
+  loadedSuccessBadgeText: {
+    color: "#16A34A",
+    fontSize: 11,
+    fontWeight: "700",
+  },
+
+  previewFileName: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#0F172A",
+  },
+
+  previewFileSize: {
+    fontSize: 11,
+    color: "#64748B",
+    marginTop: 2,
+  },
+
+  changeImageBtn: {
+    marginTop: 6,
+    alignSelf: "flex-start",
+  },
+
+  changeImageBtnText: {
+    fontSize: 11,
+    color: "#0B5CAD",
+    fontWeight: "700",
+    textDecorationLine: "underline",
+  },
+
+  modalActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 12,
+    marginTop: 16,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: "#E2E8F0",
+  },
+
+  cancelBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: "#F1F5F9",
+  },
+
+  cancelBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#64748B",
+  },
+
+  publishBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: "#0B5CAD",
+  },
+
+  publishBtnText: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#FFFFFF",
   },
 });

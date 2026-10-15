@@ -14,20 +14,39 @@ import {
   Platform,
 } from "react-native";
 import gsap from "gsap";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import useResponsive from "../hooks/useResponsive";
 import { useData, resolveAsset } from "../context/DataContext";
+import { useAuth } from "../context/AuthContext";
 
 const { height, width } = Dimensions.get("window");
 
 export default function ExploreTripsScreen() {
   const navigation = useNavigation();
-  const { trips } = useData();
+  const { trips, tripCategories = [] } = useData();
+  const { userProfile, updateUserProfile } = useAuth();
   const [activeFilter, setActiveFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+
+  const toggleWishlist = async (trip) => {
+    const current = userProfile?.wishlist || [];
+    const exists = current.some((w) => w.id === trip.id || w.name === trip.title);
+    let updated;
+    if (exists) {
+      updated = current.filter((w) => w.id !== trip.id && w.name !== trip.title);
+    } else {
+      updated = [...current, { id: trip.id, name: trip.title, tag: trip.location || "Trip" }];
+    }
+    await updateUserProfile({ wishlist: updated });
+  };
+
+  const isWishlisted = (trip) => {
+    const current = userProfile?.wishlist || [];
+    return current.some((w) => w.id === trip.id || w.name === trip.title);
+  };
   const {
     isMobile,
     isDesktop,
@@ -63,13 +82,21 @@ export default function ExploreTripsScreen() {
 
     if (!matchesSearch) return false;
     if (activeFilter === "All") return true;
+    if (t.category && t.category.toLowerCase() === activeFilter.toLowerCase()) return true;
     if (activeFilter === "Hiking") return t.category === "Hiking";
     if (activeFilter === "Camping") return t.category === "Camping";
     if (activeFilter === "Mountains") return t.category === "Trekking" || (t.location && t.location.includes("Gilgit"));
     if (activeFilter === "Nature") return t.category === "Nature Trails";
     if (activeFilter === "Heritage") return t.title.includes("Hunza") || t.title.includes("Heritage");
-    return true;
+    return false;
   });
+
+  const categoryFilters = [
+    "All",
+    ...(tripCategories && tripCategories.length > 0
+      ? tripCategories
+      : ["Hiking", "Camping", "Trekking", "Nature Trails", "Mountaineering", "Road Trip"]),
+  ];
 
   const popularHubs = [
     {
@@ -171,47 +198,27 @@ export default function ExploreTripsScreen() {
 
               {/* Filter Chips Horizontal Row */}
               <View style={styles.filterChipsRow}>
-                <TouchableOpacity
-                  style={[styles.filterChip, activeFilter === "All" && styles.activeFilterChip]}
-                  onPress={() => setActiveFilter("All")}
-                >
-                  <Text style={[styles.filterChipText, activeFilter === "All" && styles.activeFilterText]}>All Trips</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.filterChip, activeFilter === "Mountains" && styles.activeFilterChip]}
-                  onPress={() => setActiveFilter("Mountains")}
-                >
-                  <Text style={[styles.filterChipText, activeFilter === "Mountains" && styles.activeFilterText]}>⛰️ Mountains</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.filterChip, activeFilter === "Hiking" && styles.activeFilterChip]}
-                  onPress={() => setActiveFilter("Hiking")}
-                >
-                  <Text style={[styles.filterChipText, activeFilter === "Hiking" && styles.activeFilterText]}>🥾 Hiking</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.filterChip, activeFilter === "Camping" && styles.activeFilterChip]}
-                  onPress={() => setActiveFilter("Camping")}
-                >
-                  <Text style={[styles.filterChipText, activeFilter === "Camping" && styles.activeFilterText]}>⛺ Camping</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.filterChip, activeFilter === "Nature" && styles.activeFilterChip]}
-                  onPress={() => setActiveFilter("Nature")}
-                >
-                  <Text style={[styles.filterChipText, activeFilter === "Nature" && styles.activeFilterText]}>🌲 Nature Trails</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.filterChip, activeFilter === "Heritage" && styles.activeFilterChip]}
-                  onPress={() => setActiveFilter("Heritage")}
-                >
-                  <Text style={[styles.filterChipText, activeFilter === "Heritage" && styles.activeFilterText]}>🎒 Heritage Areas</Text>
-                </TouchableOpacity>
+                {categoryFilters.map((cat) => {
+                  const isSelected = activeFilter.toLowerCase() === cat.toLowerCase();
+                  let icon = "🗺️";
+                  if (cat === "All") icon = "✨";
+                  else if (cat.toLowerCase().includes("hik")) icon = "🥾";
+                  else if (cat.toLowerCase().includes("camp")) icon = "⛺";
+                  else if (cat.toLowerCase().includes("trek") || cat.toLowerCase().includes("mountain")) icon = "⛰️";
+                  else if (cat.toLowerCase().includes("nature")) icon = "🌲";
+                  else if (cat.toLowerCase().includes("road")) icon = "🚙";
+                  return (
+                    <TouchableOpacity
+                      key={cat}
+                      style={[styles.filterChip, isSelected && styles.activeFilterChip]}
+                      onPress={() => setActiveFilter(cat)}
+                    >
+                      <Text style={[styles.filterChipText, isSelected && styles.activeFilterText]}>
+                        {icon} {cat === "All" ? "All Trips" : cat}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
           </View>
@@ -248,6 +255,17 @@ export default function ExploreTripsScreen() {
                         <Text style={styles.curatedBadgeText}>{item.badge}</Text>
                       </View>
                     )}
+                    <TouchableOpacity
+                      style={styles.heartBtn}
+                      onPress={() => toggleWishlist(item)}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons
+                        name={isWishlisted(item) ? "heart" : "heart-outline"}
+                        size={18}
+                        color={isWishlisted(item) ? "#EF4444" : "#FFFFFF"}
+                      />
+                    </TouchableOpacity>
                   </View>
 
                   <View style={styles.curatedContent}>
@@ -648,6 +666,20 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 11,
     fontWeight: "700",
+  },
+
+  heartBtn: {
+    position: "absolute",
+    top: 14,
+    left: 14,
+    backgroundColor: "rgba(15, 23, 42, 0.6)",
+    borderRadius: 18,
+    width: 36,
+    height: 36,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
+    cursor: "pointer",
   },
 
   curatedContent: {
