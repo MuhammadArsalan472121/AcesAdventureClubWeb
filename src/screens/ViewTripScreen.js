@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
@@ -17,14 +17,16 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import useResponsive from "../hooks/useResponsive";
 import { useData, resolveAsset } from "../context/DataContext";
+import { animateHero, animateCards, animateSection } from "../utils/animations";
 
 const { height, width } = Dimensions.get("window");
 
 export default function ViewTripScreen({ route }) {
   const navigation = useNavigation();
-  const { trips } = useData();
   const tripId = route?.params?.tripId;
-  const currentTrip = trips.find((t) => t.id === tripId) || trips[0] || {
+  const { trips } = useData();
+  const publishedTrips = (trips || []).filter((t) => t.status !== "DRAFT");
+  const currentTrip = (trips || []).find((t) => t.id === tripId) || publishedTrips[0] || (trips || [])[0] || {
     title: "Hunza Explorer",
     badge: "Featured",
     duration: "5 Days",
@@ -36,12 +38,23 @@ export default function ViewTripScreen({ route }) {
   };
 
   const {
+    isMobile,
     isDesktop,
     isTablet,
     isLargeDesktop,
     contentMaxWidth,
     paddingHorizontal,
   } = useResponsive();
+
+  // GSAP entrance animations on mount
+  useEffect(() => {
+    animateHero(".gsap-trip-hero");
+    const t = setTimeout(() => {
+      animateCards(".gsap-trip-card");
+      animateSection(".gsap-trip-section");
+    }, 350);
+    return () => clearTimeout(t);
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -54,7 +67,7 @@ export default function ViewTripScreen({ route }) {
           style={[styles.hero, { height: isDesktop ? 680 : height * 0.88 }]}
           resizeMode="cover"
         >
-          <View style={[styles.overlay, { paddingHorizontal: paddingHorizontal }]}>
+          <View className="gsap-trip-hero" style={[styles.overlay, { paddingHorizontal: paddingHorizontal }]}>
             <Header />
 
             <View style={[styles.heroContent, { maxWidth: contentMaxWidth, width: "100%", alignSelf: "center" }]}>
@@ -72,39 +85,59 @@ export default function ViewTripScreen({ route }) {
                 {currentTrip.description}
               </Text>
 
-              {/* 4 Translucent Info Cards Row */}
-              <View style={[styles.infoRow, isDesktop ? { flexDirection: "row", gap: 16, marginTop: 24 } : { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 20 }]}>
-                <View style={[styles.infoCard, isDesktop ? { flex: 1 } : { width: isTablet ? "48%" : "100%" }]}>
+              {/* Translucent Info Cards Row */}
+              <View style={[styles.infoRow, isDesktop ? { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 24 } : { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 20 }]}>
+                <View style={[styles.infoCard, isDesktop ? { width: (currentTrip.tripStartDate || currentTrip.tripEndDate) ? "31%" : "23%" } : { width: isTablet ? "48%" : "100%" }]}>
                   <Ionicons name="time-outline" size={18} color="#38BDF8" />
                   <View style={{ marginLeft: 10 }}>
                     <Text style={styles.infoLabel}>DURATION</Text>
-                    <Text style={styles.infoValue}>{currentTrip.duration}</Text>
+                    <Text style={styles.infoValue}>{currentTrip.duration || "N/A"}</Text>
                   </View>
                 </View>
 
-                <View style={[styles.infoCard, isDesktop ? { flex: 1 } : { width: isTablet ? "48%" : "100%" }]}>
+                <View style={[styles.infoCard, isDesktop ? { width: (currentTrip.tripStartDate || currentTrip.tripEndDate) ? "31%" : "23%" } : { width: isTablet ? "48%" : "100%" }]}>
                   <Ionicons name="speedometer-outline" size={18} color="#38BDF8" />
                   <View style={{ marginLeft: 10 }}>
                     <Text style={styles.infoLabel}>DIFFICULTY</Text>
-                    <Text style={styles.infoValue}>{currentTrip.difficulty}</Text>
+                    <Text style={styles.infoValue}>{currentTrip.difficulty || "Moderate"}</Text>
                   </View>
                 </View>
 
-                <View style={[styles.infoCard, isDesktop ? { flex: 1 } : { width: isTablet ? "48%" : "100%" }]}>
+                <View style={[styles.infoCard, isDesktop ? { width: (currentTrip.tripStartDate || currentTrip.tripEndDate) ? "31%" : "23%" } : { width: isTablet ? "48%" : "100%" }]}>
                   <Ionicons name="location-outline" size={18} color="#38BDF8" />
                   <View style={{ marginLeft: 10 }}>
                     <Text style={styles.infoLabel}>LOCATION</Text>
-                    <Text style={styles.infoValue}>{currentTrip.location}</Text>
+                    <Text style={styles.infoValue}>{currentTrip.location || "Pakistan"}</Text>
                   </View>
                 </View>
 
-                <View style={[styles.infoCard, isDesktop ? { flex: 1 } : { width: isTablet ? "48%" : "100%" }]}>
+                <View style={[styles.infoCard, isDesktop ? { width: (currentTrip.tripStartDate || currentTrip.tripEndDate) ? "31%" : "23%" } : { width: isTablet ? "48%" : "100%" }]}>
                   <Ionicons name="pricetag-outline" size={18} color="#38BDF8" />
                   <View style={{ marginLeft: 10 }}>
                     <Text style={styles.infoLabel}>PRICE</Text>
-                    <Text style={styles.infoValue}>{currentTrip.price} / person</Text>
+                    <Text style={styles.infoValue}>{currentTrip.price || "PKR 0"} / person</Text>
                   </View>
                 </View>
+
+                {currentTrip.tripStartDate ? (
+                  <View style={[styles.infoCard, isDesktop ? { width: "31%" } : { width: isTablet ? "48%" : "100%" }]}>
+                    <Ionicons name="calendar-outline" size={18} color="#38BDF8" />
+                    <View style={{ marginLeft: 10 }}>
+                      <Text style={styles.infoLabel}>START DATE</Text>
+                      <Text style={styles.infoValue}>{currentTrip.tripStartDate}</Text>
+                    </View>
+                  </View>
+                ) : null}
+
+                {currentTrip.tripEndDate ? (
+                  <View style={[styles.infoCard, isDesktop ? { width: "31%" } : { width: isTablet ? "48%" : "100%" }]}>
+                    <Ionicons name="flag-outline" size={18} color="#38BDF8" />
+                    <View style={{ marginLeft: 10 }}>
+                      <Text style={styles.infoLabel}>END DATE</Text>
+                      <Text style={styles.infoValue}>{currentTrip.tripEndDate}</Text>
+                    </View>
+                  </View>
+                ) : null}
               </View>
 
               {/* Action Button */}
@@ -158,6 +191,53 @@ export default function ViewTripScreen({ route }) {
             </View>
           </View>
         </View>
+
+        {/* ================= ADDITIONAL SERVICES (Show only selected services) ================= */}
+        {Array.isArray(currentTrip.additionalServices) && currentTrip.additionalServices.length > 0 && (
+          <View style={[styles.servicesSectionWrapper, { backgroundColor: "#FFFFFF", paddingBottom: isDesktop ? 60 : 35 }]}>
+            <View style={{ maxWidth: contentMaxWidth, width: "100%", alignSelf: "center", paddingHorizontal: paddingHorizontal }}>
+              <View style={styles.servicesContainer}>
+                <View style={{ marginBottom: 20 }}>
+                  <Text style={styles.aboutSmallTitle}>INCLUDED ADD-ONS</Text>
+                  <Text style={[styles.aboutTitle, { fontSize: isDesktop ? 30 : 24, marginBottom: 8 }]}>Additional Services Included</Text>
+                  <Text style={{ fontSize: 14, color: "#64748B" }}>
+                    The following specialized services are provided for this expedition:
+                  </Text>
+                </View>
+
+                <View style={styles.servicesGrid}>
+                  {currentTrip.additionalServices.map((service, idx) => {
+                    const SERVICE_META = {
+                      "Photography": { icon: "camera-outline", desc: "Professional photography & captured memories." },
+                      "Tour Guide": { icon: "person-outline", desc: "Expert local guide leading the trails." },
+                      "Music": { icon: "musical-notes-outline", desc: "Evening campfire music & entertainment." },
+                      "Luxury Transport": { icon: "bus-outline", desc: "Comfortable air-conditioned transport." },
+                      "First Aid Kit": { icon: "medkit-outline", desc: "Comprehensive on-trail medical emergency kit." },
+                      "Breakfast": { icon: "cafe-outline", desc: "Fresh organic daily morning breakfast." },
+                      "Lunch": { icon: "restaurant-outline", desc: "Energizing mid-day lunch & snacks." },
+                      "Dinner": { icon: "flame-outline", desc: "Hearty traditional evening dinner." },
+                      "Entry Tickets": { icon: "ticket-outline", desc: "All park and heritage site entrance fees." },
+                      "Fun Rides Tickets": { icon: "boat-outline", desc: "Boating, chairlift & attraction passes." },
+                    };
+                    const meta = SERVICE_META[service] || { icon: "checkmark-circle-outline", desc: "Included expedition service." };
+
+                    return (
+                      <View key={idx} style={[styles.serviceCard, isDesktop ? { width: "31%" } : { width: isTablet ? "48%" : "100%" }]}>
+                        <View style={styles.serviceIconWrap}>
+                          <Ionicons name={meta.icon} size={22} color="#0B5CAD" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.serviceCardTitle}>{service}</Text>
+                          <Text style={styles.serviceCardDesc}>{meta.desc}</Text>
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* ================= EXCLUSIVE FEATURES (Dark Navy Container Card) ================= */}
         <View style={[styles.featuresSectionWrapper, { backgroundColor: "#F8FAFC", paddingVertical: isDesktop ? 60 : 30 }]}>
@@ -845,5 +925,60 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
     letterSpacing: 1,
+  },
+
+  /* ADDITIONAL SERVICES SECTION */
+  servicesSectionWrapper: {},
+
+  servicesContainer: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 24,
+    padding: 32,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+
+  servicesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 16,
+  },
+
+  serviceCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    shadowColor: "#000",
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+
+  serviceIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#EFF6FF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 14,
+  },
+
+  serviceCardTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#0F172A",
+    marginBottom: 2,
+  },
+
+  serviceCardDesc: {
+    fontSize: 12,
+    color: "#64748B",
+    lineHeight: 16,
   },
 });

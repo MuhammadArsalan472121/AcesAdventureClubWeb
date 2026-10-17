@@ -1,4 +1,5 @@
 import "react-native-gesture-handler";
+import "./src/global.css";
 import React, { useEffect } from "react";
 import { View, StyleSheet, Platform, Image } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
@@ -10,8 +11,6 @@ import { DataProvider } from "./src/context/DataContext";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 import * as Linking from "expo-linking";
-
-import TravelLoader from "./src/components/TravelLoader";
 
 const prefix = Linking.createURL("/");
 
@@ -48,22 +47,13 @@ const linking = {
 };
 
 export default function App() {
-  const [initialLoading, setInitialLoading] = React.useState(true);
-  const [navLoading, setNavLoading] = React.useState(false);
-  const loadingTimerRef = React.useRef(null);
-
   useEffect(() => {
-    // 1. Refresh & Initial launch loader timer (2.8s display)
-    const initTimer = setTimeout(() => {
-      setInitialLoading(false);
-    }, 2800);
-
-    // 2. Warm up icon font immediately so icons render instantly without blank delays
+    // 1. Warm up icon font immediately so icons render instantly without blank delays
     try {
       Ionicons.loadFont?.();
     } catch (_e) {}
 
-    // 3. Preload brand logo
+    // 2. Preload brand logo
     try {
       if (Platform.OS === "web" && typeof window !== "undefined") {
         const logoAsset = Image.resolveAssetSource(require("./assets/logo.png"));
@@ -73,28 +63,15 @@ export default function App() {
         }
       }
     } catch (_e) {}
-
-    return () => clearTimeout(initTimer);
   }, []);
-
-  const handleStateChange = () => {
-    setNavLoading(true);
-    if (loadingTimerRef.current) clearTimeout(loadingTimerRef.current);
-    loadingTimerRef.current = setTimeout(() => {
-      setNavLoading(false);
-    }, 850);
-  };
-
-  const isLoaderVisible = initialLoading || navLoading;
 
   return (
     <SafeAreaProvider initialMetrics={initialWindowMetrics} style={styles.root}>
       <DataProvider>
         <AuthProvider>
           <View style={styles.root}>
-            <NavigationContainer linking={linking} onStateChange={handleStateChange}>
+            <NavigationContainer linking={linking}>
               <AppNavigator />
-              <TravelLoader visible={isLoaderVisible} overlay={true} />
             </NavigationContainer>
           </View>
         </AuthProvider>

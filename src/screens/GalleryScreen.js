@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   SafeAreaView,
   StatusBar,
@@ -21,6 +21,12 @@ import Footer from "../components/Footer";
 import useResponsive from "../hooks/useResponsive";
 import { useData, resolveAsset } from "../context/DataContext";
 import { pickImageFromDevice } from "../utils/imageUpload";
+import {
+  animateHero,
+  animateCards,
+  animateSection,
+  animateModal,
+} from "../utils/animations";
 
 const { height, width } = Dimensions.get("window");
 
@@ -45,6 +51,16 @@ export default function GalleryScreen() {
     contentMaxWidth,
     paddingHorizontal,
   } = useResponsive();
+
+  // GSAP entrance animations on mount
+  useEffect(() => {
+    animateHero(".gsap-gallery-hero");
+    const t = setTimeout(() => {
+      animateCards(".gsap-gallery-card");
+      animateSection(".gsap-gallery-section");
+    }, 400);
+    return () => clearTimeout(t);
+  }, []);
 
   // Base preset categories with "All" first
   const baseCategories = ["All", "Mountains", "Lakes", "Camping", "Trekking", "Nature Trails"];
@@ -128,7 +144,7 @@ export default function GalleryScreen() {
           style={[styles.hero, { height: isDesktop ? 640 : height * 0.85 }]}
           resizeMode="cover"
         >
-          <View style={[styles.overlay, { paddingHorizontal: paddingHorizontal }]}>
+          <View className="gsap-gallery-hero" style={[styles.overlay, { paddingHorizontal: paddingHorizontal }]}>
             <Header />
 
             <View style={[styles.heroContent, { maxWidth: contentMaxWidth, width: "100%", alignSelf: "center", alignItems: "center" }]}>
@@ -232,7 +248,7 @@ export default function GalleryScreen() {
                 {/* Column 1 */}
                 <View style={[styles.masonryColumn, { width: "32%" }]}>
                   {col1.map((item) => (
-                    <View key={item.id} style={styles.imageCardContainer}>
+                    <View key={item.id} className="gsap-gallery-card interactive-card" style={styles.imageCardContainer}>
                       <Image source={resolveAsset(item.imageKey, "gallery1.jpg")} style={[styles.galleryImage, { height: item.height || 260 }]} />
                       <View style={styles.imageTagOverlay}>
                         <Text style={styles.imageTagText}>{item.category}</Text>
@@ -244,7 +260,7 @@ export default function GalleryScreen() {
                 {/* Column 2 */}
                 <View style={[styles.masonryColumn, { width: "32%" }]}>
                   {col2.map((item) => (
-                    <View key={item.id} style={styles.imageCardContainer}>
+                    <View key={item.id} className="gsap-gallery-card interactive-card" style={styles.imageCardContainer}>
                       <Image source={resolveAsset(item.imageKey, "gallery2.jpg")} style={[styles.galleryImage, { height: item.height || 220 }]} />
                       <View style={styles.imageTagOverlay}>
                         <Text style={styles.imageTagText}>{item.category}</Text>
@@ -256,7 +272,7 @@ export default function GalleryScreen() {
                 {/* Column 3 */}
                 <View style={[styles.masonryColumn, { width: "32%" }]}>
                   {col3.map((item) => (
-                    <View key={item.id} style={styles.imageCardContainer}>
+                    <View key={item.id} className="gsap-gallery-card interactive-card" style={styles.imageCardContainer}>
                       <Image source={resolveAsset(item.imageKey, "gallery3.jpg")} style={[styles.galleryImage, { height: item.height || 280 }]} />
                       <View style={styles.imageTagOverlay}>
                         <Text style={styles.imageTagText}>{item.category}</Text>
@@ -268,7 +284,7 @@ export default function GalleryScreen() {
             ) : (
               <View style={styles.mobileGridContainer}>
                 {filteredGallery.map((item) => (
-                  <View key={item.id} style={styles.mobileImageCard}>
+                  <View key={item.id} className="gsap-gallery-card interactive-card" style={[styles.mobileImageCard, isTablet && { width: "48%" }]}>
                     <Image source={resolveAsset(item.imageKey, "gallery1.jpg")} style={styles.mobileGalleryImage} />
                     <View style={styles.imageTagOverlay}>
                       <Text style={styles.imageTagText}>{item.category}</Text>
@@ -281,7 +297,7 @@ export default function GalleryScreen() {
         </View>
 
         {/* ================= SIGNATURE DESTINATIONS ================= */}
-        <View style={[styles.destinationSectionWrapper, { backgroundColor: "#F7FAFD" }]}>
+        <View className="gsap-gallery-section" style={[styles.destinationSectionWrapper, { backgroundColor: "#F7FAFD" }]}>
           <View
             style={[
               styles.destinationSection,
@@ -308,7 +324,8 @@ export default function GalleryScreen() {
               {signatureDestinations.map((item) => (
                 <TouchableOpacity
                   key={item.id}
-                  style={[styles.destinationCard, isDesktop && { width: "31.5%", marginBottom: 0 }]}
+                  className="gsap-gallery-card interactive-card"
+                  style={[styles.destinationCard, isDesktop ? { width: "31.5%", marginBottom: 0 } : isTablet ? { width: "48%" } : { width: "100%" }]}
                   onPress={() => navigation.navigate("ViewTrip", { tripId: item.id })}
                 >
                   <ImageBackground source={resolveAsset(item.imageKey, "hub1.jpg")} style={styles.destinationCardBg} imageStyle={{ borderRadius: 20 }}>
@@ -405,9 +422,14 @@ export default function GalleryScreen() {
       </ScrollView>
 
       {/* ================= UPLOAD FROM DEVICE MODAL ================= */}
-      <Modal visible={uploadModalVisible} transparent animationType="fade">
+      <Modal
+        visible={uploadModalVisible}
+        transparent
+        animationType="fade"
+        onShow={() => animateModal(".gsap-gallery-modal")}
+      >
         <View style={styles.modalBackdrop}>
-          <View style={styles.modalContent}>
+          <View className="gsap-gallery-modal" style={[styles.modalContent, isMobile && { marginHorizontal: 12, borderRadius: 20 }]}>
             <View style={styles.modalHeader}>
               <View>
                 <Text style={styles.modalTitle}>Upload Photo to Gallery</Text>

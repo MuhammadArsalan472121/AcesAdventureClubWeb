@@ -7,8 +7,15 @@ try:
 except Exception:
     pass
 
+try:
+    import pillow_heif
+    pillow_heif.register_heif_opener()
+    AVIF_SUPPORTED = True
+except Exception:
+    AVIF_SUPPORTED = False
+
 def optimize_directory(dir_path):
-    print(f"Fine-tuning optimization for: {dir_path}", flush=True)
+    print(f"Fine-tuning optimization & AVIF generation for: {dir_path}", flush=True)
     if not os.path.exists(dir_path):
         return
 
@@ -17,6 +24,7 @@ def optimize_directory(dir_path):
     
     total_orig = 0
     total_new = 0
+    avif_created = 0
 
     for f in sorted(image_files):
         fp = os.path.join(dir_path, f)
@@ -28,6 +36,7 @@ def optimize_directory(dir_path):
                 w, h = im.size
                 is_png = f.lower().endswith('.png')
                 f_lower = f.lower()
+                base_name, _ = os.path.splitext(f)
                 
                 if any(k in f_lower for k in ['logo', 'splash-icon']):
                     max_dim = 400
@@ -51,9 +60,7 @@ def optimize_directory(dir_path):
                 if is_png:
                     resized = im.resize((new_w, new_h), Image.Resampling.LANCZOS)
                     if f_lower == 'map.png':
-                        # Convert to RGB JPEG format or palette PNG
                         if resized.mode == 'RGBA':
-                            # check if alpha is used
                             alpha = resized.split()[-1]
                             if alpha.getextrema() == (255, 255):
                                 resized = resized.convert('RGB')
@@ -80,12 +87,30 @@ def optimize_directory(dir_path):
                     os.replace(temp_path, fp)
                     total_new += new_size
                     pct = (1 - (new_size / orig_size)) * 100
-                    print(f"[OPTIMIZED] {f:22} | {orig_size/1024:6.1f}KB -> {new_size/1024:6.1f}KB [-{pct:4.1f}%] | {w}x{h}->{new_w}x{new_h}", flush=True)
+                    print(f"[OPTIMIZED] {f:24} | {orig_size/1024:6.1f}KB -> {new_size/1024:6.1f}KB [-{pct:4.1f}%] | {w}x{h}->{new_w}x{new_h}", flush=True)
                 else:
                     if os.path.exists(temp_path):
                         os.remove(temp_path)
                     total_new += orig_size
-                    print(f"[KEPT]      {f:22} | {orig_size/1024:6.1f}KB", flush=True)
+                    print(f"[KEPT]      {f:24} | {orig_size/1024:6.1f}KB", flush=True)
+
+                # Generate modern .avif counterpart
+                if AVIF_SUPPORTED and not f.lower().startswith('.'):
+                    avif_fp = os.path.join(dir_path, f"{base_name}.avif")
+                    try:
+                        with Image.open(fp) as im_current:
+                            cur_w, cur_h = im_current.size
+                            if im_current.mode in ("RGBA", "LA") or (im_current.mode == "P" and "transparency" in im_current.info):
+                                avif_im = im_current.convert("RGBA")
+                            else:
+                                avif_im = im_current.convert("RGB")
+                            avif_im.save(avif_fp, format="AVIF", quality=q)
+                            avif_size = os.path.getsize(avif_fp)
+                            avif_pct = (1 - (avif_size / orig_size)) * 100
+                            print(f"[AVIF]      {base_name + '.avif':24} | {orig_size/1024:6.1f}KB -> {avif_size/1024:6.1f}KB [-{avif_pct:4.1f}%]", flush=True)
+                            avif_created += 1
+                    except Exception as e_avif:
+                        print(f"[AVIF-SKIP] {f}: {e_avif}", flush=True)
 
         except Exception as e:
             print(f"[ERROR] processing {f}: {e}", flush=True)
@@ -98,6 +123,7 @@ def optimize_directory(dir_path):
         print(f"Original Total : {total_orig / (1024*1024):.2f} MB", flush=True)
         print(f"Optimized Total: {total_new / (1024*1024):.2f} MB", flush=True)
         print(f"Total Saved    : {saved / (1024*1024):.2f} MB ({(saved/total_orig)*100:.1f}% reduction)", flush=True)
+        print(f"AVIF Files     : {avif_created} modern AVIF images generated", flush=True)
     print("=" * 75, flush=True)
 
 if __name__ == "__main__":

@@ -564,8 +564,10 @@ const styles = StyleSheet.create({
   mascotWrapper: {
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 10,
-    marginBottom: -4,
+    zIndex: 20,
+    // Negative margin lets the bear's paws overlap the card top edge.
+    // Value is ~25% of the bear height (135px desktop / 100px mobile).
+    marginBottom: -28,
   },
 
   card: {
@@ -573,7 +575,9 @@ const styles = StyleSheet.create({
     maxWidth: 420,
     backgroundColor: "#FFFFFF",
     borderRadius: 24,
-    paddingVertical: 24,
+    // Enough top padding so the bear overlap doesn't cover form content
+    paddingTop: 40,
+    paddingBottom: 24,
     paddingHorizontal: 22,
     borderWidth: 1.5,
     borderColor: "rgba(11, 92, 173, 0.14)",
@@ -582,6 +586,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 24,
     elevation: 5,
+    zIndex: 10,
   },
 
   badge: {

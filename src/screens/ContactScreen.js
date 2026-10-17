@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   SafeAreaView,
   StatusBar,
@@ -18,6 +18,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import useResponsive from "../hooks/useResponsive";
 import { useData } from "../context/DataContext";
+import { animateHero, animateCards, animateSection } from "../utils/animations";
 
 const { height, width } = Dimensions.get("window");
 
@@ -25,12 +26,23 @@ export default function ContactScreen() {
   const navigation = useNavigation();
   const { contactContent, addInquiry, trips = [], tripCategories = [] } = useData();
   const {
+    isMobile,
     isDesktop,
     isTablet,
     isLargeDesktop,
     contentMaxWidth,
     paddingHorizontal,
   } = useResponsive();
+
+  // GSAP entrance animations on mount
+  useEffect(() => {
+    animateHero(".gsap-contact-hero");
+    const t = setTimeout(() => {
+      animateCards(".gsap-contact-card");
+      animateSection(".gsap-contact-section");
+    }, 350);
+    return () => clearTimeout(t);
+  }, []);
 
   const [formData, setFormData] = useState({
     firstName: "Aiden",
@@ -128,7 +140,7 @@ export default function ContactScreen() {
           style={[styles.hero, { height: isDesktop ? 520 : 380 }]}
           resizeMode="cover"
         >
-          <View style={[styles.overlay, { paddingHorizontal: paddingHorizontal }]}>
+          <View className="gsap-contact-hero" style={[styles.overlay, { paddingHorizontal: paddingHorizontal }]}>
             <Header />
 
             <View style={[styles.heroContent, { maxWidth: contentMaxWidth, width: "100%", alignSelf: "center", alignItems: "center" }]}>

@@ -30,9 +30,10 @@ export default function SponsorsManagementScreen() {
 
   // Sponsor form
   const [sponsorForm, setSponsorForm] = useState({
-    name: '',
-    contact: '',
-    package: 'Gold',
+    sponsorName: '',
+    companyName: '',
+    phone: '',
+    email: '',
     trips: '1',
     status: 'ACTIVE',
   });
@@ -49,9 +50,10 @@ export default function SponsorsManagementScreen() {
   const handleOpenAdd = () => {
     setEditingSponsorId(null);
     setSponsorForm({
-      name: '',
-      contact: '',
-      package: 'Gold',
+      sponsorName: '',
+      companyName: '',
+      phone: '',
+      email: '',
       trips: '1',
       status: 'ACTIVE',
     });
@@ -61,25 +63,53 @@ export default function SponsorsManagementScreen() {
   const handleOpenEdit = (sponsor: any) => {
     setEditingSponsorId(sponsor.id);
     setSponsorForm({
-      name: sponsor.name || '',
-      contact: sponsor.contact || '',
-      package: sponsor.package || 'Gold',
-      trips: sponsor.trips || '1',
+      sponsorName: sponsor.sponsorName || sponsor.name || '',
+      companyName: sponsor.companyName || sponsor.name || '',
+      phone: sponsor.phone || sponsor.contactNumber || '',
+      email: sponsor.email || sponsor.contact || '',
+      trips: sponsor.trips ? String(sponsor.trips) : '1',
       status: sponsor.status || 'ACTIVE',
     });
     setModalVisible(true);
   };
 
   const handleSaveSponsor = () => {
-    if (!sponsorForm.name.trim()) {
+    if (!sponsorForm.sponsorName.trim()) {
       alert('Please enter sponsor name');
       return;
     }
+    if (!sponsorForm.companyName.trim()) {
+      alert('Please enter company name');
+      return;
+    }
+    if (!sponsorForm.phone.trim()) {
+      alert('Please enter contact number');
+      return;
+    }
+    if (!sponsorForm.email.trim()) {
+      alert('Please enter email address');
+      return;
+    }
+    if (!sponsorForm.trips.trim()) {
+      alert('Please enter sponsor trips count');
+      return;
+    }
+
+    const payload = {
+      sponsorName: sponsorForm.sponsorName.trim(),
+      companyName: sponsorForm.companyName.trim(),
+      name: sponsorForm.companyName.trim(),
+      phone: sponsorForm.phone.trim(),
+      email: sponsorForm.email.trim(),
+      contact: sponsorForm.email.trim(),
+      trips: sponsorForm.trips.trim(),
+      status: sponsorForm.status,
+    };
 
     if (editingSponsorId) {
-      updateSponsor(editingSponsorId, sponsorForm);
+      updateSponsor(editingSponsorId, payload);
     } else {
-      addSponsor(sponsorForm);
+      addSponsor(payload);
     }
     setModalVisible(false);
   };
@@ -125,7 +155,7 @@ export default function SponsorsManagementScreen() {
             <View>
               <Text style={styles.title}>Sponsors & Strategic Partners</Text>
               <Text style={styles.subtitle}>
-                Manage corporate partnerships, brand tier packages, and the official featured partner on the live website.
+                Manage corporate partnerships, sponsored trips count, and the official featured partner on the live website.
               </Text>
             </View>
 
@@ -159,59 +189,68 @@ export default function SponsorsManagementScreen() {
           {/* Sponsors Table */}
           <View style={styles.tableContainer}>
             <View style={styles.tableHeader}>
-              <Text style={[styles.th, { flex: 2.2 }]}>SPONSOR COMPANY</Text>
-              <Text style={[styles.th, { flex: 2 }]}>CONTACT EMAIL</Text>
-              <Text style={styles.th}>PACKAGE TIER</Text>
-              <Text style={styles.th}>SPONSORED TRIPS</Text>
-              <Text style={styles.th}>STATUS</Text>
-              <Text style={[styles.th, { textAlign: 'center', width: 150, flex: 0 }]}>ACTIONS</Text>
+              <Text style={[styles.th, { flex: 1.5 }]}>SPONSOR NAME</Text>
+              <Text style={[styles.th, { flex: 1.6 }]}>COMPANY NAME</Text>
+              <Text style={[styles.th, { flex: 1.3 }]}>CONTACT NUMBER</Text>
+              <Text style={[styles.th, { flex: 1.6 }]}>EMAIL</Text>
+              <Text style={[styles.th, { flex: 1.2 }]}>SPONSORED TRIPS</Text>
+              <Text style={[styles.th, { flex: 1 }]}>STATUS</Text>
+              <Text style={[styles.th, { textAlign: 'center', width: 140, flex: 0 }]}>ACTIONS</Text>
             </View>
 
-            {sponsors.map((sponsor) => (
-              <View style={styles.tableRow} key={sponsor.id}>
-                <View style={[styles.td, { flex: 2.2, flexDirection: 'row', alignItems: 'center', gap: 12 }]}>
-                  <View style={styles.logoCircle}>
-                    <Text style={styles.logoText}>
-                      {sponsor.name ? sponsor.name.substring(0, 2).toUpperCase() : 'SP'}
+            {sponsors.map((sponsor) => {
+              const displayName = sponsor.sponsorName || sponsor.name || 'Sponsor';
+              const displayCompany = sponsor.companyName || sponsor.name || '-';
+              const displayPhone = sponsor.phone || sponsor.contactNumber || '-';
+              const displayEmail = sponsor.email || sponsor.contact || '-';
+              const tripsCount = sponsor.trips || '0';
+              const initials = (displayName || displayCompany).substring(0, 2).toUpperCase();
+
+              return (
+                <View style={styles.tableRow} key={sponsor.id}>
+                  <View style={[styles.td, { flex: 1.5, flexDirection: 'row', alignItems: 'center', gap: 10 }]}>
+                    <View style={styles.logoCircle}>
+                      <Text style={styles.logoText}>{initials}</Text>
+                    </View>
+                    <Text style={styles.sponsorNameText} numberOfLines={1}>{displayName}</Text>
+                  </View>
+
+                  <Text style={[styles.td, { flex: 1.6, fontWeight: '600' }]} numberOfLines={1}>{displayCompany}</Text>
+                  <Text style={[styles.td, { flex: 1.3 }]} numberOfLines={1}>{displayPhone}</Text>
+                  <Text style={[styles.td, { flex: 1.6, color: '#0B5CAD' }]} numberOfLines={1}>{displayEmail}</Text>
+                  <Text style={[styles.td, { flex: 1.2, fontWeight: '700' }]}>{tripsCount} Trips</Text>
+
+                  <View style={[styles.td, { flex: 1 }]}>
+                    <Text
+                      style={[
+                        styles.statusTag,
+                        sponsor.status === 'ACTIVE'
+                          ? styles.statusActive
+                          : styles.statusInactive,
+                      ]}
+                    >
+                      {sponsor.status}
                     </Text>
                   </View>
-                  <Text style={styles.sponsorNameText}>{sponsor.name}</Text>
+
+                  <View style={[styles.tdActions, { width: 140 }]}>
+                    <TouchableOpacity
+                      style={styles.editActionBtn}
+                      onPress={() => handleOpenEdit(sponsor)}
+                    >
+                      <Text style={styles.editActionText}>✏️ Edit</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.deleteActionBtn}
+                      onPress={() => handleDelete(sponsor.id, displayCompany || displayName)}
+                    >
+                      <Text style={styles.deleteActionText}>🗑️ Delete</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
-
-                <Text style={[styles.td, { flex: 2 }]}>{sponsor.contact}</Text>
-                <Text style={[styles.td, { fontWeight: '700', color: '#0B5CAD', fontSize: 14 }]}>{sponsor.package}</Text>
-                <Text style={styles.td}>{sponsor.trips} Expeditions</Text>
-
-                <View style={styles.td}>
-                  <Text
-                    style={[
-                      styles.statusTag,
-                      sponsor.status === 'ACTIVE'
-                        ? styles.statusActive
-                        : styles.statusInactive,
-                    ]}
-                  >
-                    {sponsor.status}
-                  </Text>
-                </View>
-
-                <View style={[styles.tdActions, { width: 150 }]}>
-                  <TouchableOpacity
-                    style={styles.editActionBtn}
-                    onPress={() => handleOpenEdit(sponsor)}
-                  >
-                    <Text style={styles.editActionText}>✏️ Edit</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.deleteActionBtn}
-                    onPress={() => handleDelete(sponsor.id, sponsor.name)}
-                  >
-                    <Text style={styles.deleteActionText}>🗑️ Delete</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ))}
+              );
+            })}
           </View>
         </ScrollView>
       </View>
@@ -226,7 +265,7 @@ export default function SponsorsManagementScreen() {
                   {editingSponsorId ? 'Edit Sponsor Details' : 'Add New Sponsor'}
                 </Text>
                 <Text style={styles.modalSubTitle}>
-                  Manage sponsor brand information and partnership tier.
+                  Manage sponsor contact information, company name, and sponsored trips.
                 </Text>
               </View>
               <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeBtn}>
@@ -235,52 +274,67 @@ export default function SponsorsManagementScreen() {
             </View>
 
             <View style={styles.formGrid}>
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>SPONSOR COMPANY NAME *</Text>
-                <TextInput
-                  style={styles.formInput}
-                  placeholder="e.g. Mountain Gear Pakistan"
-                  placeholderTextColor="#94A3B8"
-                  value={sponsorForm.name}
-                  onChangeText={(t) => setSponsorForm({ ...sponsorForm, name: t })}
-                />
-              </View>
+              <View style={styles.formRow}>
+                <View style={[styles.formGroup, { flex: 1, marginRight: 14 }]}>
+                  <Text style={styles.formLabel}>SPONSOR NAME *</Text>
+                  <TextInput
+                    style={styles.formInput}
+                    placeholder="e.g. John Doe / Muhammad Ali"
+                    placeholderTextColor="#94A3B8"
+                    value={sponsorForm.sponsorName}
+                    onChangeText={(t) => setSponsorForm({ ...sponsorForm, sponsorName: t })}
+                  />
+                </View>
 
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>CONTACT EMAIL *</Text>
-                <TextInput
-                  style={styles.formInput}
-                  placeholder="contact@company.com"
-                  placeholderTextColor="#94A3B8"
-                  value={sponsorForm.contact}
-                  onChangeText={(t) => setSponsorForm({ ...sponsorForm, contact: t })}
-                />
+                <View style={[styles.formGroup, { flex: 1 }]}>
+                  <Text style={styles.formLabel}>COMPANY NAME *</Text>
+                  <TextInput
+                    style={styles.formInput}
+                    placeholder="e.g. Mountain Gear Pakistan"
+                    placeholderTextColor="#94A3B8"
+                    value={sponsorForm.companyName}
+                    onChangeText={(t) => setSponsorForm({ ...sponsorForm, companyName: t })}
+                  />
+                </View>
               </View>
 
               <View style={styles.formRow}>
                 <View style={[styles.formGroup, { flex: 1, marginRight: 14 }]}>
-                  <Text style={styles.formLabel}>PACKAGE TIER</Text>
-                  <View style={styles.optionPillRow}>
-                    {['Platinum', 'Gold', 'Silver'].map((pkg) => (
-                      <TouchableOpacity
-                        key={pkg}
-                        style={[
-                          styles.optionPill,
-                          sponsorForm.package === pkg && styles.activeOptionPill,
-                        ]}
-                        onPress={() => setSponsorForm({ ...sponsorForm, package: pkg })}
-                      >
-                        <Text
-                          style={[
-                            styles.optionPillText,
-                            sponsorForm.package === pkg && styles.activeOptionPillText,
-                          ]}
-                        >
-                          {pkg}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
+                  <Text style={styles.formLabel}>CONTACT NUMBER *</Text>
+                  <TextInput
+                    style={styles.formInput}
+                    placeholder="e.g. +92 300 1234567"
+                    placeholderTextColor="#94A3B8"
+                    value={sponsorForm.phone}
+                    onChangeText={(t) => setSponsorForm({ ...sponsorForm, phone: t })}
+                  />
+                </View>
+
+                <View style={[styles.formGroup, { flex: 1 }]}>
+                  <Text style={styles.formLabel}>EMAIL ADDRESS *</Text>
+                  <TextInput
+                    style={styles.formInput}
+                    placeholder="contact@company.com"
+                    placeholderTextColor="#94A3B8"
+                    value={sponsorForm.email}
+                    onChangeText={(t) => setSponsorForm({ ...sponsorForm, email: t })}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.formRow}>
+                <View style={[styles.formGroup, { flex: 1, marginRight: 14 }]}>
+                  <Text style={styles.formLabel}>SPONSOR TRIPS COUNT *</Text>
+                  <TextInput
+                    style={styles.formInput}
+                    placeholder="e.g. 5"
+                    placeholderTextColor="#94A3B8"
+                    value={sponsorForm.trips}
+                    onChangeText={(t) => setSponsorForm({ ...sponsorForm, trips: t })}
+                    keyboardType="numeric"
+                  />
                 </View>
 
                 <View style={[styles.formGroup, { flex: 1 }]}>
@@ -307,17 +361,6 @@ export default function SponsorsManagementScreen() {
                     ))}
                   </View>
                 </View>
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>SPONSORED EXPEDITIONS COUNT</Text>
-                <TextInput
-                  style={styles.formInput}
-                  placeholder="e.g. 5"
-                  placeholderTextColor="#94A3B8"
-                  value={sponsorForm.trips}
-                  onChangeText={(t) => setSponsorForm({ ...sponsorForm, trips: t })}
-                />
               </View>
             </View>
 

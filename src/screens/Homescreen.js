@@ -20,6 +20,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import useResponsive from "../hooks/useResponsive";
 import { useData, resolveAsset } from "../context/DataContext";
+import { animateHero, animateCards, animateStats, animateSection } from "../utils/animations";
 
 const { height, width } = Dimensions.get("window");
 
@@ -40,20 +41,9 @@ export default function HomeScreen() {
   } = useResponsive();
 
   useEffect(() => {
-    if (Platform.OS !== "web" || typeof window === "undefined") return;
-
-    const prefersReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReduced) return;
-
-    try {
-      gsap.fromTo(
-        ".gsap-fade-up",
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 0.8, stagger: 0.12, ease: "power2.out" }
-      );
-    } catch (e) {
-      // Graceful fallback
-    }
+    animateHero(".gsap-hero-item");
+    animateStats(".gsap-stat");
+    animateCards(".gsap-card");
   }, []);
 
   return (
@@ -75,27 +65,70 @@ export default function HomeScreen() {
             {/* Hero Content */}
             <View style={[styles.content, { maxWidth: contentMaxWidth, width: "100%", alignSelf: "center", alignItems: "center" }]}>
               {/* Badge */}
-              <View style={styles.badge}>
+              <View style={styles.badge} className="gsap-hero-item">
                 <Text style={styles.badgeText}>{homeContent.heroBadge || "• Premium Adventure Club •"}</Text>
               </View>
 
               {/* Heading */}
-              <Text style={[styles.headingWhite, { fontSize: isDesktop ? 58 : 36, lineHeight: isDesktop ? 66 : 42, textAlign: "center" }]}>
+              <Text
+                className="gsap-hero-item"
+                style={[
+                  styles.headingWhite,
+                  {
+                    fontSize: isMobile ? 32 : isDesktop ? 58 : 42,
+                    lineHeight: isMobile ? 40 : isDesktop ? 66 : 50,
+                    textAlign: "center",
+                  },
+                ]}
+              >
                 {homeContent.heroHeadingWhite || "EXPLORE THE WILD"}
               </Text>
-              <Text style={[styles.headingBlue, { fontSize: isDesktop ? 58 : 36, lineHeight: isDesktop ? 66 : 42, textAlign: "center" }]}>
+              <Text
+                className="gsap-hero-item"
+                style={[
+                  styles.headingBlue,
+                  {
+                    fontSize: isMobile ? 32 : isDesktop ? 58 : 42,
+                    lineHeight: isMobile ? 40 : isDesktop ? 66 : 50,
+                    textAlign: "center",
+                  },
+                ]}
+              >
                 {homeContent.heroHeadingBlue || "CREATE MEMORIES"}
               </Text>
 
               {/* Paragraph */}
-              <Text style={[styles.paragraph, { fontSize: isDesktop ? 18 : 15, lineHeight: isDesktop ? 28 : 24, textAlign: "center", maxWidth: 750 }]}>
+              <Text
+                className="gsap-hero-item"
+                style={[
+                  styles.paragraph,
+                  {
+                    fontSize: isMobile ? 14 : isDesktop ? 18 : 16,
+                    lineHeight: isMobile ? 22 : isDesktop ? 28 : 25,
+                    textAlign: "center",
+                    maxWidth: 750,
+                    paddingHorizontal: isMobile ? 8 : 0,
+                  },
+                ]}
+              >
                 {homeContent.heroParagraph}
               </Text>
 
               {/* Buttons */}
-              <View style={styles.buttonRow}>
+              <View
+                className="gsap-hero-item"
+                style={[
+                  styles.buttonRow,
+                  isMobile && { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 12 },
+                ]}
+              >
                 <TouchableOpacity
-                  style={[styles.primaryButton, isDesktop && { paddingHorizontal: 32, paddingVertical: 16 }]}
+                  className="interactive-btn"
+                  style={[
+                    styles.primaryButton,
+                    isDesktop && { paddingHorizontal: 32, paddingVertical: 16 },
+                    isMobile && { paddingHorizontal: 22, paddingVertical: 12 },
+                  ]}
                   onPress={() => navigation.navigate("BrowseTrips")}
                 >
                   <Text style={[styles.primaryText, isDesktop && { fontSize: 16 }]}>
@@ -104,7 +137,12 @@ export default function HomeScreen() {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.secondaryButton, isDesktop && { paddingHorizontal: 32, paddingVertical: 16 }]}
+                  className="interactive-btn"
+                  style={[
+                    styles.secondaryButton,
+                    isDesktop && { paddingHorizontal: 32, paddingVertical: 16 },
+                    isMobile && { paddingHorizontal: 22, paddingVertical: 12 },
+                  ]}
                   onPress={() => navigation.navigate("Gallery")}
                 >
                   <Text style={[styles.secondaryText, isDesktop && { fontSize: 16 }]}>
@@ -231,9 +269,13 @@ export default function HomeScreen() {
             </Text>
 
             {/* Adventure Cards Grid */}
-            <View style={[styles.cardsContainer, isDesktop && { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" }]}>
+            <View style={[styles.cardsContainer, { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" }]}>
               {/* Card 1 */}
-              <TouchableOpacity style={[styles.adventureCard, isDesktop && { width: "23.5%", marginRight: 0, marginBottom: 20 }]} onPress={() => navigation.navigate("ViewTrip")}>
+              <TouchableOpacity
+                className="gsap-card interactive-card"
+                style={[styles.adventureCard, { width: isDesktop ? "23.5%" : isTablet ? "48%" : "100%", marginBottom: 20 }]}
+                onPress={() => navigation.navigate("ViewTrip")}
+              >
                 <Image source={require("../../assets/hiking.jpg")} style={styles.cardImage} />
                 <View style={styles.cardIcon}>
                   <Text style={styles.cardIconText}>🥾</Text>
@@ -247,7 +289,11 @@ export default function HomeScreen() {
               </TouchableOpacity>
 
               {/* Card 2 */}
-              <TouchableOpacity style={[styles.adventureCard, isDesktop && { width: "23.5%", marginRight: 0, marginBottom: 20 }]} onPress={() => navigation.navigate("ViewTrip")}>
+              <TouchableOpacity
+                className="gsap-card interactive-card"
+                style={[styles.adventureCard, { width: isDesktop ? "23.5%" : isTablet ? "48%" : "100%", marginBottom: 20 }]}
+                onPress={() => navigation.navigate("ViewTrip")}
+              >
                 <Image source={require("../../assets/camping.jpg")} style={styles.cardImage} />
                 <View style={styles.cardIcon}>
                   <Text style={styles.cardIconText}>⛺</Text>
@@ -261,7 +307,11 @@ export default function HomeScreen() {
               </TouchableOpacity>
 
               {/* Card 3 */}
-              <TouchableOpacity style={[styles.adventureCard, isDesktop && { width: "23.5%", marginRight: 0, marginBottom: 20 }]} onPress={() => navigation.navigate("ViewTrip")}>
+              <TouchableOpacity
+                className="gsap-card interactive-card"
+                style={[styles.adventureCard, { width: isDesktop ? "23.5%" : isTablet ? "48%" : "100%", marginBottom: 20 }]}
+                onPress={() => navigation.navigate("ViewTrip")}
+              >
                 <Image source={require("../../assets/trekking.jpg")} style={styles.cardImage} />
                 <View style={styles.cardIcon}>
                   <Text style={styles.cardIconText}>🎒</Text>
@@ -275,7 +325,11 @@ export default function HomeScreen() {
               </TouchableOpacity>
 
               {/* Card 4 */}
-              <TouchableOpacity style={[styles.adventureCard, isDesktop && { width: "23.5%", marginRight: 0, marginBottom: 20 }]} onPress={() => navigation.navigate("ViewTrip")}>
+              <TouchableOpacity
+                className="gsap-card interactive-card"
+                style={[styles.adventureCard, { width: isDesktop ? "23.5%" : isTablet ? "48%" : "100%", marginBottom: 20 }]}
+                onPress={() => navigation.navigate("ViewTrip")}
+              >
                 <Image source={require("../../assets/nature.jpg")} style={styles.cardImage} />
                 <View style={styles.cardIcon}>
                   <Text style={styles.cardIconText}>🌲</Text>
@@ -305,23 +359,23 @@ export default function HomeScreen() {
               },
             ]}
           >
-            <View style={[styles.statsRowContainer, isDesktop && { flexDirection: "row", justifyContent: "space-between", alignItems: "center" }]}>
-              <View style={[styles.statItem, isDesktop && { width: "23%" }]}>
+            <View style={[styles.statsRowContainer, { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center" }]}>
+              <View className="gsap-stat" style={[styles.statItem, { width: isDesktop ? "23%" : "48%" }]}>
                 <Text style={styles.statNumber}>{homeContent.statTrips || "100+"}</Text>
                 <Text style={styles.statLabel}>{homeContent.statTripsLabel || "TRIPS COMPLETED"}</Text>
               </View>
 
-              <View style={[styles.statItem, isDesktop && { width: "23%" }]}>
+              <View className="gsap-stat" style={[styles.statItem, { width: isDesktop ? "23%" : "48%" }]}>
                 <Text style={styles.statNumber}>{homeContent.statExplorers || "500+"}</Text>
                 <Text style={styles.statLabel}>{homeContent.statExplorersLabel || "ELITE EXPLORERS"}</Text>
               </View>
 
-              <View style={[styles.statItem, isDesktop && { width: "23%" }]}>
+              <View className="gsap-stat" style={[styles.statItem, { width: isDesktop ? "23%" : "48%" }]}>
                 <Text style={styles.statNumber}>{homeContent.statDestinations || "50+"}</Text>
                 <Text style={styles.statLabel}>{homeContent.statDestinationsLabel || "GLOBAL DESTINATIONS"}</Text>
               </View>
 
-              <View style={[styles.statItem, isDesktop && { width: "23%" }]}>
+              <View className="gsap-stat" style={[styles.statItem, { width: isDesktop ? "23%" : "48%" }]}>
                 <Text style={styles.statNumber}>{homeContent.statGuides || "20+"}</Text>
                 <Text style={styles.statLabel}>{homeContent.statGuidesLabel || "EXPERT GUIDES"}</Text>
               </View>
@@ -353,11 +407,12 @@ export default function HomeScreen() {
             </Text>
 
             {/* Featured Cards Container */}
-            <View style={[styles.featuredScrollContainer, isDesktop && { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", marginTop: 35 }]}>
+            <View style={[styles.featuredScrollContainer, { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", marginTop: 35 }]}>
               {trips.slice(0, 3).map((trip) => (
                 <TouchableOpacity
                   key={trip.id}
-                  style={[styles.featuredCard, isDesktop && { width: "31.5%", marginRight: 0, marginBottom: 24 }]}
+                  className="gsap-card interactive-card"
+                  style={[styles.featuredCard, { width: isDesktop ? "31.5%" : isTablet ? "48%" : "100%", marginBottom: 24 }]}
                   onPress={() => navigation.navigate("ViewTrip", { tripId: trip.id })}
                 >
                   <ImageBackground source={resolveAsset(trip.imageKey, "featured1.jpg")} style={styles.featuredCardBg} imageStyle={styles.featuredImage}>
@@ -432,9 +487,9 @@ export default function HomeScreen() {
             </View>
 
             {/* 6 Feature Cards Grid */}
-            <View style={[styles.chooseCardsGrid, isDesktop && { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" }]}>
+            <View style={[styles.chooseCardsGrid, { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" }]}>
               {/* Card 1 */}
-              <View style={[styles.chooseCardItem, isDesktop && { width: "31.5%", marginBottom: 24 }]}>
+              <View className="gsap-card interactive-card" style={[styles.chooseCardItem, { width: isDesktop ? "31.5%" : isTablet ? "48%" : "100%", marginBottom: 24 }]}>
                 <View style={styles.iconBox}>
                   <Ionicons name="person-outline" size={24} color="#0B5CAD" />
                 </View>
@@ -445,7 +500,7 @@ export default function HomeScreen() {
               </View>
 
               {/* Card 2 */}
-              <View style={[styles.chooseCardItem, isDesktop && { width: "31.5%", marginBottom: 24 }]}>
+              <View className="gsap-card interactive-card" style={[styles.chooseCardItem, { width: isDesktop ? "31.5%" : isTablet ? "48%" : "100%", marginBottom: 24 }]}>
                 <View style={styles.iconBox}>
                   <Ionicons name="shield-checkmark-outline" size={24} color="#0B5CAD" />
                 </View>
@@ -456,7 +511,7 @@ export default function HomeScreen() {
               </View>
 
               {/* Card 3 */}
-              <View style={[styles.chooseCardItem, isDesktop && { width: "31.5%", marginBottom: 24 }]}>
+              <View className="gsap-card interactive-card" style={[styles.chooseCardItem, { width: isDesktop ? "31.5%" : isTablet ? "48%" : "100%", marginBottom: 24 }]}>
                 <View style={styles.iconBox}>
                   <Ionicons name="ribbon-outline" size={24} color="#0B5CAD" />
                 </View>
@@ -467,7 +522,7 @@ export default function HomeScreen() {
               </View>
 
               {/* Card 4 */}
-              <View style={[styles.chooseCardItem, isDesktop && { width: "31.5%", marginBottom: 24 }]}>
+              <View className="gsap-card interactive-card" style={[styles.chooseCardItem, { width: isDesktop ? "31.5%" : isTablet ? "48%" : "100%", marginBottom: 24 }]}>
                 <View style={styles.iconBox}>
                   <Ionicons name="location-outline" size={24} color="#0B5CAD" />
                 </View>
@@ -478,7 +533,7 @@ export default function HomeScreen() {
               </View>
 
               {/* Card 5 */}
-              <View style={[styles.chooseCardItem, isDesktop && { width: "31.5%", marginBottom: 24 }]}>
+              <View className="gsap-card interactive-card" style={[styles.chooseCardItem, { width: isDesktop ? "31.5%" : isTablet ? "48%" : "100%", marginBottom: 24 }]}>
                 <View style={styles.iconBox}>
                   <Ionicons name="people-circle-outline" size={24} color="#0B5CAD" />
                 </View>
@@ -489,7 +544,7 @@ export default function HomeScreen() {
               </View>
 
               {/* Card 6 */}
-              <View style={[styles.chooseCardItem, isDesktop && { width: "31.5%", marginBottom: 24 }]}>
+              <View className="gsap-card interactive-card" style={[styles.chooseCardItem, { width: isDesktop ? "31.5%" : isTablet ? "48%" : "100%", marginBottom: 24 }]}>
                 <View style={styles.iconBox}>
                   <Ionicons name="trail-sign-outline" size={24} color="#0B5CAD" />
                 </View>
@@ -810,13 +865,14 @@ const styles = StyleSheet.create({
 
   cardOverlay: {
     position: "absolute",
+    top: 0,
     left: 0,
     right: 0,
     bottom: 0,
     paddingHorizontal: 20,
-    paddingBottom: 20,
-    paddingTop: 60,
-    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    paddingBottom: 22,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(15, 23, 42, 0.45)",
   },
 
   cardTitle: {
@@ -856,16 +912,17 @@ const styles = StyleSheet.create({
   },
 
   statsRowContainer: {
-    paddingVertical: 10,
+    paddingVertical: 14,
   },
 
   statItem: {
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
   },
 
   statNumber: {
-    fontSize: 42,
+    fontSize: 36,
     fontWeight: "800",
     color: "#FFFFFF",
   },

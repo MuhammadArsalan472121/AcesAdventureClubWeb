@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   SafeAreaView,
   StatusBar,
@@ -17,6 +17,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import useResponsive from "../hooks/useResponsive";
 import { useData, resolveAsset } from "../context/DataContext";
+import { animateHero, animateCards, animateSection } from "../utils/animations";
 
 const { height, width } = Dimensions.get("window");
 
@@ -24,12 +25,23 @@ export default function PartnerScreen() {
   const navigation = useNavigation();
   const { officialPartner, partnerBenefits, trips } = useData();
   const {
+    isMobile,
     isDesktop,
     isTablet,
     isLargeDesktop,
     contentMaxWidth,
     paddingHorizontal,
   } = useResponsive();
+
+  // GSAP entrance animations on mount
+  useEffect(() => {
+    animateHero(".gsap-partner-hero");
+    const t = setTimeout(() => {
+      animateCards(".gsap-partner-card");
+      animateSection(".gsap-partner-section");
+    }, 350);
+    return () => clearTimeout(t);
+  }, []);
 
   const sponsoredTrips = trips.slice(0, 3);
 
@@ -44,7 +56,7 @@ export default function PartnerScreen() {
           style={[styles.hero, { height: isDesktop ? 650 : height * 0.85 }]}
           resizeMode="cover"
         >
-          <View style={[styles.overlay, { paddingHorizontal: paddingHorizontal }]}>
+          <View className="gsap-partner-hero" style={[styles.overlay, { paddingHorizontal: paddingHorizontal }]}>
             <Header />
 
             <View style={[styles.heroContent, { maxWidth: contentMaxWidth, width: "100%", alignSelf: "center" }]}>

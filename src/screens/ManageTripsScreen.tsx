@@ -69,6 +69,7 @@ export default function ManageTripsScreen() {
   // Dropdown states for Add / Edit Modal
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [badgeDropdownOpen, setBadgeDropdownOpen] = useState(false);
+  const [busesDropdownOpen, setBusesDropdownOpen] = useState(false);
   const [newCategoryInput, setNewCategoryInput] = useState('');
   const [newBadgeInput, setNewBadgeInput] = useState('');
 
@@ -76,6 +77,21 @@ export default function ManageTripsScreen() {
   const [managePresetsModalVisible, setManagePresetsModalVisible] = useState(false);
   const [standaloneCategoryInput, setStandaloneCategoryInput] = useState('');
   const [standaloneBadgeInput, setStandaloneBadgeInput] = useState('');
+
+  const ADDITIONAL_SERVICES_OPTIONS = [
+    'Photography',
+    'Tour Guide',
+    'Music',
+    'Luxury Transport',
+    'First Aid Kit',
+    'Breakfast',
+    'Lunch',
+    'Dinner',
+    'Entry Tickets',
+    'Fun Rides Tickets',
+  ];
+
+  const BUS_OPTIONS = ['1', '2'];
 
   // Form state
   const [formData, setFormData] = useState({
@@ -92,7 +108,10 @@ export default function ManageTripsScreen() {
     aboutText: '',
     fitnessLevel: 'Moderate',
     groupSize: '15 Max',
-    bestSeason: 'Spring - Autumn',
+    tripStartDate: '',
+    tripEndDate: '',
+    numberOfBuses: '1',
+    additionalServices: [] as string[],
     imageKey: 'hunza.jpg',
   });
 
@@ -100,6 +119,7 @@ export default function ManageTripsScreen() {
     setEditingTripId(null);
     setCategoryDropdownOpen(false);
     setBadgeDropdownOpen(false);
+    setBusesDropdownOpen(false);
     setNewCategoryInput('');
     setNewBadgeInput('');
     setFormData({
@@ -116,7 +136,10 @@ export default function ManageTripsScreen() {
       aboutText: 'An incredible mountain expedition through pristine valleys and ancient trails.',
       fitnessLevel: 'Moderate',
       groupSize: '15 Max',
-      bestSeason: 'Spring - Autumn',
+      tripStartDate: '',
+      tripEndDate: '',
+      numberOfBuses: '1',
+      additionalServices: [] as string[],
       imageKey: 'hunza.jpg',
     });
     setModalVisible(true);
@@ -126,6 +149,7 @@ export default function ManageTripsScreen() {
     setEditingTripId(trip.id);
     setCategoryDropdownOpen(false);
     setBadgeDropdownOpen(false);
+    setBusesDropdownOpen(false);
     setNewCategoryInput('');
     setNewBadgeInput('');
     setFormData({
@@ -142,7 +166,10 @@ export default function ManageTripsScreen() {
       aboutText: trip.aboutText || trip.description || '',
       fitnessLevel: trip.fitnessLevel || trip.difficulty || 'Moderate',
       groupSize: trip.groupSize || (trip.members ? `${trip.members} Max` : '15 Max'),
-      bestSeason: trip.bestSeason || 'Spring - Autumn',
+      tripStartDate: trip.tripStartDate || '',
+      tripEndDate: trip.tripEndDate || '',
+      numberOfBuses: trip.numberOfBuses || '1',
+      additionalServices: Array.isArray(trip.additionalServices) ? trip.additionalServices : [],
       imageKey: trip.imageKey || 'hunza.jpg',
     });
     setModalVisible(true);
@@ -150,7 +177,7 @@ export default function ManageTripsScreen() {
 
   const handleSaveTrip = () => {
     if (!formData.title.trim()) {
-      alert('Please enter an expedition title');
+      alert('Please enter a trip title');
       return;
     }
 
@@ -204,9 +231,9 @@ export default function ManageTripsScreen() {
           {/* Header */}
           <View style={styles.headerRow}>
             <View>
-              <Text style={styles.title}>Trips & Expeditions Manager</Text>
+              <Text style={styles.title}>Trips Manager</Text>
               <Text style={styles.subtitle}>
-                Add, edit, delete, and control all adventure packages displayed across the public website.
+                Add, edit, delete, and control all trip packages displayed across the public website.
               </Text>
             </View>
 
@@ -219,7 +246,7 @@ export default function ManageTripsScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.addBtn} onPress={handleOpenAddModal}>
-                <Text style={styles.addBtnText}>+ ADD NEW EXPEDITION</Text>
+                <Text style={styles.addBtnText}>+ ADD NEW TRIP</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -230,7 +257,7 @@ export default function ManageTripsScreen() {
               <Text style={styles.searchIcon}>🔍</Text>
               <TextInput
                 style={styles.searchInput}
-                placeholder="Search expeditions by name, location, or category..."
+                placeholder="Search trips by name, location, or category..."
                 placeholderTextColor="#94A3B8"
                 value={searchQuery}
                 onChangeText={setSearchQuery}
@@ -263,8 +290,10 @@ export default function ManageTripsScreen() {
           {/* Table */}
           <View style={styles.tableContainer}>
             <View style={styles.tableHeader}>
-              <Text style={[styles.th, { flex: 2.2 }]}>EXPEDITION & COVER</Text>
-              <Text style={[styles.th, { flex: 1.6 }]}>LOCATION</Text>
+              <Text style={[styles.th, { flex: 2.2 }]}>TRIP & COVER</Text>
+              <Text style={[styles.th, { flex: 1.5 }]}>LOCATION</Text>
+              <Text style={[styles.th, { flex: 1.1 }]}>START DATE</Text>
+              <Text style={[styles.th, { flex: 1.1 }]}>END DATE</Text>
               <Text style={styles.th}>CATEGORY</Text>
               <Text style={styles.th}>DURATION</Text>
               <Text style={styles.th}>DIFFICULTY</Text>
@@ -275,7 +304,7 @@ export default function ManageTripsScreen() {
 
             {filteredTrips.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>No expeditions found matching your search.</Text>
+                <Text style={styles.emptyText}>No trips found matching your search.</Text>
               </View>
             ) : (
               filteredTrips.map((trip: any) => (
@@ -299,7 +328,13 @@ export default function ManageTripsScreen() {
                     </View>
                   </View>
 
-                  <Text style={[styles.td, { flex: 1.6 }]}>{trip.location}</Text>
+                  <Text style={[styles.td, { flex: 1.5 }]}>{trip.location}</Text>
+                  <Text style={[styles.td, { flex: 1.1, color: trip.tripStartDate ? '#0F172A' : '#94A3B8' }]}>
+                    {trip.tripStartDate || '—'}
+                  </Text>
+                  <Text style={[styles.td, { flex: 1.1, color: trip.tripEndDate ? '#0F172A' : '#94A3B8' }]}>
+                    {trip.tripEndDate || '—'}
+                  </Text>
                   <Text style={styles.td}>{trip.category || 'Hiking'}</Text>
                   <Text style={styles.td}>{trip.duration}</Text>
 
@@ -388,7 +423,7 @@ export default function ManageTripsScreen() {
             <View style={styles.modalHeader}>
               <View>
                 <Text style={styles.modalTitle}>
-                  {editingTripId ? 'Edit Expedition Package' : 'Create New Expedition'}
+                  {editingTripId ? 'Edit Trip Package' : 'Create New Trip'}
                 </Text>
                 <Text style={styles.modalSubTitle}>
                   Fill all details exactly as displayed on the live frontend trip cards & details page.
@@ -403,7 +438,7 @@ export default function ManageTripsScreen() {
               <View style={styles.formGrid}>
                 {/* Title */}
                 <View style={styles.formGroup}>
-                  <Text style={styles.formLabel}>EXPEDITION TITLE *</Text>
+                  <Text style={styles.formLabel}>TRIP TITLE *</Text>
                   <TextInput
                     style={styles.formInput}
                     placeholder="e.g. Hunza Explorer, Fairy Meadows Trek"
@@ -752,7 +787,7 @@ export default function ManageTripsScreen() {
                   </View>
 
                   <View style={[styles.formGroup, { flex: 1 }]}>
-                    <Text style={styles.formLabel}>EXPEDITION STATUS</Text>
+                    <Text style={styles.formLabel}>TRIP STATUS</Text>
                     <View style={styles.optionPillRow}>
                       {['UPCOMING', 'ACTIVE', 'COMPLETED', 'DRAFT'].map((st) => (
                         <TouchableOpacity
@@ -789,28 +824,147 @@ export default function ManageTripsScreen() {
                   />
                 </View>
 
-                {/* Fitness Level & Best Season */}
+                {/* Fitness Level */}
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel}>FITNESS LEVEL</Text>
+                  <View style={styles.optionPillRow}>
+                    {['Hiking', 'Trekking', 'Camping', 'Easy', 'Moderate', 'High'].map((fit) => {
+                      const isSelected = (formData.fitnessLevel || '').toLowerCase() === fit.toLowerCase();
+                      return (
+                        <TouchableOpacity
+                          key={fit}
+                          style={[
+                            styles.optionPill,
+                            isSelected && styles.activeOptionPill,
+                          ]}
+                          onPress={() => setFormData({ ...formData, fitnessLevel: fit })}
+                        >
+                          <Text
+                            style={[
+                              styles.optionPillText,
+                              isSelected && styles.activeOptionPillText,
+                            ]}
+                          >
+                            {fit}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+
+                {/* Trip Start & End Dates */}
                 <View style={styles.formRow}>
                   <View style={[styles.formGroup, { flex: 1, marginRight: 14 }]}>
-                    <Text style={styles.formLabel}>FITNESS LEVEL</Text>
+                    <Text style={styles.formLabel}>TRIP START DATE</Text>
                     <TextInput
                       style={styles.formInput}
-                      placeholder="e.g. Easy-Mod, High, Extreme"
+                      placeholder="e.g. 2026-06-01"
                       placeholderTextColor="#94A3B8"
-                      value={formData.fitnessLevel}
-                      onChangeText={(t) => setFormData({ ...formData, fitnessLevel: t })}
+                      value={formData.tripStartDate}
+                      onChangeText={(t) => setFormData({ ...formData, tripStartDate: t })}
                     />
                   </View>
 
                   <View style={[styles.formGroup, { flex: 1 }]}>
-                    <Text style={styles.formLabel}>BEST SEASON</Text>
+                    <Text style={styles.formLabel}>TRIP END DATE</Text>
                     <TextInput
                       style={styles.formInput}
-                      placeholder="e.g. Spring - Autumn, Summer"
+                      placeholder="e.g. 2026-06-06"
                       placeholderTextColor="#94A3B8"
-                      value={formData.bestSeason}
-                      onChangeText={(t) => setFormData({ ...formData, bestSeason: t })}
+                      value={formData.tripEndDate}
+                      onChangeText={(t) => setFormData({ ...formData, tripEndDate: t })}
                     />
+                  </View>
+                </View>
+
+                {/* Number of Buses Dropdown */}
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel}>NUMBER OF BUSES</Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.dropdownTrigger,
+                      busesDropdownOpen && styles.dropdownTriggerActive,
+                    ]}
+                    onPress={() => {
+                      setBusesDropdownOpen(!busesDropdownOpen);
+                      setCategoryDropdownOpen(false);
+                      setBadgeDropdownOpen(false);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.dropdownTriggerText}>
+                      {formData.numberOfBuses ? `${formData.numberOfBuses} Bus${parseInt(formData.numberOfBuses) > 1 ? 'es' : ''}` : 'Select...'}
+                    </Text>
+                    <Text style={styles.dropdownChevron}>
+                      {busesDropdownOpen ? '▲' : '▼'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {busesDropdownOpen && (
+                    <View style={[styles.dropdownMenu, { maxHeight: 200 }]}>
+                      <Text style={styles.dropdownSectionTitle}>SELECT NUMBER OF BUSES</Text>
+                      <ScrollView style={{ maxHeight: 160 }} nestedScrollEnabled showsVerticalScrollIndicator={true}>
+                        {BUS_OPTIONS.map((num) => {
+                          const isSelected = formData.numberOfBuses === num;
+                          return (
+                            <TouchableOpacity
+                              key={num}
+                              style={[
+                                styles.dropdownItemRow,
+                                isSelected && styles.dropdownItemRowSelected,
+                              ]}
+                              onPress={() => {
+                                setFormData({ ...formData, numberOfBuses: num });
+                                setBusesDropdownOpen(false);
+                              }}
+                            >
+                              <Text
+                                style={[
+                                  styles.dropdownItemText,
+                                  isSelected && styles.dropdownItemTextSelected,
+                                ]}
+                              >
+                                {isSelected ? '✓  ' : '   '}{num} Bus{parseInt(num) > 1 ? 'es' : ''}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </ScrollView>
+                    </View>
+                  )}
+                </View>
+
+                {/* Additional Services */}
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel}>ADDITIONAL SERVICES</Text>
+                  <Text style={[styles.formLabel, { fontSize: 11, color: '#64748B', marginBottom: 10, marginTop: -4 }]}>
+                    Select all services included in this trip package
+                  </Text>
+                  <View style={styles.servicesGrid}>
+                    {ADDITIONAL_SERVICES_OPTIONS.map((service) => {
+                      const isSelected = formData.additionalServices.includes(service);
+                      return (
+                        <TouchableOpacity
+                          key={service}
+                          style={[
+                            styles.serviceChip,
+                            isSelected && styles.serviceChipActive,
+                          ]}
+                          onPress={() => {
+                            const updated = isSelected
+                              ? formData.additionalServices.filter((s: string) => s !== service)
+                              : [...formData.additionalServices, service];
+                            setFormData({ ...formData, additionalServices: updated });
+                          }}
+                          activeOpacity={0.75}
+                        >
+                          <Text style={[styles.serviceChipText, isSelected && styles.serviceChipTextActive]}>
+                            {isSelected ? '✓ ' : ''}{service}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
                   </View>
                 </View>
 
@@ -846,7 +1000,40 @@ export default function ManageTripsScreen() {
 
                 {/* Image Selection Presets */}
                 <View style={styles.formGroup}>
-                  <Text style={styles.formLabel}>CHOOSE COVER IMAGE PRESET (OR ENTER CUSTOM URL)</Text>
+                  <View style={[styles.formLabelRow, { marginBottom: 8 }]}>
+                    <Text style={styles.formLabel}>TRIP IMAGES (COVER + GALLERY)</Text>
+                    <TouchableOpacity
+                      style={styles.addImageBtn}
+                      onPress={() => {
+                        if (typeof document !== 'undefined') {
+                          const input = document.createElement('input');
+                          input.type = 'file';
+                          input.accept = 'image/*';
+                          input.onchange = (e: any) => {
+                            const file = e.target?.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (ev) => {
+                                const dataUrl = ev.target?.result as string;
+                                if (dataUrl) {
+                                  setFormData((prev: any) => ({ ...prev, imageKey: dataUrl }));
+                                }
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          };
+                          input.click();
+                        }
+                      }}
+                    >
+                      <Text style={styles.addImageBtnText}>📁 Add New Image</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <Text style={[styles.formLabel, { fontSize: 11, color: '#64748B', marginBottom: 8, marginTop: -4 }]}>
+                    Choose a preset cover image or upload a custom image file
+                  </Text>
+
                   <View style={styles.presetGrid}>
                     {PRESET_IMAGES.map((preset) => (
                       <TouchableOpacity
@@ -878,7 +1065,7 @@ export default function ManageTripsScreen() {
                     style={[styles.formInput, { marginTop: 8 }]}
                     placeholder="Custom image file (hunza.jpg) or web image URL (https://...)"
                     placeholderTextColor="#94A3B8"
-                    value={formData.imageKey}
+                    value={formData.imageKey.startsWith('data:') ? '(Uploaded image)' : formData.imageKey}
                     onChangeText={(t) => setFormData({ ...formData, imageKey: t })}
                   />
                 </View>
@@ -1845,5 +2032,57 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#DC2626',
     fontWeight: '700',
+  },
+
+  /* Additional Services Checkbox Grid */
+  servicesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+
+  serviceChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
+    cursor: 'pointer',
+  },
+
+  serviceChipActive: {
+    backgroundColor: '#EFF6FF',
+    borderColor: '#0B5CAD',
+  },
+
+  serviceChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#475569',
+  },
+
+  serviceChipTextActive: {
+    color: '#0B5CAD',
+    fontWeight: '800',
+  },
+
+  /* Add New Image Button */
+  addImageBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0B5CAD',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 6,
+    cursor: 'pointer',
+  },
+
+  addImageBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
 });

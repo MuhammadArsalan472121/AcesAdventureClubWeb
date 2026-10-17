@@ -21,6 +21,7 @@ import Footer from "../components/Footer";
 import TravelLoader from "../components/TravelLoader";
 import useResponsive from "../hooks/useResponsive";
 import { useAuth } from "../context/AuthContext";
+import { optimizeImageWithPython } from "../utils/imageUpload";
 
 export default function ProfileScreen() {
   const navigation = useNavigation();
@@ -81,7 +82,7 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target && e.target.files && e.target.files[0];
     if (!file) return;
 
@@ -94,6 +95,20 @@ export default function ProfileScreen() {
       return;
     }
 
+    try {
+      // Step 1: Optimize and convert to AVIF via Python pipeline
+      const pyResult = await optimizeImageWithPython(file, { maxDimension: 400, quality: 75 });
+      if (pyResult?.dataUrl) {
+        await updateUserProfile({ avatarUrl: pyResult.dataUrl });
+        setSavedSuccess(true);
+        setTimeout(() => setSavedSuccess(false), 3000);
+        return;
+      }
+    } catch (_e) {
+      // Fallback
+    }
+
+    // Step 2: Fallback reader
     const reader = new FileReader();
     reader.onload = async (uploadEvent) => {
       const dataUrl = uploadEvent.target?.result;

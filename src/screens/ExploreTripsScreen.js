@@ -21,6 +21,7 @@ import Footer from "../components/Footer";
 import useResponsive from "../hooks/useResponsive";
 import { useData, resolveAsset } from "../context/DataContext";
 import { useAuth } from "../context/AuthContext";
+import { animateHero, animateCards } from "../utils/animations";
 
 const { height, width } = Dimensions.get("window");
 
@@ -57,23 +58,17 @@ export default function ExploreTripsScreen() {
   } = useResponsive();
 
   useEffect(() => {
-    if (Platform.OS !== "web" || typeof window === "undefined") return;
+    animateHero(".gsap-hero-item");
+  }, []);
 
-    const prefersReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReduced) return;
-
-    try {
-      gsap.fromTo(
-        ".gsap-fade-trips",
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 0.8, stagger: 0.1, ease: "power2.out" }
-      );
-    } catch (e) {
-      // Fallback
-    }
+  useEffect(() => {
+    animateCards(".gsap-card");
   }, [activeFilter, searchQuery]);
 
   const filteredTrips = trips.filter((t) => {
+    // Hide DRAFT trips from public website
+    if (t.status === "DRAFT") return false;
+
     const matchesSearch =
       !searchQuery.trim() ||
       t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -149,19 +144,19 @@ export default function ExploreTripsScreen() {
             <Header />
 
             <View style={[styles.heroContent, { maxWidth: contentMaxWidth, width: "100%", alignSelf: "center" }]}>
-              <Text style={[styles.heroBlue, { fontSize: isDesktop ? 54 : 36 }]}>EXPLORE</Text>
-              <Text style={[styles.heroWhite, { fontSize: isDesktop ? 54 : 36 }]}>ADVENTURES</Text>
+              <Text className="gsap-hero-item" style={[styles.heroBlue, { fontSize: isMobile ? 32 : isDesktop ? 54 : 40 }]}>EXPLORE</Text>
+              <Text className="gsap-hero-item" style={[styles.heroWhite, { fontSize: isMobile ? 32 : isDesktop ? 54 : 40 }]}>ADVENTURES</Text>
 
-              <Text style={[styles.heroDescription, { fontSize: isDesktop ? 17 : 15, maxWidth: 720 }]}>
+              <Text className="gsap-hero-item" style={[styles.heroDescription, { fontSize: isMobile ? 14 : isDesktop ? 17 : 15, maxWidth: 720 }]}>
                 Uncover the magic of hidden trails, towering peaks, and pristine lakes across Pakistan with our expert-guided expeditions.
               </Text>
 
-              <View style={styles.buttonRow}>
-                <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate("BrowseTrips")}>
+              <View className="gsap-hero-item" style={[styles.buttonRow, isMobile && { flexWrap: "wrap", gap: 12 }]}>
+                <TouchableOpacity className="interactive-btn" style={styles.primaryButton} onPress={() => navigation.navigate("BrowseTrips")}>
                   <Text style={styles.primaryText}>View Destinations</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate("Gallery")}>
+                <TouchableOpacity className="interactive-btn" style={styles.secondaryButton} onPress={() => navigation.navigate("Gallery")}>
                   <Text style={styles.secondaryText}>View Gallery</Text>
                 </TouchableOpacity>
               </View>
@@ -183,9 +178,9 @@ export default function ExploreTripsScreen() {
               },
             ]}
           >
-            <View style={[styles.searchFilterRow, isDesktop && { flexDirection: "row", justifyContent: "space-between", alignItems: "center" }]}>
+            <View style={[styles.searchFilterRow, isDesktop ? { flexDirection: "row", justifyContent: "space-between", alignItems: "center" } : { flexDirection: "column", gap: 14 }]}>
               {/* Search Input Box */}
-              <View style={[styles.searchBox, isDesktop && { flex: 1, marginRight: 20 }]}>
+              <View style={[styles.searchBox, isDesktop ? { flex: 1, marginRight: 20 } : { width: "100%", marginBottom: 12 }]}>
                 <Ionicons name="search-outline" size={20} color="#64748B" />
                 <TextInput
                   placeholder="Search Mountains, Locations, Treks Or Adventures ..."
@@ -242,11 +237,12 @@ export default function ExploreTripsScreen() {
             <Text style={styles.curatedTitle}>CURATED JOURNEYS</Text>
 
             {/* Cards Grid */}
-            <View style={[styles.curatedGrid, isDesktop && { flexDirection: "row", flexWrap: "wrap", justifyContent: "flex-start", gap: "2%", marginTop: 35 }]}>
+            <View style={[styles.curatedGrid, { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", marginTop: 35 }]}>
               {filteredTrips.map((item) => (
                 <View
                   key={item.id}
-                  style={[styles.curatedCard, isDesktop && { width: "23.5%", marginBottom: 24 }]}
+                  className="gsap-card interactive-card"
+                  style={[styles.curatedCard, { width: isDesktop ? "23.5%" : isTablet ? "48%" : "100%", marginBottom: 24 }]}
                 >
                   <View style={styles.cardImageWrapper}>
                     <Image source={resolveAsset(item.imageKey, "hunza.jpg")} style={styles.curatedImage} />
@@ -301,34 +297,57 @@ export default function ExploreTripsScreen() {
             </View>
 
             {/* ================= PAGINATION CONTROL ================= */}
-            <View style={styles.paginationContainer}>
-              <TouchableOpacity style={styles.pageArrowBtn}>
-                <Ionicons name="arrow-back" size={16} color="#0F172A" />
-                <Text style={styles.pageArrowText}>Previous</Text>
-              </TouchableOpacity>
+            {/* ================= PAGINATION CONTROL ================= */}
+            <View style={[styles.paginationContainer, isMobile && { gap: 6 }]}>
+              {isMobile ? (
+                <>
+                  <TouchableOpacity style={styles.pageArrowBtn}>
+                    <Ionicons name="arrow-back" size={14} color="#0F172A" />
+                    <Text style={styles.pageArrowText}>Prev</Text>
+                  </TouchableOpacity>
 
-              <TouchableOpacity style={styles.activePageBtn}>
-                <Text style={styles.activePageText}>1</Text>
-              </TouchableOpacity>
+                  <View style={styles.activePageBtn}>
+                    <Text style={styles.activePageText}>1</Text>
+                  </View>
 
-              <TouchableOpacity style={styles.pageNumberBtn}>
-                <Text style={styles.pageNumberText}>2</Text>
-              </TouchableOpacity>
+                  <Text style={{ color: "#64748B", fontSize: 13, marginHorizontal: 4, fontWeight: "600" }}>of 12</Text>
 
-              <TouchableOpacity style={styles.pageNumberBtn}>
-                <Text style={styles.pageNumberText}>3</Text>
-              </TouchableOpacity>
+                  <TouchableOpacity style={styles.pageArrowBtn}>
+                    <Text style={styles.pageArrowText}>Next</Text>
+                    <Ionicons name="arrow-forward" size={14} color="#0F172A" />
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <TouchableOpacity style={styles.pageArrowBtn}>
+                    <Ionicons name="arrow-back" size={16} color="#0F172A" />
+                    <Text style={styles.pageArrowText}>Previous</Text>
+                  </TouchableOpacity>
 
-              <Text style={styles.pageDotsText}>......</Text>
+                  <TouchableOpacity style={styles.activePageBtn}>
+                    <Text style={styles.activePageText}>1</Text>
+                  </TouchableOpacity>
 
-              <TouchableOpacity style={styles.pageNumberBtn}>
-                <Text style={styles.pageNumberText}>12</Text>
-              </TouchableOpacity>
+                  <TouchableOpacity style={styles.pageNumberBtn}>
+                    <Text style={styles.pageNumberText}>2</Text>
+                  </TouchableOpacity>
 
-              <TouchableOpacity style={styles.pageArrowBtn}>
-                <Text style={styles.pageArrowText}>Next</Text>
-                <Ionicons name="arrow-forward" size={16} color="#0F172A" />
-              </TouchableOpacity>
+                  <TouchableOpacity style={styles.pageNumberBtn}>
+                    <Text style={styles.pageNumberText}>3</Text>
+                  </TouchableOpacity>
+
+                  <Text style={styles.pageDotsText}>......</Text>
+
+                  <TouchableOpacity style={styles.pageNumberBtn}>
+                    <Text style={styles.pageNumberText}>12</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={styles.pageArrowBtn}>
+                    <Text style={styles.pageArrowText}>Next</Text>
+                    <Ionicons name="arrow-forward" size={16} color="#0F172A" />
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           </View>
         </View>
@@ -354,11 +373,12 @@ export default function ExploreTripsScreen() {
             </Text>
 
             {/* 3 Destination Cards Grid */}
-            <View style={[styles.popularGrid, isDesktop && { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", marginTop: 35 }]}>
+            <View style={[styles.popularGrid, { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", marginTop: 35 }]}>
               {popularHubs.map((item) => (
                 <TouchableOpacity
                   key={item.id}
-                  style={[styles.popularCard, isDesktop && { width: "31.5%", marginBottom: 24 }]}
+                  className="gsap-card interactive-card"
+                  style={[styles.popularCard, { width: isDesktop ? "31.5%" : isTablet ? "48%" : "100%", marginBottom: 24 }]}
                   onPress={() => navigation.navigate("ViewTrip")}
                 >
                   <ImageBackground

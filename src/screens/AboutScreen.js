@@ -19,6 +19,7 @@ import Footer from "../components/Footer";
 import useResponsive from "../hooks/useResponsive";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useData, resolveAsset } from "../context/DataContext";
+import { animateHero, animateStats, animateCards } from "../utils/animations";
 
 const { height, width } = Dimensions.get("window");
 
@@ -35,20 +36,9 @@ export default function AboutScreen() {
   } = useResponsive();
 
   useEffect(() => {
-    if (Platform.OS !== "web" || typeof window === "undefined") return;
-
-    const prefersReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReduced) return;
-
-    try {
-      gsap.fromTo(
-        ".gsap-fade-up-about",
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 0.8, stagger: 0.12, ease: "power2.out" }
-      );
-    } catch (e) {
-      // Fallback
-    }
+    animateHero(".gsap-hero-item");
+    animateStats(".gsap-stat");
+    animateCards(".gsap-card");
   }, []);
 
   return (
@@ -67,26 +57,67 @@ export default function AboutScreen() {
             <Header />
 
             {/* Hero Content */}
+            {/* Hero Content */}
             <View style={[styles.heroContent, { maxWidth: contentMaxWidth, width: "100%", alignSelf: "center", alignItems: "center" }]}>
-              <View style={styles.heroBadge}>
+              <View style={styles.heroBadge} className="gsap-hero-item">
                 <Text style={styles.heroBadgeText}>{aboutContent.heroBadge || "• PASSION & ADVENTURE •"}</Text>
               </View>
 
-              <Text style={[styles.heroTitle, { fontSize: isDesktop ? 54 : 36, lineHeight: isDesktop ? 62 : 42, textAlign: "center" }]}>
+              <Text
+                className="gsap-hero-item"
+                style={[
+                  styles.heroTitle,
+                  {
+                    fontSize: isMobile ? 32 : isDesktop ? 54 : 40,
+                    lineHeight: isMobile ? 40 : isDesktop ? 62 : 48,
+                    textAlign: "center",
+                  },
+                ]}
+              >
                 About Adventure{"\n"}
                 <Text style={styles.blueText}>Club</Text>
               </Text>
 
-              <Text style={[styles.heroDescription, { fontSize: isDesktop ? 17 : 15, lineHeight: isDesktop ? 28 : 24, textAlign: "center", maxWidth: 780 }]}>
+              <Text
+                className="gsap-hero-item"
+                style={[
+                  styles.heroDescription,
+                  {
+                    fontSize: isMobile ? 14 : isDesktop ? 17 : 15,
+                    lineHeight: isMobile ? 22 : isDesktop ? 28 : 24,
+                    textAlign: "center",
+                    maxWidth: 780,
+                    paddingHorizontal: isMobile ? 8 : 0,
+                  },
+                ]}
+              >
                 {aboutContent.heroDescription}
               </Text>
 
-              <View style={[styles.buttonRow, { flexDirection: isDesktop || isTablet ? "row" : "column", width: isDesktop || isTablet ? "auto" : "100%" }]}>
-                <TouchableOpacity style={[styles.primaryButton, isMobile && { alignItems: "center" }]} onPress={() => navigation.navigate("BrowseTrips")}>
+              <View
+                className="gsap-hero-item"
+                style={[
+                  styles.buttonRow,
+                  {
+                    flexDirection: isDesktop || isTablet ? "row" : "column",
+                    width: isDesktop || isTablet ? "auto" : "100%",
+                    gap: 12,
+                  },
+                ]}
+              >
+                <TouchableOpacity
+                  className="interactive-btn"
+                  style={[styles.primaryButton, isMobile && { alignItems: "center", width: "100%" }]}
+                  onPress={() => navigation.navigate("BrowseTrips")}
+                >
                   <Text style={styles.primaryButtonText}>OUR LEGACY</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={[styles.secondaryButton, isMobile && { alignItems: "center" }]} onPress={() => navigation.navigate("Contact")}>
+                <TouchableOpacity
+                  className="interactive-btn"
+                  style={[styles.secondaryButton, isMobile && { alignItems: "center", width: "100%" }]}
+                  onPress={() => navigation.navigate("Contact")}
+                >
                   <Text style={styles.secondaryButtonText}>WATCH THE FILM</Text>
                 </TouchableOpacity>
               </View>
@@ -107,9 +138,12 @@ export default function AboutScreen() {
               },
             ]}
           >
-            <View style={[styles.statsGrid, isDesktop && { flexDirection: "row", justifyContent: "space-between" }]}>
+            <View style={[styles.statsGrid, { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" }]}>
               {/* Card 1 */}
-              <View style={[styles.statCard, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
+              <View
+                className="gsap-stat interactive-card"
+                style={[styles.statCard, { width: isDesktop ? "23.5%" : "48%", marginBottom: isDesktop ? 0 : 16 }]}
+              >
                 <View style={styles.iconCircle}>
                   <Ionicons name="compass-outline" size={24} color="#0B5CAD" />
                 </View>
@@ -118,7 +152,10 @@ export default function AboutScreen() {
               </View>
 
               {/* Card 2 */}
-              <View style={[styles.statCard, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
+              <View
+                className="gsap-stat interactive-card"
+                style={[styles.statCard, { width: isDesktop ? "23.5%" : "48%", marginBottom: isDesktop ? 0 : 16 }]}
+              >
                 <View style={styles.iconCircle}>
                   <Ionicons name="earth-outline" size={24} color="#0B5CAD" />
                 </View>
@@ -127,7 +164,10 @@ export default function AboutScreen() {
               </View>
 
               {/* Card 3 */}
-              <View style={[styles.statCard, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
+              <View
+                className="gsap-stat interactive-card"
+                style={[styles.statCard, { width: isDesktop ? "23.5%" : "48%", marginBottom: isDesktop ? 0 : 16 }]}
+              >
                 <View style={styles.iconCircle}>
                   <Ionicons name="people-outline" size={24} color="#0B5CAD" />
                 </View>
@@ -136,7 +176,10 @@ export default function AboutScreen() {
               </View>
 
               {/* Card 4 */}
-              <View style={[styles.statCard, isDesktop && { width: "23.5%", marginBottom: 0 }]}>
+              <View
+                className="gsap-stat interactive-card"
+                style={[styles.statCard, { width: isDesktop ? "23.5%" : "48%", marginBottom: isDesktop ? 0 : 16 }]}
+              >
                 <View style={styles.iconCircle}>
                   <Ionicons name="shield-checkmark-outline" size={24} color="#0B5CAD" />
                 </View>
@@ -289,9 +332,13 @@ export default function AboutScreen() {
             </View>
 
             {/* Guides Grid */}
-            <View style={[styles.guidesGrid, isDesktop && { flexDirection: "row", justifyContent: "space-between" }]}>
+            <View style={[styles.guidesGrid, { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" }]}>
               {(aboutContent.guides || []).map((guide) => (
-                <View style={[styles.guideCard, isDesktop && { width: "23.5%", marginBottom: 0 }]} key={guide.id}>
+                <View
+                  className="gsap-card interactive-card"
+                  style={[styles.guideCard, { width: isDesktop ? "23.5%" : isTablet ? "48%" : "100%", marginBottom: 20 }]}
+                  key={guide.id}
+                >
                   <Image source={resolveAsset(guide.imageKey, "guide1.jpg")} style={styles.guideImage} />
                   <View style={styles.guideOverlay}>
                     <Text style={styles.guideCategory}>{guide.category}</Text>

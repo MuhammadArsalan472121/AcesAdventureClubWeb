@@ -125,8 +125,8 @@ export default function RecentActivities() {
 
       list.push({
         id: `sponsor_${sp.id || idx}`,
-        title: `Partner: ${sp.name}`,
-        description: `${sp.package} sponsor active across ${sp.trips || '1'} club expeditions.`,
+        title: `Partner: ${sp.companyName || sp.sponsorName || sp.name}`,
+        description: `Sponsor active across ${sp.trips || '1'} club trips.`,
         time: isActive ? 'VERIFIED' : 'PENDING',
         timestamp: d.getTime() - idx * 2000,
         icon: '🤝',

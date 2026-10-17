@@ -10,6 +10,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import useResponsive from "../hooks/useResponsive";
 import { useAuth } from "../context/AuthContext";
+import { animateMobileMenu } from "../utils/animations";
 
 export default function Header() {
   const navigation = useNavigation();
@@ -47,6 +48,12 @@ export default function Header() {
     await logout();
     navigation.navigate("Home");
   };
+
+  React.useEffect(() => {
+    if (menuVisible) {
+      animateMobileMenu(".gsap-mobile-menu", true);
+    }
+  }, [menuVisible]);
 
   const navItems = [
     { label: "Home", screen: "Home" },
@@ -172,90 +179,99 @@ export default function Header() {
 
       {/* MOBILE DROPDOWN MENU */}
       {!isWideScreen && menuVisible && (
-        <View style={styles.mobileMenu}>
-          {navItems.map((item) => (
-            <TouchableOpacity
-              key={item.screen}
-              style={styles.menuRow}
-              onPress={() => navigateTo(item.screen)}
-            >
-              <Ionicons
-                name={
-                  item.screen === "Home"
-                    ? "home-outline"
-                    : item.screen === "About"
-                    ? "information-circle-outline"
-                    : item.screen === "BrowseTrips"
-                    ? "compass-outline"
-                    : item.screen === "Gallery"
-                    ? "images-outline"
-                    : item.screen === "Sponsors"
-                    ? "newspaper-outline"
-                    : "call-outline"
-                }
-                size={20}
-                color="#0B5CAD"
-              />
-              <Text style={styles.menuItem}>{item.label}</Text>
-            </TouchableOpacity>
-          ))}
-
-          {user ? (
-            <>
-              {user && !user.emailVerified && (
+        <>
+          <TouchableOpacity
+            style={styles.menuBackdrop}
+            activeOpacity={1}
+            onPress={() => setMenuVisible(false)}
+          />
+          <View style={styles.mobileMenu} nativeID="gsap-mobile-menu" className="gsap-mobile-menu">
+            <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+              {navItems.map((item) => (
                 <TouchableOpacity
-                  style={styles.mobileVerifyBanner}
-                  onPress={() => navigateTo("EmailVerification")}
+                  key={item.screen}
+                  style={styles.menuRow}
+                  onPress={() => navigateTo(item.screen)}
                 >
-                  <Ionicons name="alert-circle" size={18} color="#d97706" style={{ marginRight: 8 }} />
-                  <Text style={styles.mobileVerifyBannerText}>Action Required: Verify Email</Text>
-                </TouchableOpacity>
-              )}
-
-              {/* Profile & Settings in Mobile Menu */}
-              <TouchableOpacity
-                style={styles.menuRow}
-                onPress={handleProfilePress}
-              >
-                {userProfile?.avatarUrl ? (
-                  <Image
-                    source={{ uri: userProfile.avatarUrl }}
-                    style={styles.mobileAvatarImg}
+                  <Ionicons
+                    name={
+                      item.screen === "Home"
+                        ? "home-outline"
+                        : item.screen === "About"
+                        ? "information-circle-outline"
+                        : item.screen === "BrowseTrips"
+                        ? "compass-outline"
+                        : item.screen === "Gallery"
+                        ? "images-outline"
+                        : item.screen === "Sponsors"
+                        ? "newspaper-outline"
+                        : "call-outline"
+                    }
+                    size={20}
+                    color="#0B5CAD"
                   />
-                ) : (
-                  <Ionicons name="person-outline" size={20} color="#0B5CAD" />
-                )}
-                <Text style={styles.menuItem}>My Profile ({displayName})</Text>
-              </TouchableOpacity>
+                  <Text style={styles.menuItem}>{item.label}</Text>
+                </TouchableOpacity>
+              ))}
 
-              <TouchableOpacity
-                style={styles.menuRow}
-                onPress={handleSettingsPress}
-              >
-                <Ionicons name="settings-outline" size={20} color="#0B5CAD" />
-                <Text style={styles.menuItem}>Account Settings</Text>
-              </TouchableOpacity>
+              {user ? (
+                <>
+                  {user && !user.emailVerified && (
+                    <TouchableOpacity
+                      style={styles.mobileVerifyBanner}
+                      onPress={() => navigateTo("EmailVerification")}
+                    >
+                      <Ionicons name="alert-circle" size={18} color="#d97706" style={{ marginRight: 8 }} />
+                      <Text style={styles.mobileVerifyBannerText}>Action Required: Verify Email</Text>
+                    </TouchableOpacity>
+                  )}
 
-              <TouchableOpacity
-                style={styles.logoutButtonMobile}
-                onPress={handleLogout}
-              >
-                <Ionicons name="log-out-outline" size={18} color="#DC2626" style={{ marginRight: 6 }} />
-                <Text style={styles.logoutButtonTextMobile}>Log Out</Text>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <>
-              <TouchableOpacity style={styles.loginButton} onPress={() => navigateTo("Login")}>
-                <Text style={styles.loginButtonText}>Login</Text>
-              </TouchableOpacity>
+                  {/* Profile & Settings in Mobile Menu */}
+                  <TouchableOpacity
+                    style={styles.menuRow}
+                    onPress={handleProfilePress}
+                  >
+                    {userProfile?.avatarUrl ? (
+                      <Image
+                        source={{ uri: userProfile.avatarUrl }}
+                        style={styles.mobileAvatarImg}
+                      />
+                    ) : (
+                      <Ionicons name="person-outline" size={20} color="#0B5CAD" />
+                    )}
+                    <Text style={styles.menuItem}>My Profile ({displayName})</Text>
+                  </TouchableOpacity>
 
-              <TouchableOpacity style={styles.signupButton} onPress={() => navigateTo("Signup")}>
-                <Text style={styles.signupButtonText}>Sign up</Text>
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
+                  <TouchableOpacity
+                    style={styles.menuRow}
+                    onPress={handleSettingsPress}
+                  >
+                    <Ionicons name="settings-outline" size={20} color="#0B5CAD" />
+                    <Text style={styles.menuItem}>Account Settings</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.logoutButtonMobile}
+                    onPress={handleLogout}
+                  >
+                    <Ionicons name="log-out-outline" size={18} color="#DC2626" style={{ marginRight: 6 }} />
+                    <Text style={styles.logoutButtonTextMobile}>Log Out</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <TouchableOpacity style={styles.loginButton} onPress={() => navigateTo("Login")}>
+                    <Text style={styles.loginButtonText}>Login</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={styles.signupButton} onPress={() => navigateTo("Signup")}>
+                    <Text style={styles.signupButtonText}>Sign up</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </ScrollView>
+          </View>
+        </>
       )}
     </View>
   );
@@ -392,24 +408,36 @@ const styles = StyleSheet.create({
   },
 
   hamburgerBtn: {
-    padding: 6,
+    padding: 8,
     cursor: "pointer",
+    borderRadius: 8,
+  },
+
+  menuBackdrop: {
+    position: "absolute",
+    top: -50,
+    left: -50,
+    right: -50,
+    bottom: -1000,
+    zIndex: 998,
+    backgroundColor: "rgba(8, 27, 46, 0.6)",
   },
 
   mobileMenu: {
     position: "absolute",
-    top: 80,
-    left: 20,
-    right: 20,
+    top: 75,
+    left: 16,
+    right: 16,
+    maxHeight: "82vh",
     backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    padding: 20,
+    borderRadius: 20,
+    padding: 18,
     zIndex: 999,
     shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 15,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 10,
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 12,
   },
 
   menuRow: {
