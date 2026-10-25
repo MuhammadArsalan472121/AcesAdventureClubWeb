@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { signOut } from 'firebase/auth';
 import { auth } from '../screens/firebaseConfig';
+import { useData } from '../context/DataContext';
 
 export default function TopBar() {
   const navigation = useNavigation<any>();
+
+  const { socialLinks, contactContent, updateSocialLinks } = useData() as any;
 
   const [adminName, setAdminName] = useState(() => {
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -18,6 +21,21 @@ export default function TopBar() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editNameInput, setEditNameInput] = useState(adminName);
 
+  // Social handles state
+  const [editInstaInput, setEditInstaInput] = useState(
+    socialLinks?.instagram || contactContent?.instagram || 'https://www.instagram.com/aces_adventure_club/'
+  );
+  const [editYoutubeInput, setEditYoutubeInput] = useState(
+    socialLinks?.youtube || contactContent?.youtube || 'https://www.youtube.com/@AcesAdventureClub-007'
+  );
+  const [editFacebookInput, setEditFacebookInput] = useState(
+    socialLinks?.facebook || contactContent?.facebook || 'https://www.facebook.com/acesadventureclub'
+  );
+  const [editWhatsappInput, setEditWhatsappInput] = useState(
+    socialLinks?.whatsapp || contactContent?.whatsapp || '+923121578099'
+  );
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
+
   const getInitials = (name: string) => {
     if (!name) return 'HA';
     const parts = name.trim().split(' ').filter(Boolean);
@@ -25,6 +43,34 @@ export default function TopBar() {
       return parts[0].slice(0, 2).toUpperCase();
     }
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
+
+  const handleOpenEditModal = () => {
+    setEditNameInput(adminName);
+    setEditInstaInput(socialLinks?.instagram || contactContent?.instagram || 'https://www.instagram.com/aces_adventure_club/');
+    setEditYoutubeInput(socialLinks?.youtube || contactContent?.youtube || 'https://www.youtube.com/@AcesAdventureClub-007');
+    setEditFacebookInput(socialLinks?.facebook || contactContent?.facebook || 'https://www.facebook.com/acesadventureclub');
+    setEditWhatsappInput(socialLinks?.whatsapp || contactContent?.whatsapp || '+923121578099');
+    setSaveSuccessMsg('');
+    setEditModalOpen(true);
+  };
+
+  const testExternalUrl = (rawUrl: string) => {
+    if (!rawUrl) return;
+    let url = rawUrl;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      if (url.includes('@') || url.startsWith('+') || /^\d+$/.test(url.replace(/[\s+-]/g, ''))) {
+        const cleanNumber = url.replace(/[^0-9]/g, '');
+        url = `https://wa.me/${cleanNumber}`;
+      } else {
+        url = `https://${url}`;
+      }
+    }
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } else {
+      Linking.openURL(url).catch((err) => console.warn('Failed to open link:', err));
+    }
   };
 
   const handleLogout = async () => {
@@ -43,13 +89,27 @@ export default function TopBar() {
     });
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     const trimmed = editNameInput.trim() || 'Hammad';
     setAdminName(trimmed);
     if (typeof window !== 'undefined' && window.localStorage) {
       localStorage.setItem('aces_club_admin_name', trimmed);
     }
-    setEditModalOpen(false);
+
+    if (updateSocialLinks) {
+      await updateSocialLinks({
+        instagram: editInstaInput.trim() || 'https://www.instagram.com/aces_adventure_club/',
+        youtube: editYoutubeInput.trim() || 'https://www.youtube.com/@AcesAdventureClub-007',
+        facebook: editFacebookInput.trim() || 'https://www.facebook.com/acesadventureclub',
+        whatsapp: editWhatsappInput.trim() || '+923121578099',
+      });
+    }
+
+    setSaveSuccessMsg('Profile & live social links updated!');
+    setTimeout(() => {
+      setEditModalOpen(false);
+      setSaveSuccessMsg('');
+    }, 1200);
   };
 
   return (
@@ -150,19 +210,18 @@ export default function TopBar() {
                 </View>
               </Pressable>
 
-              {/* Option 2: View Profile / Edit Name */}
+              {/* Option 2: View Profile / Edit Name & Socials */}
               <Pressable
                 style={styles.dropdownItem}
                 onPress={() => {
                   setMenuOpen(false);
-                  setEditNameInput(adminName);
-                  setEditModalOpen(true);
+                  handleOpenEditModal();
                 }}
               >
                 <Text style={styles.dropdownItemIcon}>👤</Text>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.dropdownItemTitle}>View Profile / Edit</Text>
-                  <Text style={styles.dropdownItemSub}>Manage admin name & info</Text>
+                  <Text style={styles.dropdownItemTitle}>Profile & Social Links</Text>
+                  <Text style={styles.dropdownItemSub}>Manage admin & club social handles</Text>
                 </View>
               </Pressable>
 
@@ -184,7 +243,7 @@ export default function TopBar() {
         )}
       </View>
 
-      {/* Edit Admin Profile Modal */}
+      {/* Edit Admin Profile & Social Media Modal */}
       <Modal
         visible={editModalOpen}
         transparent={true}
@@ -195,47 +254,140 @@ export default function TopBar() {
           <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation?.()}>
             <View style={styles.modalHeader}>
               <View>
-                <Text style={styles.modalTitle}>Admin Profile Settings</Text>
-                <Text style={styles.modalSubtitle}>Update display name for the admin console</Text>
+                <Text style={styles.modalTitle}>Admin Profile & Social Media Links</Text>
+                <Text style={styles.modalSubtitle}>Update admin details and live website social channels</Text>
               </View>
               <Pressable onPress={() => setEditModalOpen(false)} style={styles.closeBtn}>
                 <Text style={styles.closeBtnText}>✕</Text>
               </Pressable>
             </View>
 
-            <View style={styles.modalBody}>
-              <View style={styles.avatarPreviewRow}>
-                <View style={styles.largeAvatar}>
-                  <Text style={styles.largeAvatarText}>{getInitials(adminName)}</Text>
-                </View>
-                <View style={{ gap: 4 }}>
-                  <Text style={styles.avatarNameText}>{adminName}</Text>
-                  <View style={styles.badgePill}>
-                    <Text style={styles.badgePillText}>⚡ Super Admin</Text>
+            {saveSuccessMsg ? (
+              <View style={styles.modalSuccessToast}>
+                <Text style={styles.modalSuccessToastText}>✓ {saveSuccessMsg}</Text>
+              </View>
+            ) : null}
+
+            <ScrollView style={{ maxHeight: 480 }} showsVerticalScrollIndicator={false}>
+              <View style={styles.modalBody}>
+                {/* Admin info banner */}
+                <View style={styles.avatarPreviewRow}>
+                  <View style={styles.largeAvatar}>
+                    <Text style={styles.largeAvatarText}>{getInitials(adminName)}</Text>
+                  </View>
+                  <View style={{ gap: 4 }}>
+                    <Text style={styles.avatarNameText}>{adminName}</Text>
+                    <View style={styles.badgePill}>
+                      <Text style={styles.badgePillText}>⚡ Super Admin</Text>
+                    </View>
                   </View>
                 </View>
-              </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>ADMIN DISPLAY NAME</Text>
-                <TextInput
-                  style={styles.modalInput}
-                  value={editNameInput}
-                  onChangeText={setEditNameInput}
-                  placeholder="Enter admin name..."
-                  placeholderTextColor="#94A3B8"
-                />
-              </View>
+                {/* Display Name */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>ADMIN DISPLAY NAME</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={editNameInput}
+                    onChangeText={setEditNameInput}
+                    placeholder="Enter admin name..."
+                    placeholderTextColor="#94A3B8"
+                  />
+                </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>ROLE PERMISSIONS</Text>
-                <TextInput
-                  style={[styles.modalInput, styles.disabledInput]}
-                  value="Super Admin (Full Console Access)"
-                  editable={false}
-                />
+                {/* Section Separator */}
+                <View style={styles.socialHeaderBox}>
+                  <Text style={styles.socialHeaderBoxTitle}>🌐 LIVE WEBSITE SOCIAL MEDIA CHANNELS</Text>
+                  <Text style={styles.socialHeaderBoxSub}>
+                    These links control where the Instagram, YouTube, Facebook, and WhatsApp icons lead when users click them on the footer.
+                  </Text>
+                </View>
+
+                {/* Instagram */}
+                <View style={styles.inputGroup}>
+                  <View style={styles.inputLabelRow}>
+                    <Text style={styles.inputLabel}>📸 INSTAGRAM HANDLE / URL</Text>
+                    <TouchableOpacity
+                      onPress={() => testExternalUrl(editInstaInput)}
+                      style={styles.testLinkBtn}
+                    >
+                      <Text style={styles.testLinkBtnText}>🔗 Test Link</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={editInstaInput}
+                    onChangeText={setEditInstaInput}
+                    placeholder="https://www.instagram.com/aces_adventure_club/"
+                    placeholderTextColor="#94A3B8"
+                    autoCapitalize="none"
+                  />
+                </View>
+
+                {/* YouTube */}
+                <View style={styles.inputGroup}>
+                  <View style={styles.inputLabelRow}>
+                    <Text style={styles.inputLabel}>▶️ YOUTUBE CHANNEL / URL</Text>
+                    <TouchableOpacity
+                      onPress={() => testExternalUrl(editYoutubeInput)}
+                      style={styles.testLinkBtn}
+                    >
+                      <Text style={styles.testLinkBtnText}>🔗 Test Link</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={editYoutubeInput}
+                    onChangeText={setEditYoutubeInput}
+                    placeholder="https://www.youtube.com/@AcesAdventureClub-007"
+                    placeholderTextColor="#94A3B8"
+                    autoCapitalize="none"
+                  />
+                </View>
+
+                {/* Facebook */}
+                <View style={styles.inputGroup}>
+                  <View style={styles.inputLabelRow}>
+                    <Text style={styles.inputLabel}>📘 FACEBOOK PAGE / URL</Text>
+                    <TouchableOpacity
+                      onPress={() => testExternalUrl(editFacebookInput)}
+                      style={styles.testLinkBtn}
+                    >
+                      <Text style={styles.testLinkBtnText}>🔗 Test Link</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={editFacebookInput}
+                    onChangeText={setEditFacebookInput}
+                    placeholder="https://www.facebook.com/acesadventureclub"
+                    placeholderTextColor="#94A3B8"
+                    autoCapitalize="none"
+                  />
+                </View>
+
+                {/* WhatsApp */}
+                <View style={styles.inputGroup}>
+                  <View style={styles.inputLabelRow}>
+                    <Text style={styles.inputLabel}>💬 WHATSAPP NUMBER OR URL</Text>
+                    <TouchableOpacity
+                      onPress={() => testExternalUrl(editWhatsappInput)}
+                      style={styles.testLinkBtn}
+                    >
+                      <Text style={styles.testLinkBtnText}>🔗 Test Link</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={editWhatsappInput}
+                    onChangeText={setEditWhatsappInput}
+                    placeholder="+92 312 1578099 or https://wa.me/923121578099"
+                    placeholderTextColor="#94A3B8"
+                    autoCapitalize="none"
+                  />
+                </View>
               </View>
-            </View>
+            </ScrollView>
 
             <View style={styles.modalFooter}>
               <Pressable
@@ -246,7 +398,7 @@ export default function TopBar() {
               </Pressable>
 
               <Pressable style={styles.saveBtn} onPress={handleSaveProfile}>
-                <Text style={styles.saveBtnText}>Save Profile Name</Text>
+                <Text style={styles.saveBtnText}>Save Profile & Socials</Text>
               </Pressable>
             </View>
           </Pressable>
@@ -494,7 +646,7 @@ const styles = StyleSheet.create({
 
   modalCard: {
     width: '100%',
-    maxWidth: 440,
+    maxWidth: 540,
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 24,
@@ -646,5 +798,64 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+
+  modalSuccessToast: {
+    backgroundColor: '#DCFCE7',
+    borderWidth: 1,
+    borderColor: '#86EFAC',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginBottom: 14,
+  },
+
+  modalSuccessToastText: {
+    color: '#15803D',
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+
+  socialHeaderBox: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    marginTop: 6,
+    gap: 4,
+  },
+
+  socialHeaderBoxTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#1D4ED8',
+    letterSpacing: 0.5,
+  },
+
+  socialHeaderBoxSub: {
+    fontSize: 11,
+    color: '#3B82F6',
+    lineHeight: 16,
+  },
+
+  inputLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  testLinkBtn: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+
+  testLinkBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#0B5CAD',
   },
 });

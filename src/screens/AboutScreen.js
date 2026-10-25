@@ -13,7 +13,7 @@ import {
   Platform,
 } from "react-native";
 import gsap from "gsap";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native"; 
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import useResponsive from "../hooks/useResponsive";

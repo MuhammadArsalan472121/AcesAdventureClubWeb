@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity, Linking } from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity, Linking, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import useResponsive from "../hooks/useResponsive";
@@ -8,11 +8,55 @@ import { useData } from "../context/DataContext";
 export default function Footer() {
   const navigation = useNavigation();
   const { isDesktop, isTablet } = useResponsive();
-  const { contactContent } = useData() || {};
+  const { contactContent, socialLinks } = useData() || {};
 
   const location = contactContent?.location || "Attock, Punjab, Pakistan";
   const phone = contactContent?.phone || "+92 312 1578099";
   const email = contactContent?.email || "info.acesadventureclub@gmail.com";
+
+  const instagramUrl =
+    socialLinks?.instagram ||
+    contactContent?.instagram ||
+    "https://www.instagram.com/aces_adventure_club/";
+
+  const youtubeUrl =
+    socialLinks?.youtube ||
+    contactContent?.youtube ||
+    "https://www.youtube.com/@AcesAdventureClub-007";
+
+  const facebookUrl =
+    socialLinks?.facebook ||
+    contactContent?.facebook ||
+    "https://www.facebook.com/acesadventureclub";
+
+  const whatsappVal =
+    socialLinks?.whatsapp ||
+    contactContent?.whatsapp ||
+    "+923121578099";
+
+  const openSocialLink = (rawUrl) => {
+    if (!rawUrl) return;
+    const url = rawUrl.startsWith("http://") || rawUrl.startsWith("https://") ? rawUrl : `https://${rawUrl}`;
+    if (Platform.OS === "web" && typeof window !== "undefined") {
+      window.open(url, "_blank", "noopener,noreferrer");
+    } else {
+      Linking.openURL(url).catch((err) => console.warn("Failed to open URL:", err));
+    }
+  };
+
+  const openWhatsApp = (rawVal) => {
+    if (!rawVal) return;
+    let url = rawVal;
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      const cleanNumber = rawVal.replace(/[^0-9]/g, "");
+      url = `https://wa.me/${cleanNumber}`;
+    }
+    if (Platform.OS === "web" && typeof window !== "undefined") {
+      window.open(url, "_blank", "noopener,noreferrer");
+    } else {
+      Linking.openURL(url).catch((err) => console.warn("Failed to open WhatsApp:", err));
+    }
+  };
 
   const navigateTo = (screen) => {
     navigation.navigate(screen);
@@ -32,16 +76,40 @@ export default function Footer() {
             Discover breathtaking mountains, hidden valleys, and unforgettable adventure expeditions across Northern Pakistan.
           </Text>
           <View style={styles.socialRow}>
-            <TouchableOpacity style={styles.socialBtn}>
+            <TouchableOpacity
+              style={styles.socialBtn}
+              activeOpacity={0.7}
+              onPress={() => openSocialLink(facebookUrl)}
+              accessibilityLabel="Facebook"
+              accessibilityRole="link"
+            >
               <Ionicons name="logo-facebook" size={18} color="#FFFFFF" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.socialBtn}>
+            <TouchableOpacity
+              style={styles.socialBtn}
+              activeOpacity={0.7}
+              onPress={() => openSocialLink(instagramUrl)}
+              accessibilityLabel="Instagram"
+              accessibilityRole="link"
+            >
               <Ionicons name="logo-instagram" size={18} color="#FFFFFF" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.socialBtn}>
+            <TouchableOpacity
+              style={styles.socialBtn}
+              activeOpacity={0.7}
+              onPress={() => openSocialLink(youtubeUrl)}
+              accessibilityLabel="YouTube"
+              accessibilityRole="link"
+            >
               <Ionicons name="logo-youtube" size={18} color="#FFFFFF" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.socialBtn}>
+            <TouchableOpacity
+              style={styles.socialBtn}
+              activeOpacity={0.7}
+              onPress={() => openWhatsApp(whatsappVal)}
+              accessibilityLabel="WhatsApp"
+              accessibilityRole="link"
+            >
               <Ionicons name="logo-whatsapp" size={18} color="#FFFFFF" />
             </TouchableOpacity>
           </View>

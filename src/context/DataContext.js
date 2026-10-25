@@ -7,6 +7,7 @@ import {
   onSnapshot,
   doc,
   addDoc,
+  setDoc,
   updateDoc,
   deleteDoc,
   serverTimestamp,
@@ -978,6 +979,10 @@ const DEFAULT_DATA = {
     emailSubtitle: "Inquiry & Support",
     location: "Attock, Punjab, Pakistan",
     locationSubtitle: "The Gateway to the North",
+    facebook: "https://www.facebook.com/acesadventureclub",
+    instagram: "https://www.instagram.com/aces_adventure_club/",
+    youtube: "https://www.youtube.com/@AcesAdventureClub-007",
+    whatsapp: "+923121578099",
     goldStandards: [
       "Carefully Curated Adventures",
       "Safe and Expert-Guided Experiences",
@@ -985,6 +990,13 @@ const DEFAULT_DATA = {
       "24/7 Concierge for Expeditions",
       "Sustainability & Minimal Impact",
     ],
+  },
+
+  socialLinks: {
+    facebook: "https://www.facebook.com/acesadventureclub",
+    instagram: "https://www.instagram.com/aces_adventure_club/",
+    youtube: "https://www.youtube.com/@AcesAdventureClub-007",
+    whatsapp: "+923121578099",
   },
 
   onboardingContent: {
@@ -1056,6 +1068,7 @@ const DataContext = createContext({
   updateHomeContent: (_fields) => {},
   updateAboutContent: (_fields) => {},
   updateContactContent: (_fields) => {},
+  updateSocialLinks: (_fields) => {},
   updateOnboardingContent: (_slideKey, _fields) => {},
   resetToDefaults: () => {},
 });
@@ -1079,7 +1092,22 @@ export const DataProvider = ({ children }) => {
             // Ensure any new structure defaults are preserved
             homeContent: { ...prev.homeContent, ...(parsed.homeContent || {}) },
             aboutContent: { ...prev.aboutContent, ...(parsed.aboutContent || {}) },
-            contactContent: { ...prev.contactContent, ...(parsed.contactContent || {}) },
+            contactContent: {
+              ...DEFAULT_DATA.contactContent,
+              ...(parsed.contactContent || {}),
+              facebook: parsed.contactContent?.facebook || parsed.socialLinks?.facebook || DEFAULT_DATA.socialLinks.facebook,
+              instagram: parsed.contactContent?.instagram || parsed.socialLinks?.instagram || DEFAULT_DATA.socialLinks.instagram,
+              youtube: parsed.contactContent?.youtube || parsed.socialLinks?.youtube || DEFAULT_DATA.socialLinks.youtube,
+              whatsapp: parsed.contactContent?.whatsapp || parsed.socialLinks?.whatsapp || DEFAULT_DATA.socialLinks.whatsapp,
+            },
+            socialLinks: {
+              ...DEFAULT_DATA.socialLinks,
+              ...(parsed.socialLinks || {}),
+              facebook: parsed.socialLinks?.facebook || parsed.contactContent?.facebook || DEFAULT_DATA.socialLinks.facebook,
+              instagram: parsed.socialLinks?.instagram || parsed.contactContent?.instagram || DEFAULT_DATA.socialLinks.instagram,
+              youtube: parsed.socialLinks?.youtube || parsed.contactContent?.youtube || DEFAULT_DATA.socialLinks.youtube,
+              whatsapp: parsed.socialLinks?.whatsapp || parsed.contactContent?.whatsapp || DEFAULT_DATA.socialLinks.whatsapp,
+            },
             onboardingContent: { ...prev.onboardingContent, ...(parsed.onboardingContent || {}) },
             tripCategories: (Array.isArray(parsed.tripCategories) && parsed.tripCategories.length > 0)
               ? parsed.tripCategories
@@ -1327,6 +1355,45 @@ export const DataProvider = ({ children }) => {
     return () => {
       console.log("[INQUIRIES_FIRESTORE_DEBUG] listener stopped");
       unsubscribe();
+    };
+  }, []);
+
+  // Real-time Firestore listener for Social & Settings document (with graceful fallback)
+  useEffect(() => {
+    let unsubscribe = null;
+    try {
+      const socialDocRef = doc(db, "settings", "social");
+      unsubscribe = onSnapshot(
+        socialDocRef,
+        (snap) => {
+          if (snap.exists()) {
+            const data = snap.data();
+            setStore((prev) => {
+              const updatedSocial = {
+                ...(prev.socialLinks || DEFAULT_DATA.socialLinks),
+                ...data,
+              };
+              const updatedContact = {
+                ...(prev.contactContent || DEFAULT_DATA.contactContent),
+                ...data,
+              };
+              return {
+                ...prev,
+                socialLinks: updatedSocial,
+                contactContent: updatedContact,
+              };
+            });
+          }
+        },
+        (error) => {
+          console.log("[SETTINGS_DEBUG] Firestore social listener note:", error?.message);
+        }
+      );
+    } catch (e) {
+      console.log("[SETTINGS_DEBUG] Could not attach firestore settings listener:", e);
+    }
+    return () => {
+      if (unsubscribe) unsubscribe();
     };
   }, []);
 
@@ -1772,12 +1839,53 @@ export const DataProvider = ({ children }) => {
     saveStore(updated);
   };
 
-  const updateContactContent = (fields) => {
+  const updateContactContent = async (fields) => {
+    const updatedSocial = {
+      ...(store.socialLinks || DEFAULT_DATA.socialLinks),
+      ...(fields.facebook !== undefined && { facebook: fields.facebook }),
+      ...(fields.instagram !== undefined && { instagram: fields.instagram }),
+      ...(fields.youtube !== undefined && { youtube: fields.youtube }),
+      ...(fields.whatsapp !== undefined && { whatsapp: fields.whatsapp }),
+    };
+
     const updated = {
       ...store,
       contactContent: { ...store.contactContent, ...fields },
+      socialLinks: updatedSocial,
     };
     saveStore(updated);
+
+    if (fields.facebook || fields.instagram || fields.youtube || fields.whatsapp) {
+      try {
+        const socialDocRef = doc(db, "settings", "social");
+        await setDoc(socialDocRef, updatedSocial, { merge: true });
+      } catch (err) {
+        console.log("[SETTINGS_DEBUG] Firestore social save note:", err?.message);
+      }
+    }
+  };
+
+  const updateSocialLinks = async (fields) => {
+    const updatedSocial = {
+      ...(store.socialLinks || DEFAULT_DATA.socialLinks),
+      ...fields,
+    };
+    const updated = {
+      ...store,
+      socialLinks: updatedSocial,
+      contactContent: {
+        ...(store.contactContent || DEFAULT_DATA.contactContent),
+        ...fields,
+      },
+    };
+    saveStore(updated);
+
+    try {
+      const socialDocRef = doc(db, "settings", "social");
+      await setDoc(socialDocRef, updatedSocial, { merge: true });
+    } catch (err) {
+      console.log("[SETTINGS_DEBUG] Firestore social save note:", err?.message);
+    }
   };
 
   const updateOnboardingContent = (slideKey, fields) => {
@@ -1870,6 +1978,7 @@ export const DataProvider = ({ children }) => {
         updateHomeContent,
         updateAboutContent,
         updateContactContent,
+        updateSocialLinks,
         updateOnboardingContent,
         seedTripsToFirestore: () => seedDefaultTrips(DEFAULT_DATA.trips),
         resetToDefaults,

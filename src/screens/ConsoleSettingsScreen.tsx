@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
+  Linking,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -8,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 import Sidebar from '../components/Sidebar';
 import TopBar from '../components/TopBar';
@@ -18,6 +21,7 @@ export default function ConsoleSettingsScreen() {
     homeContent,
     aboutContent,
     contactContent,
+    socialLinks,
     onboardingContent,
     inquiries,
     trips = [],
@@ -30,13 +34,14 @@ export default function ConsoleSettingsScreen() {
     updateHomeContent,
     updateAboutContent,
     updateContactContent,
+    updateSocialLinks,
     updateOnboardingContent,
     updateInquiryStatus,
     deleteInquiry,
     resetToDefaults,
   } = useData() as any;
 
-  const [activeTab, setActiveTab] = useState<'home' | 'about' | 'contact' | 'tripPresets' | 'onboarding' | 'inquiries' | 'system'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'about' | 'contact' | 'social' | 'tripPresets' | 'onboarding' | 'inquiries' | 'system'>('home');
 
   const [adminCatInput, setAdminCatInput] = useState('');
   const [adminBadgeInput, setAdminBadgeInput] = useState('');
@@ -46,6 +51,41 @@ export default function ConsoleSettingsScreen() {
   const [aboutForm, setAboutForm] = useState(aboutContent);
   const [contactForm, setContactForm] = useState(contactContent);
   const [onboardingForm, setOnboardingForm] = useState(onboardingContent);
+  const [socialForm, setSocialForm] = useState({
+    instagram: socialLinks?.instagram || contactContent?.instagram || 'https://www.instagram.com/aces_adventure_club/',
+    youtube: socialLinks?.youtube || contactContent?.youtube || 'https://www.youtube.com/@AcesAdventureClub-007',
+    facebook: socialLinks?.facebook || contactContent?.facebook || 'https://www.facebook.com/acesadventureclub',
+    whatsapp: socialLinks?.whatsapp || contactContent?.whatsapp || '+923121578099',
+  });
+
+  useEffect(() => {
+    if (socialLinks || contactContent) {
+      setSocialForm({
+        instagram: socialLinks?.instagram || contactContent?.instagram || 'https://www.instagram.com/aces_adventure_club/',
+        youtube: socialLinks?.youtube || contactContent?.youtube || 'https://www.youtube.com/@AcesAdventureClub-007',
+        facebook: socialLinks?.facebook || contactContent?.facebook || 'https://www.facebook.com/acesadventureclub',
+        whatsapp: socialLinks?.whatsapp || contactContent?.whatsapp || '+923121578099',
+      });
+    }
+  }, [socialLinks, contactContent]);
+
+  const testExternalUrl = (rawUrl: string) => {
+    if (!rawUrl) return;
+    let url = rawUrl;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      if (url.includes('@') || url.startsWith('+') || /^\d+$/.test(url.replace(/[\s+-]/g, ''))) {
+        const cleanNumber = url.replace(/[^0-9]/g, '');
+        url = `https://wa.me/${cleanNumber}`;
+      } else {
+        url = `https://${url}`;
+      }
+    }
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } else {
+      Linking.openURL(url).catch((err) => console.warn('Failed to open link:', err));
+    }
+  };
 
   const [saveMessage, setSaveMessage] = useState('');
 
@@ -65,8 +105,21 @@ export default function ConsoleSettingsScreen() {
   };
 
   const handleSaveContact = () => {
-    updateContactContent(contactForm);
-    showSavedNotification('Official Contact channels updated live!');
+    updateContactContent({
+      ...contactForm,
+      ...socialForm,
+    });
+    if (updateSocialLinks) {
+      updateSocialLinks(socialForm);
+    }
+    showSavedNotification('Official Contact channels & Social Links updated live!');
+  };
+
+  const handleSaveSocial = () => {
+    if (updateSocialLinks) {
+      updateSocialLinks(socialForm);
+    }
+    showSavedNotification('Website social media handles updated live across all pages!');
   };
 
   const handleSaveOnboarding = (slideKey: 'slide1' | 'slide2' | 'slide3') => {
@@ -117,6 +170,7 @@ export default function ConsoleSettingsScreen() {
               { key: 'home', label: '🏠 Home Page CMS' },
               { key: 'about', label: '📖 About Page CMS' },
               { key: 'contact', label: '📞 Contact Info' },
+              { key: 'social', label: '🌐 Social Handles' },
               { key: 'tripPresets', label: '🏷️ Categories & Badges' },
               { key: 'inquiries', label: `📥 Inquiries Inbox (${inquiries.filter((i: any) => i.status === 'NEW').length} New)` },
               { key: 'onboarding', label: '📱 Onboarding Slides' },
@@ -368,8 +422,224 @@ export default function ConsoleSettingsScreen() {
                   </View>
                 </View>
 
+                <View style={styles.divider} />
+
+                <Text style={styles.subSectionTitle}>Official Social Media Channels (Footer Icons)</Text>
+                <Text style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>
+                  Links assigned here control where users are directed when clicking social icons in the footer across all website pages.
+                </Text>
+
+                <View style={styles.rowTwo}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 14 }]}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={styles.label}>📸 INSTAGRAM HANDLE / URL</Text>
+                      <TouchableOpacity onPress={() => testExternalUrl(socialForm.instagram)}>
+                        <Text style={{ fontSize: 11, color: '#0B5CAD', fontWeight: '700' }}>🔗 Test</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <TextInput
+                      style={styles.input}
+                      value={socialForm.instagram}
+                      onChangeText={(t) => setSocialForm({ ...socialForm, instagram: t })}
+                      placeholder="https://www.instagram.com/aces_adventure_club/"
+                      placeholderTextColor="#94A3B8"
+                      autoCapitalize="none"
+                    />
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={styles.label}>▶️ YOUTUBE CHANNEL / URL</Text>
+                      <TouchableOpacity onPress={() => testExternalUrl(socialForm.youtube)}>
+                        <Text style={{ fontSize: 11, color: '#0B5CAD', fontWeight: '700' }}>🔗 Test</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <TextInput
+                      style={styles.input}
+                      value={socialForm.youtube}
+                      onChangeText={(t) => setSocialForm({ ...socialForm, youtube: t })}
+                      placeholder="https://www.youtube.com/@AcesAdventureClub-007"
+                      placeholderTextColor="#94A3B8"
+                      autoCapitalize="none"
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.rowTwo}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 14 }]}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={styles.label}>📘 FACEBOOK PAGE / URL</Text>
+                      <TouchableOpacity onPress={() => testExternalUrl(socialForm.facebook)}>
+                        <Text style={{ fontSize: 11, color: '#0B5CAD', fontWeight: '700' }}>🔗 Test</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <TextInput
+                      style={styles.input}
+                      value={socialForm.facebook}
+                      onChangeText={(t) => setSocialForm({ ...socialForm, facebook: t })}
+                      placeholder="https://www.facebook.com/acesadventureclub"
+                      placeholderTextColor="#94A3B8"
+                      autoCapitalize="none"
+                    />
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={styles.label}>💬 WHATSAPP NUMBER OR URL</Text>
+                      <TouchableOpacity onPress={() => testExternalUrl(socialForm.whatsapp)}>
+                        <Text style={{ fontSize: 11, color: '#0B5CAD', fontWeight: '700' }}>🔗 Test</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <TextInput
+                      style={styles.input}
+                      value={socialForm.whatsapp}
+                      onChangeText={(t) => setSocialForm({ ...socialForm, whatsapp: t })}
+                      placeholder="+92 312 1578099 or https://wa.me/923121578099"
+                      placeholderTextColor="#94A3B8"
+                      autoCapitalize="none"
+                    />
+                  </View>
+                </View>
+
                 <TouchableOpacity style={styles.saveSubmitBtn} onPress={handleSaveContact}>
-                  <Text style={styles.saveSubmitBtnText}>Save & Publish Contact Details</Text>
+                  <Text style={styles.saveSubmitBtnText}>Save & Publish Contact & Social Details</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* TAB: SOCIAL MEDIA HANDLES CMS */}
+          {activeTab === 'social' && (
+            <View style={styles.sectionCard}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+                <View>
+                  <Text style={styles.sectionHeaderTitle}>🌐 Social Media Handles & Footer Links Manager</Text>
+                  <Text style={{ fontSize: 13, color: '#64748B', maxWidth: 640 }}>
+                    Configure official social media links. These links are dynamically wired to the Instagram, YouTube, Facebook, and WhatsApp icons placed throughout the website footer and contact modules.
+                  </Text>
+                </View>
+
+                {/* Live Preview Pill */}
+                <View style={{ backgroundColor: '#F8FAFC', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#E2E8F0', alignItems: 'center' }}>
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: '#64748B', marginBottom: 6 }}>FOOTER ICONS PREVIEW</Text>
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    <TouchableOpacity
+                      onPress={() => testExternalUrl(socialForm.facebook)}
+                      style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#0B5CAD', justifyContent: 'center', alignItems: 'center' }}
+                    >
+                      <Ionicons name="logo-facebook" size={16} color="#FFFFFF" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => testExternalUrl(socialForm.instagram)}
+                      style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#E1306C', justifyContent: 'center', alignItems: 'center' }}
+                    >
+                      <Ionicons name="logo-instagram" size={16} color="#FFFFFF" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => testExternalUrl(socialForm.youtube)}
+                      style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#FF0000', justifyContent: 'center', alignItems: 'center' }}
+                    >
+                      <Ionicons name="logo-youtube" size={16} color="#FFFFFF" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => testExternalUrl(socialForm.whatsapp)}
+                      style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#25D366', justifyContent: 'center', alignItems: 'center' }}
+                    >
+                      <Ionicons name="logo-whatsapp" size={16} color="#FFFFFF" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.fieldGrid}>
+                {/* Instagram Field */}
+                <View style={styles.formGroup}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <Text style={styles.label}>📸 INSTAGRAM PROFILE URL / HANDLE</Text>
+                    <TouchableOpacity
+                      onPress={() => testExternalUrl(socialForm.instagram)}
+                      style={{ backgroundColor: '#F1F5F9', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 }}
+                    >
+                      <Text style={{ fontSize: 11, color: '#0B5CAD', fontWeight: '700' }}>🔗 Test Link</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <TextInput
+                    style={styles.input}
+                    value={socialForm.instagram}
+                    onChangeText={(t) => setSocialForm({ ...socialForm, instagram: t })}
+                    placeholder="https://www.instagram.com/aces_adventure_club/"
+                    placeholderTextColor="#94A3B8"
+                    autoCapitalize="none"
+                  />
+                  <Text style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>Default: https://www.instagram.com/aces_adventure_club/</Text>
+                </View>
+
+                {/* YouTube Field */}
+                <View style={styles.formGroup}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <Text style={styles.label}>▶️ YOUTUBE CHANNEL URL / HANDLE</Text>
+                    <TouchableOpacity
+                      onPress={() => testExternalUrl(socialForm.youtube)}
+                      style={{ backgroundColor: '#F1F5F9', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 }}
+                    >
+                      <Text style={{ fontSize: 11, color: '#0B5CAD', fontWeight: '700' }}>🔗 Test Link</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <TextInput
+                    style={styles.input}
+                    value={socialForm.youtube}
+                    onChangeText={(t) => setSocialForm({ ...socialForm, youtube: t })}
+                    placeholder="https://www.youtube.com/@AcesAdventureClub-007"
+                    placeholderTextColor="#94A3B8"
+                    autoCapitalize="none"
+                  />
+                  <Text style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>Default: https://www.youtube.com/@AcesAdventureClub-007</Text>
+                </View>
+
+                {/* Facebook Field */}
+                <View style={styles.formGroup}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <Text style={styles.label}>📘 FACEBOOK PAGE URL</Text>
+                    <TouchableOpacity
+                      onPress={() => testExternalUrl(socialForm.facebook)}
+                      style={{ backgroundColor: '#F1F5F9', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 }}
+                    >
+                      <Text style={{ fontSize: 11, color: '#0B5CAD', fontWeight: '700' }}>🔗 Test Link</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <TextInput
+                    style={styles.input}
+                    value={socialForm.facebook}
+                    onChangeText={(t) => setSocialForm({ ...socialForm, facebook: t })}
+                    placeholder="https://www.facebook.com/acesadventureclub"
+                    placeholderTextColor="#94A3B8"
+                    autoCapitalize="none"
+                  />
+                  <Text style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>Default: https://www.facebook.com/acesadventureclub</Text>
+                </View>
+
+                {/* WhatsApp Field */}
+                <View style={styles.formGroup}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <Text style={styles.label}>💬 WHATSAPP BUSINESS NUMBER OR CHAT URL</Text>
+                    <TouchableOpacity
+                      onPress={() => testExternalUrl(socialForm.whatsapp)}
+                      style={{ backgroundColor: '#F1F5F9', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 }}
+                    >
+                      <Text style={{ fontSize: 11, color: '#0B5CAD', fontWeight: '700' }}>🔗 Test Link</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <TextInput
+                    style={styles.input}
+                    value={socialForm.whatsapp}
+                    onChangeText={(t) => setSocialForm({ ...socialForm, whatsapp: t })}
+                    placeholder="+92 312 1578099 or https://wa.me/923121578099"
+                    placeholderTextColor="#94A3B8"
+                    autoCapitalize="none"
+                  />
+                  <Text style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>Default: +92 312 1578099 (opens WhatsApp chat)</Text>
+                </View>
+
+                <TouchableOpacity style={styles.saveSubmitBtn} onPress={handleSaveSocial}>
+                  <Text style={styles.saveSubmitBtnText}>Save & Publish Social Media Links</Text>
                 </TouchableOpacity>
               </View>
             </View>
