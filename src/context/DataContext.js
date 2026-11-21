@@ -1,17 +1,17 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { Platform } from "react-native";
-import { auth, db } from "../screens/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
 import {
-  collection,
-  onSnapshot,
-  doc,
   addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  serverTimestamp,
   setDoc,
   updateDoc,
-  deleteDoc,
-  serverTimestamp,
 } from "firebase/firestore";
+import { createContext, useContext, useEffect, useState } from "react";
+import { Platform } from "react-native";
+import { auth, db } from "../screens/firebaseConfig";
 
 const normalizeRole = (role) => {
   if (!role) return "Member";
@@ -196,6 +196,7 @@ const normalizeInquiry = (docSnap) => {
     name: data.name || "Anonymous Traveler",
     email: data.email || "",
     phone: data.phone || "",
+    city: data.city || "",
     destination: data.destination || "Northern Areas, Pakistan",
     travelDate: data.travelDate || "",
     travelers: data.travelers || "1 - 2 Person",
@@ -231,10 +232,28 @@ const seedDefaultInquiries = async (defaultInquiries) => {
   }
 };
 
+const parseDurationDays = (durationStr) => {
+  if (!durationStr) return 9999;
+  const match = String(durationStr).match(/\d+/);
+  return match ? parseInt(match[0], 10) : 9999;
+};
+
 const normalizeTrip = (docSnap) => {
   const data = docSnap.data();
+  // Generate consistent 3 to 4 digit fallback ID if not present in Firestore
+  let tripCode = data.tripCode || data.code;
+  if (!tripCode) {
+    let hash = 0;
+    const str = docSnap.id || "trip";
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash * 31 + str.charCodeAt(i)) % 9000;
+    }
+    tripCode = String(1000 + Math.abs(hash));
+  }
+
   return {
     id: docSnap.id,
+    tripCode: String(tripCode),
     title: data.title || "Untitled Trip",
     badge: data.badge || "Featured",
     location: data.location || "",
@@ -329,6 +348,7 @@ export const ASSET_MAP = {
   "onboarding1.jpg": require("../../assets/onboarding1.jpg"),
   "onboarding2.jpg": require("../../assets/onboarding2.jpg"),
   "onboarding3.jpg": require("../../assets/onboarding3.jpg"),
+  "galiyat-poster.jpg": require("../../assets/galiyat-poster.jpg"),
 };
 
 // Fast CDN Fallbacks for ultra-reliable image rendering
@@ -376,254 +396,30 @@ export const resolveAsset = (imageRef, fallback = "hero.jpg") => {
 
 // Initial default demo data synced across the entire Aces Adventure Club web application
 const DEFAULT_DATA = {
-  trips: [
+  trips: [],
+
+  featuredPosters: [
     {
-      id: "1",
-      title: "Hunza Explorer",
-      badge: "Featured",
-      location: "Gilgit, Pakistan",
-      description: "Experience breathtaking mountain landscapes, ancient forts, and rich alpine culture.",
-      duration: "5 Days",
-      difficulty: "Easy",
-      difficultyColor: "#22C55E",
-      price: "PKR 40,000",
-      rawPrice: 40000,
-      imageKey: "hunza.jpg",
-      members: "24",
-      status: "UPCOMING",
-      category: "Hiking",
-      groupSize: "12 Max",
-      bestSeason: "Spring - Autumn",
-      fitnessLevel: "Easy-Mod",
-      aboutText: "The Hunza Valley Adventure is a journey through one of the most serene and majestic places on earth. Surrounded by iconic peaks such as Rakaposhi, Ultar Sar, and Ladyfinger Peak, this expedition offers an unforgettable blend of natural grandeur and vibrant local culture.\n\nFrom exploring ancient 800-year-old forts like Baltit and Altit to walking alongside tranquil turquoise lakes at Attabad, every day is crafted to provide a deep connection with nature and local mountain traditions.",
-      includedFeatures: [
-        { title: "Boutique Stays", desc: "Handpicked cozy hotel and riverside lodge accommodations." },
-        { title: "Guided Excursions", desc: "Expert local mountain guides leading every trek and site tour." },
-        { title: "Photography Spots", desc: "Prime vantage points for sunrise and sunset photography." },
-        { title: "Cultural Meals", desc: "Traditional organic cuisine and comfortable 4x4 transport." },
+      id: "galiyat-poster-1",
+      posterKey: "galiyat-poster.jpg",
+      badge: "🔥 FEATURED SPECIAL TRIP",
+      title: "AN UNFORGETTABLE TRIP TO GALIYAT!",
+      subtitle: "Ayubia • Pipeline Track • Dunga Gali • Nathia Gali • Wonderland Park",
+      description:
+        "Get ready for an exciting adventure filled with breathtaking views, thrilling experiences, music, bonfire, and unforgettable memories!",
+      price: "Rs. 4,000/-",
+      priceTag: "ONLY",
+      departureTime: "6:00 AM",
+      returnTime: "8:00 PM",
+      pickupPoint: "Islamabad / Rawalpindi",
+      services: [
+        "Entry Tickets (Ayubia Tunnel, Pipeline Track & Park)",
+        "Luxury Air-Conditioned Transport",
+        "Delicious Dinner Included",
+        "Bonfire Night & Music Entertainment",
       ],
-      itinerary: [
-        { day: "DAY 01", title: "Arrival & Karimabad Orientation", desc: "Arrive in Gilgit/Hunza, check in hotel. Evening walk through Karimabad bazaar and welcoming dinner.", imageKey: "featured1.jpg" },
-        { day: "DAY 02", title: "Baltit & Altit Forts Exploration", desc: "Visit historic 800-year-old forts, experience local Hunza heritage, and watch sunset at Eagle's Nest.", imageKey: "featured2.jpg" },
-        { day: "DAY 03", title: "Attabad Lake & Passu Cones", desc: "Boating on turquoise Attabad Lake, crossing Hussaini Suspension Bridge, and admiring Passu Cathedral.", imageKey: "featured3.jpg" },
-      ],
-    },
-    {
-      id: "2",
-      title: "Fairy Meadows Trek",
-      badge: "Popular",
-      location: "Diamer, Pakistan",
-      description: "Base camp of mighty Nanga Parbat mountain with pine forests and starry skies.",
-      duration: "7 Days",
-      difficulty: "Hard",
-      difficultyColor: "#EF4444",
-      price: "PKR 55,000",
-      rawPrice: 55000,
-      imageKey: "fairy.jpg",
-      members: "16",
+      whatsappMsg: "Hello Ace Adventure Club! I want to book seats for the Galiyat Trip (Rs. 4,000/- ONLY). Please share booking details.",
       status: "ACTIVE",
-      category: "Trekking",
-      groupSize: "10 Max",
-      bestSeason: "Summer",
-      fitnessLevel: "High",
-      aboutText: "Fairy Meadows is a magical alpine grassland located at the foot of Nanga Parbat, the 9th highest mountain in the world. Known locally as Joot, this legendary spot offers unmatched panoramic views of Nanga Parbat's massive Raikot Face.\n\nTrekkers navigate thrilling mountain jeep trails followed by a rewarding hike through pine and birch forests to reach high-altitude wooden cabin camps.",
-      includedFeatures: [
-        { title: "Jeep Safari & Trek", desc: "Exciting 4x4 mountain drive and wilderness trekking guide." },
-        { title: "Wooden Cabin Camps", desc: "Authentic timber cabins facing Nanga Parbat glacier." },
-        { title: "Alpine Leadership", desc: "Certified mountain guides equipped with safety gear." },
-        { title: "Campfire Nights", desc: "Stargazing and cozy evening bonfires beneath snow peaks." },
-      ],
-      itinerary: [
-        { day: "DAY 01", title: "Raikot Bridge to Fairy Meadows", desc: "Jeep ride to Tattu village followed by a 3-hour hike up to Fairy Meadows campsite.", imageKey: "hiking.jpg" },
-        { day: "DAY 02", title: "Beyal Camp & Glacier View", desc: "Day hike through alpine forest to Beyal Camp and Raikot Glacier view point.", imageKey: "camping.jpg" },
-        { day: "DAY 03", title: "Nanga Parbat Base Camp", desc: "Challenging trek to Nanga Parbat Base Camp (4,000m) and return to Fairy Meadows.", imageKey: "trekking.jpg" },
-      ],
-    },
-    {
-      id: "3",
-      title: "Skardu Adventure",
-      badge: "Recommended",
-      location: "Skardu, Pakistan",
-      description: "Lakes, cold deserts, and unforgettable Karakoram mountain views.",
-      duration: "10 Days",
-      difficulty: "Moderate",
-      difficultyColor: "#F59E0B",
-      price: "PKR 65,000",
-      rawPrice: 65000,
-      imageKey: "skardu.jpg",
-      members: "18",
-      status: "UPCOMING",
-      category: "Camping",
-      groupSize: "14 Max",
-      bestSeason: "May - Oct",
-      fitnessLevel: "Moderate",
-      aboutText: "Skardu is the gateway to some of the highest peaks on Earth. This 10-day comprehensive expedition takes you through Katpana Cold Desert, Shangrila Lake, Upper Kachura Lake, and the vast high-altitude plains of Deosai National Park.\n\nExperience dramatic contrasts where sand dunes meet snow-capped peaks, crystal glaciers flow into turquoise lakes, and ancient Tibetan culture welcomes travelers.",
-      includedFeatures: [
-        { title: "Lakes & Deserts", desc: "Explore Shangrila Resort, Kachura Lake, and Katpana Cold Dunes." },
-        { title: "Deosai Plateau Tour", desc: "Day excursion to the world's second highest plateau at 4,114m." },
-        { title: "Resort & Glamping", desc: "Mix of luxury lakefront resort stays and wilderness camping." },
-        { title: "Fort & Heritage Visit", desc: "Guided tour of Khaplu Palace and Shigar Fort cultural sites." },
-      ],
-      itinerary: [
-        { day: "DAY 01", title: "Skardu Arrival & Shangrila Lake", desc: "Arrive in Skardu, visit Lower Kachura (Shangrila Lake) and relax by the water.", imageKey: "hub3.jpg" },
-        { day: "DAY 02", title: "Katpana Dunes & Shigar Valley", desc: "Experience cold desert quad biking and explore historic Shigar Fort Palace.", imageKey: "hub2.jpg" },
-        { day: "DAY 03", title: "Deosai Plains & Sheosar Lake", desc: "Full day safari across Deosai National Park, brown bear territory and Sheosar Lake.", imageKey: "hub1.jpg" },
-      ],
-    },
-    {
-      id: "4",
-      title: "Naran Valley Escape",
-      badge: "Trending",
-      location: "Mansehra, Pakistan",
-      description: "Enjoy lush green valleys, babbling Kunhar river, and alpine lake views.",
-      duration: "4 Days",
-      difficulty: "Easy",
-      difficultyColor: "#22C55E",
-      price: "PKR 35,000",
-      rawPrice: 35000,
-      imageKey: "naran.jpg",
-      members: "20",
-      status: "UPCOMING",
-      category: "Hiking",
-      groupSize: "16 Max",
-      bestSeason: "Summer",
-      fitnessLevel: "Easy",
-      aboutText: "Naran Valley in Kaghan is one of Pakistan's most popular mountain escapes. Surrounded by pine forests, roaring Kunhar river waters, and majestic alpine lakes like Saif-ul-Malook, this trip is ideal for families, solo explorers, and casual hikers.\n\nWitness the mythical beauty of Lake Saif-ul-Malook under clear blue skies, trek along Pyala Lake, and cross Babusar Top at 4,173 meters.",
-      includedFeatures: [
-        { title: "Lake Saif-ul-Malook", desc: "Jeep excursion to the world-famous legendary fairy lake." },
-        { title: "River Rafting", desc: "Optional white water rafting experience along Kunhar River." },
-        { title: "Babusar Top Pass", desc: "Scenic drive up to Babusar Pass with panoramic valley views." },
-        { title: "Family Friendly Hikes", desc: "Gentle nature trails suitable for all fitness levels." },
-      ],
-      itinerary: [
-        { day: "DAY 01", title: "Drive to Naran Valley", desc: "Travel through Abbottabad and Mansehra, arriving at Naran alongside Kunhar River.", imageKey: "nature.jpg" },
-        { day: "DAY 02", title: "Saif-ul-Malook Lake Excursion", desc: "Jeep ride to Lake Saif-ul-Malook, boat rides, and optional short hike up surrounding slopes.", imageKey: "hiking.jpg" },
-        { day: "DAY 03", title: "Lulusar Lake & Babusar Pass", desc: "Drive up Kaghan valley to pristine Lulusar Lake and scenic Babusar Top.", imageKey: "aboutTrip.jpg" },
-      ],
-    },
-    {
-      id: "5",
-      title: "Swat Valley Escape",
-      badge: "Seasonal",
-      location: "Swat, Khyber Pakhtunkhwa",
-      description: "Switzerland of the East with river trails, pine forests, and emerald lakes.",
-      duration: "4 Days",
-      difficulty: "Easy",
-      difficultyColor: "#22C55E",
-      price: "PKR 38,000",
-      rawPrice: 38000,
-      imageKey: "nature.jpg",
-      members: "20",
-      status: "UPCOMING",
-      category: "Nature Trails",
-      groupSize: "15 Max",
-      bestSeason: "All Year",
-      fitnessLevel: "Easy",
-      aboutText: "Swat Valley, often referred to as the Switzerland of the East, is renowned for its verdant river valleys, thick pine wilderness, roaring Swat River, and snow-capped peaks. From Kalam to Ushu Forest and Mahodand Lake, this escape provides pure bliss for nature lovers.\n\nTake peaceful walks through cedar forests, enjoy trout fishing, and experience warm Pashtun mountain hospitality.",
-      includedFeatures: [
-        { title: "Ushu Pine Forest Walk", desc: "Peaceful walks among towering centuries-old cedar and pine trees." },
-        { title: "Mahodand Lake Safari", desc: "4x4 excursion to Mahodand Lake surrounded by mountain streams." },
-        { title: "Trout Special Dinners", desc: "Fresh river trout barbecue dinner in Kalam valley." },
-        { title: "Malam Jabba Ski Resort", desc: "Visit to Malam Jabba chairlifts and alpine activity park." },
-      ],
-      itinerary: [
-        { day: "DAY 01", title: "Arrival in Mingora & Kalam", desc: "Drive along Swat motorway and riverside road to reach scenic Kalam valley.", imageKey: "gallery6.jpg" },
-        { day: "DAY 02", title: "Ushu Forest & Mahodand Lake", desc: "Jeep trip through Ushu cedar forest to Mahodand and Blue Water streams.", imageKey: "gallery3.jpg" },
-        { day: "DAY 03", title: "White Palace & Malam Jabba", desc: "Explore Saidu Sharif historical sites, White Palace, and Malam Jabba chairlift.", imageKey: "about-bg.jpg" },
-      ],
-    },
-    {
-      id: "6",
-      title: "Kumrat Valley Wilderness",
-      badge: "Popular",
-      location: "Upper Dir, Khyber Pakhtunkhwa",
-      description: "Dense Deodar forests, cascading Panjkora river, and untouched alpine meadows.",
-      duration: "5 Days",
-      difficulty: "Moderate",
-      difficultyColor: "#F59E0B",
-      price: "PKR 42,000",
-      rawPrice: 42000,
-      imageKey: "camping.jpg",
-      members: "18",
-      status: "UPCOMING",
-      category: "Camping",
-      groupSize: "14 Max",
-      bestSeason: "Summer - Autumn",
-      fitnessLevel: "Easy-Mod",
-      aboutText: "Kumrat Valley is a hidden natural jewel located in Upper Dir. Famed for its dense tall Deodar pine forests, crystal-clear Panjkora river, and cascading Jahaz Banda waterfall, Kumrat remains one of the most serene off-grid escapes in Pakistan.\n\nTrek up to Jahaz Banda meadows and Katora Lake for an awe-inspiring high-altitude wilderness adventure.",
-      includedFeatures: [
-        { title: "Deodar Forest Camping", desc: "Overnight luxury tent camping under thick pine and Deodar trees." },
-        { title: "Jahaz Banda Meadows Trek", desc: "Guided day hike up to Jahaz Banda high-altitude grass meadows." },
-        { title: "Katora Glacial Lake", desc: "Excursion to bowl-shaped alpine lake surrounded by snow peaks." },
-        { title: "Off-Grid Experience", desc: "Unplug from city noise with campfire music and fresh air." },
-      ],
-      itinerary: [
-        { day: "DAY 01", title: "Drive to Upper Dir & Kumrat", desc: "Travel to Dir Upper, transfer to 4x4 jeeps to enter Kumrat valley along Panjkora river.", imageKey: "camping.jpg" },
-        { day: "DAY 02", title: "Kala Chashma & Waterfall Trail", desc: "Walk through dense Deodar forest to Kala Chashma and Kumrat Waterfall.", imageKey: "nature.jpg" },
-        { day: "DAY 03", title: "Jahaz Banda Trek & Katora Lake", desc: "Hike up to Jahaz Banda meadows and continue trek to alpine Katora Lake.", imageKey: "trekking.jpg" },
-      ],
-    },
-    {
-      id: "7",
-      title: "Deosai Plains Expedition",
-      badge: "Trending",
-      location: "Skardu & Astore, Pakistan",
-      description: "Explore the Land of Giants, high-altitude alpine plateaus, and pristine glacial lakes.",
-      duration: "6 Days",
-      difficulty: "Moderate",
-      difficultyColor: "#F59E0B",
-      price: "PKR 48,000",
-      rawPrice: 48000,
-      imageKey: "trekking.jpg",
-      members: "15",
-      status: "UPCOMING",
-      category: "Trekking",
-      groupSize: "12 Max",
-      bestSeason: "July - Sept",
-      fitnessLevel: "Moderate",
-      aboutText: "Deosai National Park is the second highest plateau on Earth, sitting at an average elevation of 4,114 meters. Known as the 'Land of Giants', Deosai turns into a blooming field of hundreds of wild flower species during summer months.\n\nSpot Himalayan Brown Bears, camp beside Sheosar Lake, and gaze at endless starry horizons across the vast plateau.",
-      includedFeatures: [
-        { title: "High Altitude Safari", desc: "Open-top 4x4 safari across the 4,100m high-altitude plateau." },
-        { title: "Sheosar Lake Camping", desc: "Glamping beside the crystal clear waters of Sheosar Lake." },
-        { title: "Wildlife Spotting", desc: "Guided observation for Himalayan Brown Bears and golden marmots." },
-        { title: "Bara Pani Crossing", desc: "Cross wooden bridges over crystal glacial rivers of Deosai." },
-      ],
-      itinerary: [
-        { day: "DAY 01", title: "Skardu to Deosai Plateau", desc: "Ascend from Skardu through Satpara Lake up to Deosai National Park gate.", imageKey: "hub1.jpg" },
-        { day: "DAY 02", title: "Sheosar Lake Wilderness Camp", desc: "Trek across wildflower fields and camp under the stars at Sheosar Lake.", imageKey: "hub2.jpg" },
-        { day: "DAY 03", title: "Astore Valley Descent", desc: "Cross Bara Pani wooden bridge and descend through scenic Astore gorge.", imageKey: "hub3.jpg" },
-      ],
-    },
-    {
-      id: "8",
-      title: "K2 Base Camp Expedition",
-      badge: "Elite",
-      location: "Baltoro Glacier, Pakistan",
-      description: "The ultimate expedition beneath the world's most formidable peak.",
-      duration: "14 Days",
-      difficulty: "Hard",
-      difficultyColor: "#EF4444",
-      price: "PKR 140,000",
-      rawPrice: 140000,
-      imageKey: "featured1.jpg",
-      members: "12",
-      status: "UPCOMING",
-      category: "Trekking",
-      groupSize: "8 Max",
-      bestSeason: "Summer",
-      fitnessLevel: "Extreme",
-      aboutText: "The K2 Base Camp Trek via Baltoro Glacier is widely regarded as the ultimate mountain trekking experience on planet Earth. Navigating through Concordia — the 'Throne Room of the Mountain Gods' — trekkers stand surrounded by four 8,000m peaks: K2, Broad Peak, Gasherbrum I, and Gasherbrum II.\n\nThis expedition requires high physical fitness, endurance, and spirit of adventure, supported by our top-tier high-altitude guides and porter teams.",
-      includedFeatures: [
-        { title: "Concordia & K2 Base", desc: "Trek to Concordia and K2 Base Camp (5,100m elevation)." },
-        { title: "High Altitude Team", desc: "Certified mountain guides, kitchen crew, and porter support." },
-        { title: "Satellite Communication", desc: "24/7 satellite emergency phone and safety gear." },
-        { title: "Full Expedition Gear", desc: "Extreme temperature tents, sleeping pads, and warm dining dome." },
-      ],
-      itinerary: [
-        { day: "DAY 01", title: "Skardu to Askole Jeep Drive", desc: "Scenic and thrilling 4x4 drive along Braldu river to Askole village, starting point of trek.", imageKey: "featured1.jpg" },
-        { day: "DAY 02", title: "Jhula & Paiju Glacier Camp", desc: "Trek through dramatic granite canyon to Jhula camp and on towards Paiju trees.", imageKey: "featured2.jpg" },
-        { day: "DAY 03", title: "Concordia & K2 Base Camp", desc: "Step onto Baltoro Glacier, trek to Concordia 'Throne Room of Gods', and reach K2 Base.", imageKey: "featured3.jpg" },
-      ],
     },
   ],
 
@@ -742,118 +538,7 @@ const DEFAULT_DATA = {
   ],
 
   /** @type {any[]} */
-  users: [
-    {
-      id: "u1",
-      name: "Sophia Miller",
-      email: "sophia.m@acesclub.com",
-      role: "Elite Voyager",
-      status: "ACTIVE",
-      joined: "Oct 15, 2026",
-      phone: "+92 300 1234567",
-      location: "Islamabad, Pakistan",
-      createdAt: new Date("2026-10-15T08:30:00Z").getTime(),
-    },
-    {
-      id: "u2",
-      name: "Hamza Tariq",
-      email: "hamza.t@adventure.pk",
-      role: "Member",
-      status: "ACTIVE",
-      joined: "Oct 15, 2026",
-      phone: "+92 321 4455667",
-      location: "Lahore, Pakistan",
-      createdAt: new Date("2026-10-15T09:45:00Z").getTime(),
-    },
-    {
-      id: "u3",
-      name: "James Kovic",
-      email: "j.kovic@adventure.org",
-      role: "Member",
-      status: "ACTIVE",
-      joined: "Oct 14, 2026",
-      phone: "+92 312 9988776",
-      location: "Rawalpindi, Pakistan",
-      createdAt: new Date("2026-10-14T11:20:00Z").getTime(),
-    },
-    {
-      id: "u4",
-      name: "Elena Volkov",
-      email: "elena.v@expeditions.net",
-      role: "Elite Voyager",
-      status: "ACTIVE",
-      joined: "Oct 13, 2026",
-      phone: "+92 345 5566778",
-      location: "Gilgit, Pakistan",
-      createdAt: new Date("2026-10-13T16:45:00Z").getTime(),
-    },
-    {
-      id: "u5",
-      name: "Aris Loucas",
-      email: "loucas.a@travel.co",
-      role: "Sponsor Rep",
-      status: "INACTIVE",
-      joined: "Oct 12, 2026",
-      phone: "+92 301 7766554",
-      location: "Karachi, Pakistan",
-      createdAt: new Date("2026-10-12T10:10:00Z").getTime(),
-    },
-    {
-      id: "u6",
-      name: "Zainab Malik",
-      email: "zainab.m@travelers.pk",
-      role: "Member",
-      status: "ACTIVE",
-      joined: "Oct 11, 2026",
-      phone: "+92 333 1122334",
-      location: "Islamabad, Pakistan",
-      createdAt: new Date("2026-10-11T15:00:00Z").getTime(),
-    },
-    {
-      id: "u7",
-      name: "Aiden Vance",
-      email: "aiden.v@luxury.com",
-      role: "Member",
-      status: "ACTIVE",
-      joined: "Oct 10, 2026",
-      phone: "+92 300 9876543",
-      location: "Skardu, Pakistan",
-      createdAt: new Date("2026-10-10T08:20:00Z").getTime(),
-    },
-    {
-      id: "u8",
-      name: "Bilal Ahmed",
-      email: "bilal.ahmed@peaktrek.pk",
-      role: "Member",
-      status: "ACTIVE",
-      joined: "Oct 09, 2026",
-      phone: "+92 315 2233445",
-      location: "Peshawar, Pakistan",
-      createdAt: new Date("2026-10-09T12:00:00Z").getTime(),
-    },
-    {
-      id: "u9",
-      name: "Sara Khan",
-      email: "sara.k@travelers.pk",
-      role: "Elite Voyager",
-      status: "ACTIVE",
-      joined: "Sep 25, 2026",
-      phone: "+92 345 8889900",
-      location: "Lahore, Pakistan",
-      createdAt: new Date("2026-09-25T14:15:00Z").getTime(),
-    },
-    {
-      id: "u10",
-      name: "Marcus Thorne",
-      email: "marcus.t@acesclub.com",
-      role: "Admin",
-      status: "ACTIVE",
-      joined: "Aug 15, 2026",
-      phone: "+92 302 3344556",
-      location: "Islamabad, Pakistan",
-      createdAt: new Date("2026-08-15T09:00:00Z").getTime(),
-    },
-  ],
+  users: [],
 
   inquiries: [
     {
@@ -944,6 +629,9 @@ const DEFAULT_DATA = {
         icon: "leaf-outline",
       },
     ],
+    guidesTitle: "MEET OUR GUIDES",
+    guidesDescription:
+      "Each guide is a master of the mountains, highly skilled in rescue, navigation, and passion for sharing the wild.",
     guides: [
       {
         id: "1",
@@ -1040,48 +728,136 @@ const DEFAULT_DATA = {
 };
 
 const STORAGE_KEY = "aces_adventure_club_v3_store";
+const TRIPS_CACHE_KEY = "aces_club_trips_cache";
+const POSTERS_CACHE_KEY = "aces_club_featured_posters_cache";
+
+const getInitialStore = () => {
+  let initial = { ...DEFAULT_DATA };
+  if (Platform.OS === "web" && typeof window !== "undefined" && window.localStorage) {
+    try {
+      const cachedTrips = window.localStorage.getItem(TRIPS_CACHE_KEY);
+      if (cachedTrips) {
+        const parsedCached = JSON.parse(cachedTrips);
+        if (Array.isArray(parsedCached) && parsedCached.length > 0) {
+          initial.trips = parsedCached;
+        }
+      }
+      const cachedPosters = window.localStorage.getItem(POSTERS_CACHE_KEY);
+      if (cachedPosters) {
+        const parsedPosters = JSON.parse(cachedPosters);
+        if (Array.isArray(parsedPosters) && parsedPosters.length > 0) {
+          initial.featuredPosters = parsedPosters;
+        }
+      }
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const { users: _persistedUsers, trips: _persistedTrips, sponsors: _persistedSponsors, gallery: _persistedGallery, inquiries: _persistedInquiries, ...restParsed } = parsed;
+        initial = {
+          ...initial,
+          ...restParsed,
+          homeContent: { ...initial.homeContent, ...(parsed.homeContent || {}) },
+          aboutContent: { ...initial.aboutContent, ...(parsed.aboutContent || {}) },
+          contactContent: {
+            ...DEFAULT_DATA.contactContent,
+            ...(parsed.contactContent || {}),
+            facebook: parsed.contactContent?.facebook || parsed.socialLinks?.facebook || DEFAULT_DATA.socialLinks.facebook,
+            instagram: parsed.contactContent?.instagram || parsed.socialLinks?.instagram || DEFAULT_DATA.socialLinks.instagram,
+            youtube: parsed.contactContent?.youtube || parsed.socialLinks?.youtube || DEFAULT_DATA.socialLinks.youtube,
+            whatsapp: parsed.contactContent?.whatsapp || parsed.socialLinks?.whatsapp || DEFAULT_DATA.socialLinks.whatsapp,
+          },
+          socialLinks: {
+            ...DEFAULT_DATA.socialLinks,
+            ...(parsed.socialLinks || {}),
+            facebook: parsed.socialLinks?.facebook || parsed.contactContent?.facebook || DEFAULT_DATA.socialLinks.facebook,
+            instagram: parsed.socialLinks?.instagram || parsed.contactContent?.instagram || DEFAULT_DATA.socialLinks.instagram,
+            youtube: parsed.socialLinks?.youtube || parsed.contactContent?.youtube || DEFAULT_DATA.socialLinks.youtube,
+            whatsapp: parsed.socialLinks?.whatsapp || parsed.contactContent?.whatsapp || DEFAULT_DATA.socialLinks.whatsapp,
+          },
+          onboardingContent: { ...initial.onboardingContent, ...(parsed.onboardingContent || {}) },
+          tripCategories: (Array.isArray(parsed.tripCategories) && parsed.tripCategories.length > 0)
+            ? parsed.tripCategories
+            : initial.tripCategories,
+          tripBadges: (Array.isArray(parsed.tripBadges) && parsed.tripBadges.length > 0)
+            ? parsed.tripBadges
+            : initial.tripBadges,
+        };
+      }
+    } catch (e) {
+      console.warn("Could not load initial store from localStorage:", e);
+    }
+  }
+  return initial;
+};
 
 const DataContext = createContext({
   ...DEFAULT_DATA,
+  tripsLoading: false,
   // Preset options CRUD
-  addTripCategory: (_cat) => {},
-  deleteTripCategory: (_cat) => {},
-  addTripBadge: (_badge) => {},
-  deleteTripBadge: (_badge) => {},
+  addTripCategory: (_cat) => { },
+  deleteTripCategory: (_cat) => { },
+  addTripBadge: (_badge) => { },
+  deleteTripBadge: (_badge) => { },
   // CRUD operations
-  addTrip: (_trip) => {},
-  updateTrip: (_id, _updatedFields) => {},
-  deleteTrip: (_id) => {},
-  addSponsor: (_sponsor) => {},
-  updateSponsor: (_id, _updatedFields) => {},
-  deleteSponsor: (_id) => {},
-  updateOfficialPartner: (_fields) => {},
-  addGalleryItem: (_item) => {},
-  updateGalleryItem: (_id, _updatedFields) => {},
-  deleteGalleryItem: (_id) => {},
-  addUser: (_user) => {},
-  updateUser: (_id, _updatedFields) => {},
-  deleteUser: (_id) => {},
-  addInquiry: (_inquiry) => {},
-  updateInquiryStatus: (_id, _status) => {},
-  deleteInquiry: (_id) => {},
-  updateHomeContent: (_fields) => {},
-  updateAboutContent: (_fields) => {},
-  updateContactContent: (_fields) => {},
-  updateSocialLinks: (_fields) => {},
-  updateOnboardingContent: (_slideKey, _fields) => {},
-  resetToDefaults: () => {},
+  addFeaturedPoster: (_poster) => { },
+  updateFeaturedPoster: (_id, _updatedFields) => { },
+  deleteFeaturedPoster: (_id) => { },
+  addTrip: (_trip) => { },
+  updateTrip: (_id, _updatedFields) => { },
+  deleteTrip: (_id) => { },
+  addSponsor: (_sponsor) => { },
+  updateSponsor: (_id, _updatedFields) => { },
+  deleteSponsor: (_id) => { },
+  updateOfficialPartner: (_fields) => { },
+  addGalleryItem: (_item) => { },
+  updateGalleryItem: (_id, _updatedFields) => { },
+  deleteGalleryItem: (_id) => { },
+  addUser: (_user) => { },
+  updateUser: (_id, _updatedFields) => { },
+  deleteUser: (_id) => { },
+  deleteAllUsersExceptSuperAdmin: () => { },
+  addInquiry: (_inquiry) => { },
+  updateInquiryStatus: (_id, _status) => { },
+  deleteInquiry: (_id) => { },
+  updateHomeContent: (_fields) => { },
+  updateAboutContent: (_fields) => { },
+  addGuide: (_guide) => { },
+  updateGuide: (_id, _fields) => { },
+  deleteGuide: (_id) => { },
+  updateContactContent: (_fields) => { },
+  updateSocialLinks: (_fields) => { },
+  updateOnboardingContent: (_slideKey, _fields) => { },
+  resetToDefaults: () => { },
 });
 
 export const DataProvider = ({ children }) => {
-  const [store, setStore] = useState(DEFAULT_DATA);
+  const [store, setStore] = useState(getInitialStore);
+  const [tripsLoading, setTripsLoading] = useState(() => {
+    if (Platform.OS === "web" && typeof window !== "undefined" && window.localStorage) {
+      try {
+        const cached = window.localStorage.getItem(TRIPS_CACHE_KEY);
+        if (cached && JSON.parse(cached)?.length > 0) return false;
+      } catch (_) { }
+    }
+    return true;
+  });
 
   console.log("[USERS_DEBUG] DataProvider mounted. Current store.users count:", store.users.length);
 
-  // Load persisted store from localStorage on init (excluding users, trips, sponsors, gallery, and inquiries collections managed by Firestore)
+  // Load persisted store from localStorage on init
   useEffect(() => {
     if (Platform.OS === "web" && typeof window !== "undefined" && window.localStorage) {
       try {
+        // Fast-load cached trips so page doesn't show blank while Firestore connects
+        const cachedTrips = window.localStorage.getItem(TRIPS_CACHE_KEY);
+        if (cachedTrips) {
+          const parsedCached = JSON.parse(cachedTrips);
+          if (Array.isArray(parsedCached) && parsedCached.length > 0) {
+            setStore((prev) => ({ ...prev, trips: parsedCached }));
+            setTripsLoading(false);
+          }
+        }
+
         const raw = window.localStorage.getItem(STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
@@ -1150,15 +926,14 @@ export const DataProvider = ({ children }) => {
               phone: data.phone || "",
               location: data.location || "",
               createdAt: data.createdAt || null,
+              emailVerified: data.emailVerified === true || data.isVerified === true,
             };
           });
 
           setStore((prev) => {
-            const base = prev.users && prev.users.length ? prev.users : DEFAULT_DATA.users;
-            const merged = mergeUsersLists(fetchedUsers, base);
             return {
               ...prev,
-              users: merged.length > 0 ? merged : DEFAULT_DATA.users,
+              users: fetchedUsers,
             };
           });
         },
@@ -1191,32 +966,40 @@ export const DataProvider = ({ children }) => {
       tripsRef,
       (snapshot) => {
         console.log(`[TRIPS_FIRESTORE_DEBUG] snapshot size: ${snapshot.docs.length}`);
+        setTripsLoading(false);
 
         if (snapshot.empty || snapshot.docs.length === 0) {
-          console.log("[TRIPS_FIRESTORE_DEBUG] Firestore trips collection is empty. Triggering automatic seed...");
-          seedDefaultTrips(DEFAULT_DATA.trips);
+          console.log("[TRIPS_FIRESTORE_DEBUG] Firestore trips collection is empty.");
+          if (Platform.OS === "web" && typeof window !== "undefined" && window.localStorage) {
+            window.localStorage.removeItem(TRIPS_CACHE_KEY);
+          }
           setStore((prev) => ({
             ...prev,
-            trips: prev.trips && prev.trips.length ? prev.trips : DEFAULT_DATA.trips,
+            trips: [],
           }));
         } else {
           const fetchedTrips = snapshot.docs.map(normalizeTrip);
+          // Sort trips in ascending order by duration (days: 1, 2, 3...)
+          fetchedTrips.sort((a, b) => parseDurationDays(a.duration) - parseDurationDays(b.duration));
+
+          if (Platform.OS === "web" && typeof window !== "undefined" && window.localStorage) {
+            try {
+              window.localStorage.setItem(TRIPS_CACHE_KEY, JSON.stringify(fetchedTrips));
+            } catch (_) { }
+          }
+
           setStore((prev) => {
-            const mergedTrips = mergeTripsLists(fetchedTrips, prev.trips && prev.trips.length ? prev.trips : DEFAULT_DATA.trips);
-            console.log(`[TRIPS_FIRESTORE_DEBUG] DataContext store.trips updated with merged length: ${mergedTrips.length}`);
+            console.log(`[TRIPS_FIRESTORE_DEBUG] DataContext store.trips updated with fetched length: ${fetchedTrips.length}`);
             return {
               ...prev,
-              trips: mergedTrips,
+              trips: fetchedTrips,
             };
           });
         }
       },
       (error) => {
-        console.warn(`[TRIPS_FIRESTORE_DEBUG] listener error (retaining default trips): ${error?.code || ''} ${error?.message || error}`);
-        setStore((prev) => ({
-          ...prev,
-          trips: prev.trips && prev.trips.length ? prev.trips : DEFAULT_DATA.trips,
-        }));
+        console.warn(`[TRIPS_FIRESTORE_DEBUG] listener error: ${error?.code || ''} ${error?.message || error}`);
+        setTripsLoading(false);
       }
     );
 
@@ -1237,30 +1020,24 @@ export const DataProvider = ({ children }) => {
         console.log(`[SPONSORS_FIRESTORE_DEBUG] snapshot size: ${snapshot.docs.length}`);
 
         if (snapshot.empty || snapshot.docs.length === 0) {
-          console.log("[SPONSORS_FIRESTORE_DEBUG] Firestore sponsors collection is empty. Triggering automatic seed...");
-          seedDefaultSponsors(DEFAULT_DATA.sponsors);
+          console.log("[SPONSORS_FIRESTORE_DEBUG] Firestore sponsors collection is empty.");
           setStore((prev) => ({
             ...prev,
-            sponsors: prev.sponsors && prev.sponsors.length ? prev.sponsors : DEFAULT_DATA.sponsors,
+            sponsors: [],
           }));
         } else {
           const fetchedSponsors = snapshot.docs.map(normalizeSponsor);
           setStore((prev) => {
-            const mergedSponsors = mergeSponsorsLists(fetchedSponsors, prev.sponsors && prev.sponsors.length ? prev.sponsors : DEFAULT_DATA.sponsors);
-            console.log(`[SPONSORS_FIRESTORE_DEBUG] DataContext store.sponsors updated with merged length: ${mergedSponsors.length}`);
+            console.log(`[SPONSORS_FIRESTORE_DEBUG] DataContext store.sponsors updated with fetched length: ${fetchedSponsors.length}`);
             return {
               ...prev,
-              sponsors: mergedSponsors,
+              sponsors: fetchedSponsors,
             };
           });
         }
       },
       (error) => {
-        console.warn(`[SPONSORS_FIRESTORE_DEBUG] listener error (retaining default sponsors): ${error?.code || ''} ${error?.message || error}`);
-        setStore((prev) => ({
-          ...prev,
-          sponsors: prev.sponsors && prev.sponsors.length ? prev.sponsors : DEFAULT_DATA.sponsors,
-        }));
+        console.warn(`[SPONSORS_FIRESTORE_DEBUG] listener error: ${error?.code || ''} ${error?.message || error}`);
       }
     );
 
@@ -1281,30 +1058,24 @@ export const DataProvider = ({ children }) => {
         console.log(`[GALLERY_FIRESTORE_DEBUG] snapshot size: ${snapshot.docs.length}`);
 
         if (snapshot.empty || snapshot.docs.length === 0) {
-          console.log("[GALLERY_FIRESTORE_DEBUG] Firestore gallery collection is empty. Triggering automatic seed...");
-          seedDefaultGallery(DEFAULT_DATA.gallery);
+          console.log("[GALLERY_FIRESTORE_DEBUG] Firestore gallery collection is empty.");
           setStore((prev) => ({
             ...prev,
-            gallery: prev.gallery && prev.gallery.length ? prev.gallery : DEFAULT_DATA.gallery,
+            gallery: [],
           }));
         } else {
           const fetchedGallery = snapshot.docs.map(normalizeGalleryItem);
           setStore((prev) => {
-            const mergedGallery = mergeGalleryLists(fetchedGallery, prev.gallery && prev.gallery.length ? prev.gallery : DEFAULT_DATA.gallery);
-            console.log(`[GALLERY_FIRESTORE_DEBUG] DataContext store.gallery updated with merged length: ${mergedGallery.length}`);
+            console.log(`[GALLERY_FIRESTORE_DEBUG] DataContext store.gallery updated with fetched length: ${fetchedGallery.length}`);
             return {
               ...prev,
-              gallery: mergedGallery,
+              gallery: fetchedGallery,
             };
           });
         }
       },
       (error) => {
-        console.warn(`[GALLERY_FIRESTORE_DEBUG] listener error (retaining default gallery): ${error?.code || ''} ${error?.message || error}`);
-        setStore((prev) => ({
-          ...prev,
-          gallery: prev.gallery && prev.gallery.length ? prev.gallery : DEFAULT_DATA.gallery,
-        }));
+        console.warn(`[GALLERY_FIRESTORE_DEBUG] listener error: ${error?.code || ''} ${error?.message || error}`);
       }
     );
 
@@ -1358,44 +1129,202 @@ export const DataProvider = ({ children }) => {
     };
   }, []);
 
-  // Real-time Firestore listener for Social & Settings document (with graceful fallback)
+  // Real-time Firestore listener for Social & Contact Settings (with graceful fallback)
   useEffect(() => {
-    let unsubscribe = null;
+    let unsubSocial = null;
+    let unsubContact = null;
     try {
       const socialDocRef = doc(db, "settings", "social");
-      unsubscribe = onSnapshot(
+      unsubSocial = onSnapshot(
         socialDocRef,
         (snap) => {
           if (snap.exists()) {
             const data = snap.data();
-            setStore((prev) => {
-              const updatedSocial = {
+            setStore((prev) => ({
+              ...prev,
+              socialLinks: {
                 ...(prev.socialLinks || DEFAULT_DATA.socialLinks),
                 ...data,
-              };
-              const updatedContact = {
+              },
+              contactContent: {
                 ...(prev.contactContent || DEFAULT_DATA.contactContent),
                 ...data,
-              };
-              return {
-                ...prev,
-                socialLinks: updatedSocial,
-                contactContent: updatedContact,
-              };
-            });
+              },
+            }));
           }
         },
         (error) => {
           console.log("[SETTINGS_DEBUG] Firestore social listener note:", error?.message);
         }
       );
+
+      const contactDocRef = doc(db, "settings", "contact");
+      unsubContact = onSnapshot(
+        contactDocRef,
+        (snap) => {
+          if (snap.exists()) {
+            const data = snap.data();
+            setStore((prev) => ({
+              ...prev,
+              contactContent: {
+                ...(prev.contactContent || DEFAULT_DATA.contactContent),
+                ...data,
+              },
+            }));
+          }
+        },
+        (error) => {
+          console.log("[SETTINGS_DEBUG] Firestore contact listener note:", error?.message);
+        }
+      );
     } catch (e) {
       console.log("[SETTINGS_DEBUG] Could not attach firestore settings listener:", e);
     }
     return () => {
-      if (unsubscribe) unsubscribe();
+      if (unsubSocial) unsubSocial();
+      if (unsubContact) unsubContact();
     };
   }, []);
+
+  // Real-time Firestore listener for Featured Posters collection
+  useEffect(() => {
+    console.log("[POSTERS_FIRESTORE_DEBUG] listener started");
+
+    const postersRef = collection(db, "featured_posters");
+    const unsubscribe = onSnapshot(
+      postersRef,
+      async (snapshot) => {
+        if (snapshot.empty || snapshot.docs.length === 0) {
+          console.log("[POSTERS_FIRESTORE_DEBUG] collection is empty, checking initial default...");
+          // If first time, seed default Galiyat poster
+          try {
+            const defaultItem = DEFAULT_DATA.featuredPosters[0];
+            await addDoc(collection(db, "featured_posters"), {
+              ...payload,
+              createdAt: serverTimestamp(),
+            });
+          } catch (e) {
+            console.warn("[POSTERS_FIRESTORE_DEBUG] seed error:", e);
+          }
+        } else {
+          const fetched = snapshot.docs.map((docSnap) => {
+            const data = docSnap.data();
+            return {
+              id: docSnap.id,
+              posterKey: data.posterKey || "galiyat-poster.jpg",
+              badge: data.badge || "🔥 FEATURED SPECIAL TRIP",
+              title: data.title || "AN UNFORGETTABLE TRIP TO GALIYAT!",
+              subtitle: data.subtitle || "",
+              description: data.description || "",
+              price: data.price || "Rs. 4,000/-",
+              priceTag: data.priceTag || "ONLY",
+              departureTime: data.departureTime || "6:00 AM",
+              returnTime: data.returnTime || "8:00 PM",
+              pickupPoint: data.pickupPoint || "Islamabad / Rawalpindi",
+              services: Array.isArray(data.services)
+                ? data.services
+                : (typeof data.services === "string" ? data.services.split(",").map((s) => s.trim()).filter(Boolean) : []),
+              whatsappMsg: data.whatsappMsg || "",
+              status: data.status ? String(data.status).toUpperCase() : "ACTIVE",
+              createdAt: data.createdAt || null,
+            };
+          });
+
+          if (Platform.OS === "web" && typeof window !== "undefined" && window.localStorage) {
+            try {
+              window.localStorage.setItem(POSTERS_CACHE_KEY, JSON.stringify(fetched));
+            } catch (_) { }
+          }
+
+          setStore((prev) => ({
+            ...prev,
+            featuredPosters: fetched,
+          }));
+        }
+      },
+      (error) => {
+        console.warn("[POSTERS_FIRESTORE_DEBUG] listener error:", error?.message || error);
+      }
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  // FEATURED POSTERS CRUD
+  const addFeaturedPoster = async (poster) => {
+    const tempId = "temp_" + Date.now();
+    const payload = {
+      posterKey: poster.posterKey || "galiyat-poster.jpg",
+      badge: poster.badge || "🔥 FEATURED SPECIAL TRIP",
+      title: poster.title || "New Promo Tour",
+      subtitle: poster.subtitle || "",
+      description: poster.description || "",
+      price: poster.price || "PKR 0",
+      priceTag: poster.priceTag || "ONLY",
+      departureTime: poster.departureTime || "6:00 AM",
+      returnTime: poster.returnTime || "8:00 PM",
+      pickupPoint: poster.pickupPoint || "Islamabad / Rawalpindi",
+      services: Array.isArray(poster.services)
+        ? poster.services
+        : (typeof poster.services === "string" ? poster.services.split(",").map((s) => s.trim()).filter(Boolean) : []),
+      whatsappMsg: poster.whatsappMsg || "",
+      status: poster.status ? String(poster.status).toUpperCase() : "ACTIVE",
+      createdAt: serverTimestamp(),
+    };
+
+    setStore((prev) => {
+      const updated = [{ id: tempId, ...payload }, ...(prev.featuredPosters || [])];
+      if (Platform.OS === "web" && typeof window !== "undefined" && window.localStorage) {
+        try { window.localStorage.setItem(POSTERS_CACHE_KEY, JSON.stringify(updated)); } catch (_) { }
+      }
+      return { ...prev, featuredPosters: updated };
+    });
+
+    try {
+      const docRef = await addDoc(collection(db, "featured_posters"), payload);
+      return { id: docRef.id, ...payload };
+    } catch (e) {
+      console.warn("[POSTERS_DEBUG] addDoc error:", e);
+      throw e;
+    }
+  };
+
+  const updateFeaturedPoster = async (id, updatedFields) => {
+    setStore((prev) => {
+      const updated = (prev.featuredPosters || []).map((p) => (p.id === id ? { ...p, ...updatedFields } : p));
+      if (Platform.OS === "web" && typeof window !== "undefined" && window.localStorage) {
+        try { window.localStorage.setItem(POSTERS_CACHE_KEY, JSON.stringify(updated)); } catch (_) { }
+      }
+      return { ...prev, featuredPosters: updated };
+    });
+
+    try {
+      const docRef = doc(db, "featured_posters", id);
+      const { id: _ignore, ...payload } = updatedFields;
+      await updateDoc(docRef, payload);
+    } catch (e) {
+      console.warn("[POSTERS_DEBUG] updateDoc error:", e);
+    }
+  };
+
+  const deleteFeaturedPoster = async (id) => {
+    setStore((prev) => {
+      const updated = (prev.featuredPosters || []).filter((p) => p.id !== id);
+      if (Platform.OS === "web" && typeof window !== "undefined" && window.localStorage) {
+        try { window.localStorage.setItem(POSTERS_CACHE_KEY, JSON.stringify(updated)); } catch (_) { }
+      }
+      return { ...prev, featuredPosters: updated };
+    });
+
+    try {
+      const docRef = doc(db, "featured_posters", id);
+      await deleteDoc(docRef);
+    } catch (e) {
+      console.warn("[POSTERS_DEBUG] deleteDoc error:", e);
+    }
+  };
 
   // Save changes to localStorage (excluding users, trips, sponsors, gallery, and inquiries collections managed by Firestore)
   const saveStore = (updated) => {
@@ -1416,8 +1345,24 @@ export const DataProvider = ({ children }) => {
     const rawP = trip.rawPrice ? Number(trip.rawPrice) : (trip.price ? Number(String(trip.price).replace(/[^0-9]/g, '')) || 0 : 0);
     const formattedPrice = trip.price || (rawP > 0 ? `PKR ${rawP.toLocaleString()}` : "PKR 0");
 
+    // Generate a unique 3 to 4 digit tripCode (e.g., 100 - 9999)
+    const existingCodes = new Set((store.trips || []).map((t) => String(t.tripCode || '')));
+    let newTripCode = "";
+    for (let attempts = 0; attempts < 50; attempts++) {
+      // Pick random 3 or 4 digit code between 100 and 9999
+      const candidate = String(Math.floor(100 + Math.random() * 9900));
+      if (!existingCodes.has(candidate)) {
+        newTripCode = candidate;
+        break;
+      }
+    }
+    if (!newTripCode) {
+      newTripCode = String(Date.now()).slice(-4);
+    }
+
     const tempId = "temp_" + Date.now();
     const payload = {
+      tripCode: newTripCode,
       title: trip.title || "New Expedition",
       badge: trip.badge || "Featured",
       location: trip.location || "Northern Areas, Pakistan",
@@ -1451,10 +1396,16 @@ export const DataProvider = ({ children }) => {
 
     // 1. Optimistic local update
     const optimisticTrip = { id: tempId, ...payload, createdAt: new Date() };
-    setStore((prev) => ({
-      ...prev,
-      trips: [optimisticTrip, ...prev.trips],
-    }));
+    setStore((prev) => {
+      const updated = [optimisticTrip, ...prev.trips];
+      if (Platform.OS === "web" && typeof window !== "undefined" && window.localStorage) {
+        try { window.localStorage.setItem(TRIPS_CACHE_KEY, JSON.stringify(updated)); } catch (_) { }
+      }
+      return {
+        ...prev,
+        trips: updated,
+      };
+    });
 
     // 2. Persist to Firestore
     try {
@@ -1472,10 +1423,16 @@ export const DataProvider = ({ children }) => {
     console.log(`[TRIPS_FIRESTORE_DEBUG] updateTrip called for ID [${id}]:`, updatedFields);
 
     // 1. Optimistic local update
-    setStore((prev) => ({
-      ...prev,
-      trips: prev.trips.map((t) => (t.id === id ? { ...t, ...updatedFields } : t)),
-    }));
+    setStore((prev) => {
+      const updated = prev.trips.map((t) => (t.id === id ? { ...t, ...updatedFields } : t));
+      if (Platform.OS === "web" && typeof window !== "undefined" && window.localStorage) {
+        try { window.localStorage.setItem(TRIPS_CACHE_KEY, JSON.stringify(updated)); } catch (_) { }
+      }
+      return {
+        ...prev,
+        trips: updated,
+      };
+    });
 
     // 2. Update in Firestore
     try {
@@ -1492,10 +1449,16 @@ export const DataProvider = ({ children }) => {
     console.log(`[TRIPS_FIRESTORE_DEBUG] deleteTrip called for ID [${id}]`);
 
     // 1. Optimistic local update
-    setStore((prev) => ({
-      ...prev,
-      trips: prev.trips.filter((t) => t.id !== id),
-    }));
+    setStore((prev) => {
+      const updated = prev.trips.filter((t) => t.id !== id);
+      if (Platform.OS === "web" && typeof window !== "undefined" && window.localStorage) {
+        try { window.localStorage.setItem(TRIPS_CACHE_KEY, JSON.stringify(updated)); } catch (_) { }
+      }
+      return {
+        ...prev,
+        trips: updated,
+      };
+    });
 
     // 2. Delete from Firestore
     try {
@@ -1729,6 +1692,11 @@ export const DataProvider = ({ children }) => {
   };
 
   const deleteUser = async (id) => {
+    // Safety check: protect Super Admin
+    if (id === "dAA4wFxhnjZHLP5yQA4lwuiSKDv1") {
+      console.warn("[USERS_SECURITY] Cannot delete Super Admin account!");
+      return;
+    }
     console.log(`[USERS_DEBUG] deleteUser called for ID [${id}]`);
     // 1. Instantly update UI state
     setStore((prev) => {
@@ -1746,6 +1714,36 @@ export const DataProvider = ({ children }) => {
     }
   };
 
+  const deleteAllUsersExceptSuperAdmin = async () => {
+    const SUPER_ADMIN_UID = "dAA4wFxhnjZHLP5yQA4lwuiSKDv1";
+    const SUPER_ADMIN_EMAIL = "superadmin@acesclub.com";
+
+    // 1. Instantly filter UI state
+    setStore((prev) => {
+      const preserved = prev.users.filter(
+        (u) => u.id === SUPER_ADMIN_UID || (u.email && u.email.toLowerCase() === SUPER_ADMIN_EMAIL)
+      );
+      return { ...prev, users: preserved };
+    });
+
+    // 2. Delete from Firestore in background
+    try {
+      const usersToDelete = store.users.filter(
+        (u) => u.id !== SUPER_ADMIN_UID && (!u.email || u.email.toLowerCase() !== SUPER_ADMIN_EMAIL)
+      );
+      for (const u of usersToDelete) {
+        try {
+          await deleteDoc(doc(db, "users", u.id));
+        } catch (e) {
+          console.warn("[USERS_DELETE_ALL] Could not delete doc:", u.id, e);
+        }
+      }
+      console.log("[USERS_DELETE_ALL] All users except Super Admin deleted from Firestore.");
+    } catch (error) {
+      console.error("[USERS_DELETE_ALL] Error deleting users:", error);
+    }
+  };
+
   // INQUIRY CRUD (Connected to Firestore with optimistic UI updates)
   const addInquiry = async (inquiry) => {
     console.log("[INQUIRIES_FIRESTORE_DEBUG] addInquiry called with:", inquiry);
@@ -1754,6 +1752,7 @@ export const DataProvider = ({ children }) => {
       name: inquiry.name || "Anonymous Traveler",
       email: inquiry.email || "",
       phone: inquiry.phone || "",
+      city: inquiry.city || "",
       destination: inquiry.destination || "Northern Areas, Pakistan",
       travelDate: inquiry.travelDate || "",
       travelers: inquiry.travelers || "1 - 2 Person",
@@ -1839,52 +1838,159 @@ export const DataProvider = ({ children }) => {
     saveStore(updated);
   };
 
+  const addGuide = (guide) => {
+    const currentGuides = store.aboutContent?.guides || DEFAULT_DATA.aboutContent.guides || [];
+    const newGuide = {
+      id: guide.id || "guide_" + Date.now(),
+      name: (guide.name || "NEW GUIDE").toUpperCase(),
+      category: (guide.category || "MOUNTAIN GUIDE").toUpperCase(),
+      imageKey: guide.imageKey || "guide1.jpg",
+      ...guide,
+    };
+    const updatedGuides = [...currentGuides, newGuide];
+    updateAboutContent({ guides: updatedGuides });
+    return newGuide;
+  };
+
+  const updateGuide = (guideId, updatedFields) => {
+    const currentGuides = store.aboutContent?.guides || DEFAULT_DATA.aboutContent.guides || [];
+    const updatedGuides = currentGuides.map((g) => {
+      if (g.id === guideId) {
+        return {
+          ...g,
+          ...updatedFields,
+          name: updatedFields.name !== undefined ? updatedFields.name.toUpperCase() : g.name,
+          category: updatedFields.category !== undefined ? updatedFields.category.toUpperCase() : g.category,
+        };
+      }
+      return g;
+    });
+    updateAboutContent({ guides: updatedGuides });
+  };
+
+  const deleteGuide = (guideId) => {
+    const currentGuides = store.aboutContent?.guides || DEFAULT_DATA.aboutContent.guides || [];
+    const updatedGuides = currentGuides.filter((g) => g.id !== guideId);
+    updateAboutContent({ guides: updatedGuides });
+  };
+
   const updateContactContent = async (fields) => {
-    const updatedSocial = {
-      ...(store.socialLinks || DEFAULT_DATA.socialLinks),
-      ...(fields.facebook !== undefined && { facebook: fields.facebook }),
-      ...(fields.instagram !== undefined && { instagram: fields.instagram }),
-      ...(fields.youtube !== undefined && { youtube: fields.youtube }),
-      ...(fields.whatsapp !== undefined && { whatsapp: fields.whatsapp }),
-    };
+    let toPersist = null;
+    let socialToSync = null;
 
-    const updated = {
-      ...store,
-      contactContent: { ...store.contactContent, ...fields },
-      socialLinks: updatedSocial,
-    };
-    saveStore(updated);
+    setStore((prev) => {
+      const currentContact = prev.contactContent || DEFAULT_DATA.contactContent;
+      const currentSocial = prev.socialLinks || DEFAULT_DATA.socialLinks;
 
-    if (fields.facebook || fields.instagram || fields.youtube || fields.whatsapp) {
+      const updatedSocial = {
+        ...currentSocial,
+        ...(fields.facebook !== undefined && { facebook: fields.facebook }),
+        ...(fields.instagram !== undefined && { instagram: fields.instagram }),
+        ...(fields.youtube !== undefined && { youtube: fields.youtube }),
+        ...(fields.whatsapp !== undefined && { whatsapp: fields.whatsapp }),
+      };
+
+      const updatedContact = {
+        ...currentContact,
+        ...fields,
+        facebook: updatedSocial.facebook,
+        instagram: updatedSocial.instagram,
+        youtube: updatedSocial.youtube,
+        whatsapp: updatedSocial.whatsapp,
+      };
+
+      const updated = {
+        ...prev,
+        contactContent: updatedContact,
+        socialLinks: updatedSocial,
+      };
+
+      toPersist = updated;
+      socialToSync = updatedSocial;
+      return updated;
+    });
+
+    if (toPersist && Platform.OS === "web" && typeof window !== "undefined" && window.localStorage) {
+      try {
+        const { users: _u, trips: _t, sponsors: _s, gallery: _g, inquiries: _i, ...toStore } = toPersist;
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
+      } catch (e) {
+        console.warn("Could not write DataContext to localStorage", e);
+      }
+    }
+
+    if (socialToSync && (fields.facebook || fields.instagram || fields.youtube || fields.whatsapp)) {
       try {
         const socialDocRef = doc(db, "settings", "social");
-        await setDoc(socialDocRef, updatedSocial, { merge: true });
+        await setDoc(socialDocRef, socialToSync, { merge: true });
       } catch (err) {
         console.log("[SETTINGS_DEBUG] Firestore social save note:", err?.message);
       }
     }
+
+    try {
+      const contactDocRef = doc(db, "settings", "contact");
+      const cleanContact = {
+        ...(fields.phone !== undefined && { phone: fields.phone }),
+        ...(fields.phoneHours !== undefined && { phoneHours: fields.phoneHours }),
+        ...(fields.email !== undefined && { email: fields.email }),
+        ...(fields.location !== undefined && { location: fields.location }),
+        ...(fields.whatsapp !== undefined && { whatsapp: fields.whatsapp }),
+      };
+      await setDoc(contactDocRef, cleanContact, { merge: true });
+    } catch (err) {
+      console.log("[SETTINGS_DEBUG] Firestore contact save note:", err?.message);
+    }
   };
 
   const updateSocialLinks = async (fields) => {
-    const updatedSocial = {
-      ...(store.socialLinks || DEFAULT_DATA.socialLinks),
-      ...fields,
-    };
-    const updated = {
-      ...store,
-      socialLinks: updatedSocial,
-      contactContent: {
-        ...(store.contactContent || DEFAULT_DATA.contactContent),
-        ...fields,
-      },
-    };
-    saveStore(updated);
+    let toPersist = null;
+    let socialToSync = null;
 
-    try {
-      const socialDocRef = doc(db, "settings", "social");
-      await setDoc(socialDocRef, updatedSocial, { merge: true });
-    } catch (err) {
-      console.log("[SETTINGS_DEBUG] Firestore social save note:", err?.message);
+    setStore((prev) => {
+      const currentSocial = prev.socialLinks || DEFAULT_DATA.socialLinks;
+      const currentContact = prev.contactContent || DEFAULT_DATA.contactContent;
+
+      const updatedSocial = {
+        ...currentSocial,
+        ...fields,
+      };
+
+      const updatedContact = {
+        ...currentContact,
+        ...(fields.facebook !== undefined && { facebook: fields.facebook }),
+        ...(fields.instagram !== undefined && { instagram: fields.instagram }),
+        ...(fields.youtube !== undefined && { youtube: fields.youtube }),
+        ...(fields.whatsapp !== undefined && { whatsapp: fields.whatsapp }),
+      };
+
+      const updated = {
+        ...prev,
+        socialLinks: updatedSocial,
+        contactContent: updatedContact,
+      };
+
+      toPersist = updated;
+      socialToSync = updatedSocial;
+      return updated;
+    });
+
+    if (toPersist && Platform.OS === "web" && typeof window !== "undefined" && window.localStorage) {
+      try {
+        const { users: _u, trips: _t, sponsors: _s, gallery: _g, inquiries: _i, ...toStore } = toPersist;
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
+      } catch (e) {
+        console.warn("Could not write DataContext to localStorage", e);
+      }
+    }
+
+    if (socialToSync) {
+      try {
+        const socialDocRef = doc(db, "settings", "social");
+        await setDoc(socialDocRef, socialToSync, { merge: true });
+      } catch (err) {
+        console.log("[SETTINGS_DEBUG] Firestore social save note:", err?.message);
+      }
     }
   };
 
@@ -1955,6 +2061,10 @@ export const DataProvider = ({ children }) => {
     <DataContext.Provider
       value={{
         ...store,
+        tripsLoading,
+        addFeaturedPoster,
+        updateFeaturedPoster,
+        deleteFeaturedPoster,
         addTripCategory,
         deleteTripCategory,
         addTripBadge,
@@ -1972,11 +2082,15 @@ export const DataProvider = ({ children }) => {
         addUser,
         updateUser,
         deleteUser,
+        deleteAllUsersExceptSuperAdmin,
         addInquiry,
         updateInquiryStatus,
         deleteInquiry,
         updateHomeContent,
         updateAboutContent,
+        addGuide,
+        updateGuide,
+        deleteGuide,
         updateContactContent,
         updateSocialLinks,
         updateOnboardingContent,

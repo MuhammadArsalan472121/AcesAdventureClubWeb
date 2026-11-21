@@ -1,5 +1,6 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
+  ActivityIndicator,
   View,
   Text,
   StyleSheet,
@@ -12,6 +13,8 @@ import {
   TextInput,
   Dimensions,
   Platform,
+  Modal,
+  Linking,
 } from "react-native";
 import gsap from "gsap";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -26,7 +29,7 @@ const { height, width } = Dimensions.get("window");
 
 export default function HomeScreen() {
   const navigation = useNavigation();
-  const { homeContent, trips } = useData();
+  const { homeContent, trips, tripsLoading, contactContent, socialLinks, featuredPosters = [] } = useData();
   const {
     isMobile,
     isDesktop,
@@ -40,11 +43,81 @@ export default function HomeScreen() {
     bodyLineHeight,
   } = useResponsive();
 
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [posterModalVisible, setPosterModalVisible] = useState(false);
+  const [selectedPosterImage, setSelectedPosterImage] = useState(null);
+
+  const activePosters = (featuredPosters || []).filter((p) => p.status !== "INACTIVE");
+  const posterSlides = activePosters.length > 0 ? activePosters : [
+    {
+      id: "galiyat-poster-1",
+      posterKey: "galiyat-poster.jpg",
+      badge: "🔥 FEATURED SPECIAL TRIP",
+      title: "AN UNFORGETTABLE TRIP TO GALIYAT!",
+      subtitle: "Ayubia • Pipeline Track • Dunga Gali • Nathia Gali • Wonderland Park",
+      description:
+        "Get ready for an exciting adventure filled with breathtaking views, thrilling experiences, music, bonfire, and unforgettable memories!",
+      price: "Rs. 4,000/-",
+      priceTag: "ONLY",
+      departureTime: "6:00 AM",
+      returnTime: "8:00 PM",
+      pickupPoint: "Islamabad / Rawalpindi",
+      services: [
+        "Entry Tickets (Ayubia Tunnel, Pipeline Track & Park)",
+        "Luxury Air-Conditioned Transport",
+        "Delicious Dinner Included",
+        "Bonfire Night & Music Entertainment",
+      ],
+      whatsappMsg: "Hello Ace Adventure Club! I want to book seats for the Galiyat Trip (Rs. 4,000/- ONLY). Please share booking details.",
+      status: "ACTIVE",
+    },
+  ];
+
+  useEffect(() => {
+    if (posterSlides.length <= 1) return;
+    const timer = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % posterSlides.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [posterSlides.length]);
+
+  const currentPosterSlide = posterSlides[activeSlide] || posterSlides[0];
+
+  const handleWhatsAppBooking = (slide) => {
+    const rawNumber = contactContent?.whatsapp || socialLinks?.whatsapp || "923000000000";
+    const cleanNumber = String(rawNumber).replace(/[^0-9]/g, "");
+    const text = encodeURIComponent(slide.whatsappMsg || "Hello Ace Adventure Club, I want to book a trip!");
+    const url = `https://wa.me/${cleanNumber || "923000000000"}?text=${text}`;
+    if (Platform.OS === "web" && typeof window !== "undefined") {
+      window.open(url, "_blank");
+    }
+  };
+
+  const handleOpenWhatsAppChat = () => {
+    const rawNumber = contactContent?.whatsapp || socialLinks?.whatsapp || "+923121578099";
+    const cleanNumber = String(rawNumber).replace(/[^0-9]/g, "");
+    const text = encodeURIComponent("Hello Ace Adventure Club! I want to get updates on upcoming trips & adventures.");
+    const url = `https://wa.me/${cleanNumber || "923121578099"}?text=${text}`;
+    if (Platform.OS === "web" && typeof window !== "undefined") {
+      window.open(url, "_blank");
+    } else {
+      Linking.openURL(url).catch((err) => console.warn("WhatsApp open error:", err));
+    }
+  };
+
+  const handleBookNow = (slide) => {
+    if (slide.tripId) {
+      navigation.navigate("ViewTrip", { tripId: slide.tripId });
+    } else {
+      navigation.navigate("Contact");
+    }
+  };
+
   useEffect(() => {
     animateHero(".gsap-hero-item");
     animateStats(".gsap-stat");
     animateCards(".gsap-card");
-  }, []);
+  }, [(trips || []).length]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -153,6 +226,186 @@ export default function HomeScreen() {
             </View>
           </View>
         </ImageBackground>
+
+        {/* ================= UPCOMING EXPEDITIONS & POSTER SLIDER SHOWCASE ================= */}
+        <View style={styles.adSectionWrapper}>
+          <View
+            style={[
+              styles.adSection,
+              {
+                maxWidth: contentMaxWidth,
+                width: "100%",
+                alignSelf: "center",
+                paddingHorizontal: paddingHorizontal,
+                paddingVertical: isDesktop ? 70 : 45,
+              },
+            ]}
+          >
+            {/* Top Heading */}
+            <View style={styles.adTopHeader}>
+              <View style={styles.adSmallBadge}>
+                <Ionicons name="megaphone-outline" size={16} color="#FACC15" />
+                <Text style={styles.adSmallBadgeText}>SPECIAL ANNOUNCEMENT & UPCOMING TOURS</Text>
+              </View>
+              <Text style={[styles.adMainHeading, { fontSize: isMobile ? 26 : isDesktop ? 38 : 30 }]}>
+                OFFICIAL TRIP <Text style={styles.adMainHeadingGold}>POSTER & BOOKINGS</Text>
+              </Text>
+              <Text style={styles.adMainSubHeading}>
+                Book direct from our official tour flyer — limited seats available with early bird confirmation!
+              </Text>
+            </View>
+
+            {/* Poster Showcase Card Container */}
+            <View style={[styles.adBannerCard, isDesktop ? { flexDirection: "row", alignItems: "center", gap: 36 } : { flexDirection: "column", gap: 24 }]}>
+              {/* Left/Top: Official Poster with Zoom trigger */}
+              <View style={[styles.posterWrapper, { width: isDesktop ? 400 : "100%", maxWidth: isDesktop ? 420 : 480, alignSelf: "center" }]}>
+                <TouchableOpacity
+                  activeOpacity={0.9}
+                  onPress={() => {
+                    setSelectedPosterImage(currentPosterSlide.posterKey);
+                    setPosterModalVisible(true);
+                  }}
+                  style={{ width: "100%" }}
+                >
+                  <Image
+                    source={resolveAsset(currentPosterSlide.posterKey, "galiyat-poster.jpg")}
+                    style={[styles.posterImage, { height: isDesktop ? 540 : isTablet ? 480 : 400 }]}
+                    resizeMode="contain"
+                  />
+                  <View style={styles.posterZoomBtn}>
+                    <Ionicons name="expand-outline" size={15} color="#FFFFFF" />
+                    <Text style={styles.posterZoomBtnText}>Tap To Zoom Poster</Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+
+              {/* Right/Bottom: Details, Pricing & Action Buttons */}
+              <View style={styles.adDetailsCard}>
+                <View style={styles.adBadgeChip}>
+                  <Text style={styles.adBadgeChipText}>{currentPosterSlide.badge}</Text>
+                </View>
+
+                <Text style={[styles.adTripTitle, { fontSize: isMobile ? 22 : isDesktop ? 30 : 25 }]}>
+                  {currentPosterSlide.title}
+                </Text>
+
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 }}>
+                  <Ionicons name="location-outline" size={18} color="#38BDF8" />
+                  <Text style={styles.adTripSubtitle} numberOfLines={2}>
+                    {currentPosterSlide.subtitle}
+                  </Text>
+                </View>
+
+                <Text style={styles.adTripDesc}>
+                  {currentPosterSlide.description}
+                </Text>
+
+                {/* Charges & Timing Highlight Box */}
+                <View style={styles.adPricingBox}>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 10 }}>
+                    <View>
+                      <Text style={styles.adPriceLabel}>TRIP CHARGES</Text>
+                      <View style={{ flexDirection: "row", alignItems: "baseline", marginTop: 2 }}>
+                        <Text style={styles.adPriceText}>{currentPosterSlide.price}</Text>
+                        <Text style={styles.adPriceTagText}>{currentPosterSlide.priceTag}</Text>
+                      </View>
+                    </View>
+
+                    <View style={{ alignItems: isMobile ? "flex-start" : "flex-end" }}>
+                      <Text style={styles.adPriceLabel}>PICKUP POINT</Text>
+                      <Text style={{ color: "#FFFFFF", fontSize: 13, fontWeight: "700", marginTop: 4 }}>
+                        {currentPosterSlide.pickupPoint}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.adTimingRow}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                      <Ionicons name="time-outline" size={16} color="#FACC15" />
+                      <Text style={styles.adTimingText}>Departure: {currentPosterSlide.departureTime}</Text>
+                    </View>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                      <Ionicons name="reload-outline" size={16} color="#38BDF8" />
+                      <Text style={styles.adTimingText}>Return: {currentPosterSlide.returnTime}</Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Services Included */}
+                <Text style={[styles.adPriceLabel, { marginBottom: 10 }]}>SERVICES INCLUDED IN PACKAGE:</Text>
+                <View style={styles.adServicesGrid}>
+                  {(Array.isArray(currentPosterSlide.services) ? currentPosterSlide.services : []).map((srv, idx) => {
+                    const text = typeof srv === "string" ? srv : srv.text || srv.label || "";
+                    let icon = "checkmark-circle-outline";
+                    const lower = text.toLowerCase();
+                    if (lower.includes("ticket") || lower.includes("entry")) icon = "ticket-outline";
+                    else if (lower.includes("bus") || lower.includes("transport")) icon = "bus-outline";
+                    else if (lower.includes("dinner") || lower.includes("meal") || lower.includes("food")) icon = "restaurant-outline";
+                    else if (lower.includes("bonfire") || lower.includes("fire")) icon = "flame-outline";
+                    else if (lower.includes("music")) icon = "musical-notes-outline";
+                    return (
+                      <View key={idx} style={styles.adServiceItem}>
+                        <Ionicons name={icon} size={15} color="#38BDF8" />
+                        <Text style={styles.adServiceText}>{text}</Text>
+                      </View>
+                    );
+                  })}
+                </View>
+
+                {/* CTA Booking Buttons */}
+                <View style={[styles.adActionBtnsRow, isMobile && { flexDirection: "column", gap: 10 }]}>
+                  <TouchableOpacity
+                    style={[styles.adBookNowBtn, isMobile && { width: "100%" }]}
+                    onPress={() => handleBookNow(currentPosterSlide)}
+                  >
+                    <Ionicons name="flash-outline" size={18} color="#FFFFFF" />
+                    <Text style={styles.adBookNowText}>Book Your Seat Now</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.adWhatsAppBtn, isMobile && { width: "100%" }]}
+                    onPress={() => handleWhatsAppBooking(currentPosterSlide)}
+                  >
+                    <Ionicons name="logo-whatsapp" size={18} color="#FFFFFF" />
+                    <Text style={styles.adWhatsAppText}>Book via WhatsApp</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Slider Next & Prev Arrow Buttons (if more than 1 slide) */}
+              {posterSlides.length > 1 && (
+                <>
+                  <TouchableOpacity
+                    style={styles.sliderNavBtnLeft}
+                    onPress={() => setActiveSlide((prev) => (prev - 1 + posterSlides.length) % posterSlides.length)}
+                  >
+                    <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.sliderNavBtnRight}
+                    onPress={() => setActiveSlide((prev) => (prev + 1) % posterSlides.length)}
+                  >
+                    <Ionicons name="chevron-forward" size={22} color="#FFFFFF" />
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+
+            {/* Slider Dots Indicator */}
+            {posterSlides.length > 1 && (
+              <View style={styles.sliderDotsRow}>
+                {posterSlides.map((s, idx) => (
+                  <TouchableOpacity
+                    key={s.id}
+                    style={[styles.sliderDot, activeSlide === idx && styles.sliderDotActive]}
+                    onPress={() => setActiveSlide(idx)}
+                  />
+                ))}
+              </View>
+            )}
+          </View>
+        </View>
 
         {/* ================= ABOUT SECTION (Who We Are) ================= */}
         <View style={[styles.aboutSectionWrapper, { backgroundColor: "#F7FAFD" }]}>
@@ -332,12 +585,12 @@ export default function HomeScreen() {
               >
                 <Image source={require("../../assets/nature.jpg")} style={styles.cardImage} />
                 <View style={styles.cardIcon}>
-                  <Text style={styles.cardIconText}>🌲</Text>
+                  <Text style={styles.cardIconText}>🌅</Text>
                 </View>
                 <View style={styles.cardOverlay}>
-                  <Text style={styles.cardTitle}>Nature Trails</Text>
+                  <Text style={styles.cardTitle}>One Day Trip</Text>
                   <Text style={styles.cardDescription}>
-                    Explore Scenic Paths Reconnect With Nature.
+                    Quick Escapes And Perfect Single-Day Getaways.
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -407,42 +660,63 @@ export default function HomeScreen() {
             </Text>
 
             {/* Featured Cards Container */}
-            <View style={[styles.featuredScrollContainer, { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", marginTop: 35 }]}>
-              {trips.slice(0, 3).map((trip) => (
-                <TouchableOpacity
-                  key={trip.id}
-                  className="gsap-card interactive-card"
-                  style={[styles.featuredCard, { width: isDesktop ? "31.5%" : isTablet ? "48%" : "100%", marginBottom: 24 }]}
-                  onPress={() => navigation.navigate("ViewTrip", { tripId: trip.id })}
-                >
-                  <ImageBackground source={resolveAsset(trip.imageKey, "featured1.jpg")} style={styles.featuredCardBg} imageStyle={styles.featuredImage}>
-                    <View style={styles.featuredOverlay}>
-                      {trip.badge ? (
-                        <View style={styles.badgePopular}>
-                          <Text style={styles.badgePopularText}>{trip.badge}</Text>
+            {/* Featured Cards Grid */}
+            {tripsLoading && trips.length === 0 ? (
+              <View style={{ width: "100%", paddingVertical: 60, alignItems: "center", justifyContent: "center" }}>
+                <ActivityIndicator size="large" color="#0B5CAD" />
+                <Text style={{ marginTop: 14, fontSize: 15, fontWeight: "700", color: "#0B5CAD" }}>
+                  Loading Featured Expeditions...
+                </Text>
+              </View>
+            ) : trips.length === 0 ? (
+              <View style={{ width: "100%", paddingVertical: 40, alignItems: "center", justifyContent: "center" }}>
+                <Text style={{ fontSize: 15, fontWeight: "600", color: "#64748B" }}>
+                  No featured expeditions available.
+                </Text>
+              </View>
+            ) : (
+              <View style={[styles.featuredScrollContainer, { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", marginTop: 35 }]}>
+                {trips.slice(0, 3).map((trip) => (
+                  <TouchableOpacity
+                    key={trip.id}
+                    className="gsap-card interactive-card"
+                    style={[styles.featuredCard, { width: isDesktop ? "31.5%" : isTablet ? "48%" : "100%", marginBottom: 24 }]}
+                    onPress={() => navigation.navigate("ViewTrip", { tripId: trip.id })}
+                  >
+                    <ImageBackground source={resolveAsset(trip.imageKey, "featured1.jpg")} style={styles.featuredCardBg} imageStyle={styles.featuredImage}>
+                      <View style={styles.featuredOverlay}>
+                        {trip.badge ? (
+                          <View style={styles.badgePopular}>
+                            <Text style={styles.badgePopularText}>{trip.badge}</Text>
+                          </View>
+                        ) : null}
+                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                          <Text style={styles.locationText}>{trip.location}</Text>
+                          <Text style={{ fontSize: 11, fontWeight: "800", color: "#38BDF8" }}>
+                            #{trip.tripCode || String(trip.id).slice(-4)}
+                          </Text>
                         </View>
-                      ) : null}
-                      <Text style={styles.locationText}>{trip.location}</Text>
-                      <Text style={styles.placeName}>{trip.title}</Text>
-                      <Text style={styles.placeDescription} numberOfLines={2}>
-                        {trip.description}
-                      </Text>
-                      <View style={styles.cardFooter}>
-                        <View style={styles.footerItem}>
-                          <Text style={styles.footerIcon}>🕒</Text>
-                          <Text style={styles.footerText}>{trip.duration}</Text>
+                        <Text style={styles.placeName}>{trip.title}</Text>
+                        <Text style={styles.placeDescription} numberOfLines={2}>
+                          {trip.description}
+                        </Text>
+                        <View style={styles.cardFooter}>
+                          <View style={styles.footerItem}>
+                            <Text style={styles.footerIcon}>🕒</Text>
+                            <Text style={styles.footerText}>{trip.duration}</Text>
+                          </View>
+                          <View style={styles.footerItem}>
+                            <Text style={styles.footerIcon}>⛰️</Text>
+                            <Text style={styles.footerText}>{trip.difficulty}</Text>
+                          </View>
+                          <Text style={styles.priceText}>{trip.price}</Text>
                         </View>
-                        <View style={styles.footerItem}>
-                          <Text style={styles.footerIcon}>⛰️</Text>
-                          <Text style={styles.footerText}>{trip.difficulty}</Text>
-                        </View>
-                        <Text style={styles.priceText}>{trip.price}</Text>
                       </View>
-                    </View>
-                  </ImageBackground>
-                </TouchableOpacity>
-              ))}
-            </View>
+                    </ImageBackground>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
 
             {/* Explore More Center Button */}
             <View style={{ alignItems: "center", marginTop: 20 }}>
@@ -579,28 +853,17 @@ export default function HomeScreen() {
                     Join our community of explorers and discover breathtaking destinations, unforgettable experiences and adventures that create memories for a lifetime.
                   </Text>
 
-                  {/* Form Row */}
-                  <View
-                    style={[
-                      styles.subscribeContainer,
-                      { width: "100%", maxWidth: 540, marginTop: isDesktop ? 30 : 20 },
-                      isMobile && styles.subscribeContainerMobile,
-                    ]}
+                  {/* WhatsApp Direct Action Button */}
+                  <TouchableOpacity
+                    style={[styles.newsWhatsAppBtn, { marginTop: isDesktop ? 30 : 20 }]}
+                    onPress={handleOpenWhatsAppChat}
+                    activeOpacity={0.85}
                   >
-                    <TextInput
-                      placeholder="Enter your email address"
-                      placeholderTextColor="#94A3B8"
-                      style={[styles.emailInput, isMobile && styles.emailInputMobile]}
-                    />
-                    <TouchableOpacity
-                      style={[styles.subscribeButton, isMobile && styles.subscribeButtonMobile]}
-                      onPress={() => navigation.navigate("Contact")}
-                    >
-                      <Text style={styles.subscribeButtonText}>Subscribe Free</Text>
-                    </TouchableOpacity>
-                  </View>
+                    <Ionicons name="logo-whatsapp" size={22} color="#FFFFFF" />
+                    <Text style={styles.newsWhatsAppBtnText}>Chat with Us on WhatsApp</Text>
+                  </TouchableOpacity>
 
-                  <Text style={styles.smallText}>No spam ever • Unsubscribe in one click</Text>
+                  <Text style={styles.smallText}>Instant booking & trip updates directly on WhatsApp</Text>
                 </View>
               </View>
             </ImageBackground>
@@ -617,6 +880,20 @@ export default function HomeScreen() {
         {/* ================= FOOTER ================= */}
         <Footer />
       </ScrollView>
+
+      {/* Modal: Full-Screen High-Res Poster Viewer */}
+      <Modal visible={posterModalVisible} transparent animationType="fade">
+        <View style={styles.posterModalBackdrop}>
+          <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setPosterModalVisible(false)}>
+            <Ionicons name="close" size={28} color="#FFFFFF" />
+          </TouchableOpacity>
+          <Image
+            source={resolveAsset(selectedPosterImage || "galiyat-poster.jpg", "galiyat-poster.jpg")}
+            style={{ width: "92%", height: "88%" }}
+            resizeMode="contain"
+          />
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -1245,6 +1522,26 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
 
+  newsWhatsAppBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#22C55E",
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 30,
+    gap: 10,
+    elevation: 5,
+    cursor: "pointer",
+  },
+
+  newsWhatsAppBtnText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+
   startExploringBtn: {
     backgroundColor: "#FFFFFF",
     paddingHorizontal: 36,
@@ -1258,5 +1555,357 @@ const styles = StyleSheet.create({
     color: "#0F172A",
     fontSize: 16,
     fontWeight: "700",
+  },
+
+  /* ================= ADVERTISEMENT / POSTER SLIDER SECTION ================= */
+  adSectionWrapper: {
+    backgroundColor: "#07111E",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 255, 255, 0.08)",
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255, 255, 255, 0.08)",
+    position: "relative",
+    overflow: "hidden",
+  },
+
+  adSection: {
+    position: "relative",
+  },
+
+  adTopHeader: {
+    alignItems: "center",
+    marginBottom: 32,
+  },
+
+  adSmallBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(250, 204, 21, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(250, 204, 21, 0.4)",
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 10,
+    gap: 6,
+  },
+
+  adSmallBadgeText: {
+    color: "#FACC15",
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+  },
+
+  adMainHeading: {
+    color: "#FFFFFF",
+    fontWeight: "900",
+    textAlign: "center",
+  },
+
+  adMainHeadingGold: {
+    color: "#FACC15",
+  },
+
+  adMainSubHeading: {
+    color: "#94A3B8",
+    fontSize: 15,
+    textAlign: "center",
+    marginTop: 8,
+    maxWidth: 680,
+  },
+
+  adBannerCard: {
+    backgroundColor: "#0F1E36",
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.12)",
+    padding: 24,
+    shadowColor: "#000",
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    position: "relative",
+  },
+
+  posterWrapper: {
+    position: "relative",
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: "#030712",
+    shadowColor: "#000",
+    shadowOpacity: 0.6,
+    shadowRadius: 25,
+    elevation: 8,
+  },
+
+  posterImage: {
+    width: "100%",
+    borderRadius: 16,
+  },
+
+  posterZoomBtn: {
+    position: "absolute",
+    bottom: 12,
+    right: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(15, 23, 42, 0.85)",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
+    gap: 6,
+    cursor: "pointer",
+  },
+
+  posterZoomBtnText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+
+  adDetailsCard: {
+    flex: 1,
+    justifyContent: "space-between",
+  },
+
+  adBadgeChip: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(239, 68, 68, 0.15)",
+    borderWidth: 1,
+    borderColor: "#EF4444",
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 14,
+    marginBottom: 12,
+  },
+
+  adBadgeChipText: {
+    color: "#F87171",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.8,
+  },
+
+  adTripTitle: {
+    color: "#FFFFFF",
+    fontWeight: "900",
+    lineHeight: 34,
+  },
+
+  adTripSubtitle: {
+    color: "#38BDF8",
+    fontSize: 14,
+    fontWeight: "700",
+    marginTop: 6,
+  },
+
+  adTripDesc: {
+    color: "#CBD5E1",
+    fontSize: 14,
+    lineHeight: 22,
+    marginTop: 10,
+  },
+
+  adPricingBox: {
+    backgroundColor: "rgba(2, 132, 199, 0.1)",
+    borderWidth: 1.5,
+    borderColor: "rgba(56, 189, 248, 0.35)",
+    borderRadius: 16,
+    padding: 16,
+    marginVertical: 18,
+  },
+
+  adPriceLabel: {
+    color: "#94A3B8",
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1,
+  },
+
+  adPriceText: {
+    color: "#FACC15",
+    fontSize: 32,
+    fontWeight: "900",
+  },
+
+  adPriceTagText: {
+    color: "#E2E8F0",
+    fontSize: 13,
+    fontWeight: "800",
+    marginLeft: 6,
+  },
+
+  adTimingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 255, 255, 0.1)",
+  },
+
+  adTimingText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+
+  adServicesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 20,
+  },
+
+  adServiceItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    gap: 8,
+  },
+
+  adServiceText: {
+    color: "#E2E8F0",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+
+  adActionBtnsRow: {
+    flexDirection: "row",
+    gap: 12,
+    alignItems: "center",
+  },
+
+  adBookNowBtn: {
+    backgroundColor: "#0B5CAD",
+    paddingVertical: 14,
+    paddingHorizontal: 22,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    shadowColor: "#0B5CAD",
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    cursor: "pointer",
+  },
+
+  adBookNowText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
+
+  adWhatsAppBtn: {
+    backgroundColor: "#22C55E",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    shadowColor: "#22C55E",
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    cursor: "pointer",
+  },
+
+  adWhatsAppText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
+
+  /* Slider Navigation Arrows & Dots */
+  sliderNavBtnLeft: {
+    position: "absolute",
+    left: -20,
+    top: "50%",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#0B5CAD",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    cursor: "pointer",
+  },
+
+  sliderNavBtnRight: {
+    position: "absolute",
+    right: -20,
+    top: "50%",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#0B5CAD",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    cursor: "pointer",
+  },
+
+  sliderDotsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 24,
+  },
+
+  sliderDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "rgba(255, 255, 255, 0.25)",
+    cursor: "pointer",
+  },
+
+  sliderDotActive: {
+    width: 28,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#38BDF8",
+  },
+
+  /* Modal Zoom View */
+  posterModalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+
+  modalCloseBtn: {
+    position: "absolute",
+    top: 30,
+    right: 30,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 20,
+    cursor: "pointer",
   },
 });

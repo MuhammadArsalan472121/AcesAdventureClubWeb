@@ -1,39 +1,53 @@
-import React, { useState, useEffect } from "react";
-import {
-  SafeAreaView,
-  StatusBar,
-  ScrollView,
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  ImageBackground,
-  Image,
-  Dimensions,
-  TouchableOpacity,
-  Modal,
-  ActivityIndicator,
-} from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import useResponsive from "../hooks/useResponsive";
-import { useData, resolveAsset } from "../context/DataContext";
-import { pickImageFromDevice } from "../utils/imageUpload";
+import { useEffect, useState } from "react";
 import {
-  animateHero,
+  ActivityIndicator,
+  Dimensions,
+  Image,
+  ImageBackground,
+  Linking,
+  Modal,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Footer from "../components/Footer";
+import Header from "../components/Header";
+import { resolveAsset, useData } from "../context/DataContext";
+import useResponsive from "../hooks/useResponsive";
+import {
   animateCards,
-  animateSection,
+  animateHero,
   animateModal,
+  animateSection,
 } from "../utils/animations";
+import { pickImageFromDevice } from "../utils/imageUpload";
 
 const { height, width } = Dimensions.get("window");
 
 export default function GalleryScreen() {
   const navigation = useNavigation();
-  const { gallery = [], trips = [], addGalleryItem } = useData();
+  const { gallery = [], trips = [], addGalleryItem, contactContent, socialLinks } = useData();
   const [selectedCategory, setSelectedCategory] = useState("All");
+
+  const handleOpenWhatsAppChat = () => {
+    const rawNumber = contactContent?.whatsapp || socialLinks?.whatsapp || "+923121578099";
+    const cleanNumber = String(rawNumber).replace(/[^0-9]/g, "");
+    const text = encodeURIComponent("Hello Ace Adventure Club! I want to get updates on upcoming trips & adventures.");
+    const url = `https://wa.me/${cleanNumber || "923121578099"}?text=${text}`;
+    if (Platform.OS === "web" && typeof window !== "undefined") {
+      window.open(url, "_blank");
+    } else {
+      Linking.openURL(url).catch((err) => console.warn("WhatsApp open error:", err));
+    }
+  };
 
   // Device upload modal state
   const [uploadModalVisible, setUploadModalVisible] = useState(false);
@@ -78,9 +92,9 @@ export default function GalleryScreen() {
   const filteredGallery = isAllSelected
     ? (gallery || [])
     : (gallery || []).filter((item) => {
-        if (!item || !item.category) return false;
-        return item.category.trim().toLowerCase() === selectedCategory.trim().toLowerCase();
-      });
+      if (!item || !item.category) return false;
+      return item.category.trim().toLowerCase() === selectedCategory.trim().toLowerCase();
+    });
 
   // Distribute items across 3 columns for desktop masonry
   const col1 = filteredGallery.filter((_, idx) => idx % 3 === 0);
@@ -382,28 +396,17 @@ export default function GalleryScreen() {
                     Join our community of explorers and discover breathtaking destinations, unforgettable experiences and adventures that create memories for a lifetime.
                   </Text>
 
-                  {/* Form Row */}
-                  <View
-                    style={[
-                      styles.subscribeContainer,
-                      { width: "100%", maxWidth: 540, marginTop: isDesktop ? 30 : 20 },
-                      isMobile && styles.subscribeContainerMobile,
-                    ]}
+                  {/* WhatsApp Direct Action Button */}
+                  <TouchableOpacity
+                    style={[styles.newsWhatsAppBtn, { marginTop: isDesktop ? 30 : 20 }]}
+                    onPress={handleOpenWhatsAppChat}
+                    activeOpacity={0.85}
                   >
-                    <TextInput
-                      placeholder="Enter your email address"
-                      placeholderTextColor="#94A3B8"
-                      style={[styles.emailInput, isMobile && styles.emailInputMobile]}
-                    />
-                    <TouchableOpacity
-                      style={[styles.subscribeButton, isMobile && styles.subscribeButtonMobile]}
-                      onPress={() => navigation.navigate("Contact")}
-                    >
-                      <Text style={styles.subscribeButtonText}>Subscribe Free</Text>
-                    </TouchableOpacity>
-                  </View>
+                    <Ionicons name="logo-whatsapp" size={22} color="#FFFFFF" />
+                    <Text style={styles.newsWhatsAppBtnText}>Chat with Us on WhatsApp</Text>
+                  </TouchableOpacity>
 
-                  <Text style={styles.smallText}>No spam ever • Unsubscribe in one click</Text>
+                  <Text style={styles.smallText}>Instant booking & trip updates directly on WhatsApp</Text>
                 </View>
               </View>
             </ImageBackground>
@@ -976,65 +979,30 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
 
-  subscribeContainer: {
-    flexDirection: "row",
-    backgroundColor: "rgba(255, 255, 255, 0.12)",
-    borderRadius: 30,
-    padding: 6,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.25)",
-  },
-
-  subscribeContainerMobile: {
-    flexDirection: "column",
-    backgroundColor: "transparent",
-    borderWidth: 0,
-    padding: 0,
-  },
-
-  emailInput: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    color: "#FFFFFF",
-    fontSize: 15,
-  },
-
-  emailInputMobile: {
-    width: "100%",
-    backgroundColor: "rgba(255, 255, 255, 0.12)",
-    borderRadius: 26,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.25)",
-    height: 52,
-    marginBottom: 12,
-  },
-
-  subscribeButton: {
-    backgroundColor: "#0088FF",
-    paddingHorizontal: 28,
-    paddingVertical: 12,
-    borderRadius: 26,
-    justifyContent: "center",
-    alignItems: "center",
-    cursor: "pointer",
-  },
-
-  subscribeButtonMobile: {
-    width: "100%",
-    height: 52,
-  },
-
-  subscribeButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "700",
-    fontSize: 15,
-  },
-
   smallText: {
     color: "#94A3B8",
     fontSize: 13,
     marginTop: 14,
+  },
+
+  newsWhatsAppBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#22C55E",
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 30,
+    gap: 10,
+    elevation: 5,
+    cursor: "pointer",
+  },
+
+  newsWhatsAppBtnText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
 
   startExploringBtn: {

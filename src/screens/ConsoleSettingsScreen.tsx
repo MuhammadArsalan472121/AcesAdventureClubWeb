@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
+  Image,
   Linking,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -14,7 +16,14 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 
 import Sidebar from '../components/Sidebar';
 import TopBar from '../components/TopBar';
-import { useData } from '../context/DataContext';
+import { useData, resolveAsset } from '../context/DataContext';
+
+const PRESET_GUIDE_IMAGES = [
+  { key: 'guide1.jpg', label: 'Guide 1 (Marcus)' },
+  { key: 'guide2.jpg', label: 'Guide 2 (Elena)' },
+  { key: 'guide3.jpg', label: 'Guide 3 (Julian)' },
+  { key: 'guide4.jpg', label: 'Guide 4 (Sofia)' },
+];
 
 export default function ConsoleSettingsScreen() {
   const {
@@ -33,6 +42,9 @@ export default function ConsoleSettingsScreen() {
     deleteTripBadge,
     updateHomeContent,
     updateAboutContent,
+    addGuide,
+    updateGuide,
+    deleteGuide,
     updateContactContent,
     updateSocialLinks,
     updateOnboardingContent,
@@ -41,10 +53,19 @@ export default function ConsoleSettingsScreen() {
     resetToDefaults,
   } = useData() as any;
 
-  const [activeTab, setActiveTab] = useState<'home' | 'about' | 'contact' | 'social' | 'tripPresets' | 'onboarding' | 'inquiries' | 'system'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'about' | 'guides' | 'contact' | 'social' | 'tripPresets' | 'onboarding' | 'inquiries' | 'system'>('home');
 
   const [adminCatInput, setAdminCatInput] = useState('');
   const [adminBadgeInput, setAdminBadgeInput] = useState('');
+
+  // Guide Management State
+  const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
+  const [editingGuideId, setEditingGuideId] = useState<string | null>(null);
+  const [guideForm, setGuideForm] = useState({
+    name: '',
+    category: '',
+    imageKey: 'guide1.jpg',
+  });
 
   // Forms
   const [homeForm, setHomeForm] = useState(homeContent);
@@ -57,6 +78,15 @@ export default function ConsoleSettingsScreen() {
     facebook: socialLinks?.facebook || contactContent?.facebook || 'https://www.facebook.com/acesadventureclub',
     whatsapp: socialLinks?.whatsapp || contactContent?.whatsapp || '+923121578099',
   });
+
+  useEffect(() => {
+    if (contactContent) {
+      setContactForm((prev: any) => ({
+        ...prev,
+        ...contactContent,
+      }));
+    }
+  }, [contactContent]);
 
   useEffect(() => {
     if (socialLinks || contactContent) {
@@ -104,15 +134,60 @@ export default function ConsoleSettingsScreen() {
     showSavedNotification('About screen CMS content updated live!');
   };
 
+  const openAddGuideModal = () => {
+    setEditingGuideId(null);
+    setGuideForm({
+      name: '',
+      category: '',
+      imageKey: 'guide1.jpg',
+    });
+    setIsGuideModalOpen(true);
+  };
+
+  const openEditGuideModal = (guide: any) => {
+    setEditingGuideId(guide.id);
+    setGuideForm({
+      name: guide.name || '',
+      category: guide.category || '',
+      imageKey: guide.imageKey || guide.image || 'guide1.jpg',
+    });
+    setIsGuideModalOpen(true);
+  };
+
+  const handleSaveGuide = () => {
+    if (!guideForm.name.trim()) {
+      alert('Please enter guide full name.');
+      return;
+    }
+    if (!guideForm.category.trim()) {
+      alert('Please enter guide category / designation.');
+      return;
+    }
+
+    if (editingGuideId) {
+      updateGuide(editingGuideId, guideForm);
+      showSavedNotification(`Guide "${guideForm.name.toUpperCase()}" updated successfully!`);
+    } else {
+      addGuide(guideForm);
+      showSavedNotification(`New guide "${guideForm.name.toUpperCase()}" added to About Us page!`);
+    }
+
+    setIsGuideModalOpen(false);
+  };
+
+  const handleDeleteGuide = (id: string, name: string) => {
+    if (confirm(`Are you sure you want to delete guide "${name}" from the About Us page?`)) {
+      deleteGuide(id);
+      showSavedNotification(`Guide "${name}" removed!`);
+    }
+  };
+
   const handleSaveContact = () => {
     updateContactContent({
       ...contactForm,
       ...socialForm,
     });
-    if (updateSocialLinks) {
-      updateSocialLinks(socialForm);
-    }
-    showSavedNotification('Official Contact channels & Social Links updated live!');
+    showSavedNotification('Official Contact channels & Social Details saved and published live!');
   };
 
   const handleSaveSocial = () => {
@@ -169,6 +244,7 @@ export default function ConsoleSettingsScreen() {
             {[
               { key: 'home', label: '🏠 Home Page CMS' },
               { key: 'about', label: '📖 About Page CMS' },
+              { key: 'guides', label: '🧗 Tour Guides (About)' },
               { key: 'contact', label: '📞 Contact Info' },
               { key: 'social', label: '🌐 Social Handles' },
               { key: 'tripPresets', label: '🏷️ Categories & Badges' },
@@ -375,6 +451,121 @@ export default function ConsoleSettingsScreen() {
                   <Text style={styles.saveSubmitBtnText}>Publish About Page Updates</Text>
                 </TouchableOpacity>
               </View>
+            </View>
+          )}
+
+          {/* TOUR GUIDES & LEADERS SECTION (Visible in both 'about' and 'guides' tab) */}
+          {(activeTab === 'about' || activeTab === 'guides') && (
+            <View style={styles.sectionCard}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+                <View style={{ flex: 1, minWidth: 260 }}>
+                  <Text style={styles.sectionHeaderTitle}>Meet Our Guides & Team Leaders (About Us Page)</Text>
+                  <Text style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>
+                    Manage the mountain guides displayed in the "MEET OUR GUIDES" section on the About Us page. Change names, roles, and photos.
+                  </Text>
+                </View>
+
+                <TouchableOpacity style={styles.addGuidePrimaryBtn} onPress={openAddGuideModal}>
+                  <Text style={styles.addGuidePrimaryBtnText}>➕ Add New Guide</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Guide Section Header Texts */}
+              <View style={styles.guideHeaderBox}>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: '#0F172A', marginBottom: 12 }}>
+                  📝 Section Title & Subheading on About Page
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14 }}>
+                  <View style={{ flex: 1, minWidth: 200 }}>
+                    <Text style={styles.label}>SECTION TITLE</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={aboutForm.guidesTitle || 'MEET OUR GUIDES'}
+                      onChangeText={(t) => setAboutForm({ ...aboutForm, guidesTitle: t })}
+                      placeholder="e.g. MEET OUR GUIDES"
+                    />
+                  </View>
+                  <View style={{ flex: 2, minWidth: 280 }}>
+                    <Text style={styles.label}>SECTION SUBHEADING / DESCRIPTION</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={aboutForm.guidesDescription || 'Each guide is a master of the mountains, highly skilled in rescue, navigation, and passion for sharing the wild.'}
+                      onChangeText={(t) => setAboutForm({ ...aboutForm, guidesDescription: t })}
+                      placeholder="Subheading..."
+                    />
+                  </View>
+                </View>
+                <TouchableOpacity
+                  style={[styles.saveSubmitBtn, { alignSelf: 'flex-start', marginTop: 12, paddingHorizontal: 18, paddingVertical: 8 }]}
+                  onPress={() => {
+                    updateAboutContent({
+                      guidesTitle: aboutForm.guidesTitle || 'MEET OUR GUIDES',
+                      guidesDescription: aboutForm.guidesDescription || 'Each guide is a master of the mountains, highly skilled in rescue, navigation, and passion for sharing the wild.',
+                    });
+                    showSavedNotification('Guide section headings updated live!');
+                  }}
+                >
+                  <Text style={[styles.saveSubmitBtnText, { fontSize: 12 }]}>Save Headings</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Guides Cards List */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <Text style={{ fontSize: 14, fontWeight: '800', color: '#0F172A' }}>
+                  Current Team Guides ({(aboutContent?.guides || []).length})
+                </Text>
+                <Text style={{ fontSize: 12, color: '#64748B' }}>
+                  Click Edit to update name, role, or picture
+                </Text>
+              </View>
+
+              {!(aboutContent?.guides?.length) ? (
+                <View style={{ padding: 40, alignItems: 'center', backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0' }}>
+                  <Text style={{ fontSize: 15, fontWeight: '700', color: '#0F172A', marginBottom: 4 }}>No Guides Configured</Text>
+                  <Text style={{ fontSize: 13, color: '#64748B', marginBottom: 14 }}>Click "Add New Guide" to add leaders to your About page.</Text>
+                  <TouchableOpacity style={styles.addGuidePrimaryBtn} onPress={openAddGuideModal}>
+                    <Text style={styles.addGuidePrimaryBtnText}>➕ Add First Guide</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={styles.guideCardsGrid}>
+                  {(aboutContent.guides || []).map((guide: any) => (
+                    <View style={styles.guideAdminCard} key={guide.id}>
+                      <Image
+                        source={resolveAsset(guide.imageKey || guide.image, 'guide1.jpg')}
+                        style={styles.guideAdminThumb}
+                        resizeMode="cover"
+                      />
+
+                      <View style={{ flex: 1, marginLeft: 14 }}>
+                        <Text style={styles.guideAdminName}>{guide.name}</Text>
+                        <View style={styles.guideAdminBadge}>
+                          <Text style={styles.guideAdminBadgeText}>{guide.category || 'MOUNTAIN GUIDE'}</Text>
+                        </View>
+                        <Text style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>
+                          ID: {guide.id}
+                        </Text>
+                      </View>
+
+                      <View style={styles.guideAdminActions}>
+                        <TouchableOpacity
+                          style={styles.guideEditBtn}
+                          onPress={() => openEditGuideModal(guide)}
+                        >
+                          <Text style={styles.guideEditBtnText}>✏️ Edit</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          style={styles.guideDeleteBtn}
+                          onPress={() => handleDeleteGuide(guide.id, guide.name)}
+                        >
+                          <Text style={styles.guideDeleteBtnText}>🗑️ Delete</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
           )}
 
@@ -830,7 +1021,7 @@ export default function ConsoleSettingsScreen() {
                         <View style={{ flex: 1 }}>
                           <Text style={styles.inquiryName}>{inq.name}</Text>
                           <Text style={styles.inquiryMeta}>
-                            📧 {inq.email} | 📞 {inq.phone} | 📅 Travel Date: {inq.travelDate}
+                            📧 {inq.email} | 📞 {inq.phone} {inq.city ? `| 🏙️ City: ${inq.city}` : ''} | 📅 Travel Date: {inq.travelDate}
                           </Text>
                           <Text style={styles.inquiryMeta}>
                             📍 Destination: <Text style={{ fontWeight: '800', color: '#0F172A' }}>{inq.destination}</Text> ({inq.adventureType} • {inq.travelers})
@@ -993,6 +1184,172 @@ export default function ConsoleSettingsScreen() {
           )}
         </ScrollView>
       </View>
+
+      {/* ADD / EDIT GUIDE MODAL */}
+      <Modal
+        visible={isGuideModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsGuideModalOpen(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalTitle}>
+                  {editingGuideId ? '✏️ Edit Mountain Guide' : '➕ Add New Mountain Guide'}
+                </Text>
+                <Text style={styles.modalSubtitle}>
+                  This guide will appear in the "MEET OUR GUIDES" section on the About Us page.
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.modalCloseBtn}
+                onPress={() => setIsGuideModalOpen(false)}
+              >
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ maxHeight: 520 }} showsVerticalScrollIndicator={false}>
+              <View style={styles.modalFormContent}>
+                {/* Full Name */}
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>GUIDE FULL NAME *</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={guideForm.name}
+                    onChangeText={(t) => setGuideForm({ ...guideForm, name: t })}
+                    placeholder="e.g. MARCUS THORNE"
+                    placeholderTextColor="#94A3B8"
+                  />
+                </View>
+
+                {/* Role / Category */}
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>CATEGORY / DESIGNATION / ROLE *</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={guideForm.category}
+                    onChangeText={(t) => setGuideForm({ ...guideForm, category: t })}
+                    placeholder="e.g. CHIEF EXPEDITION LEAD, ALPINE GUIDE, SURVIVAL EXPERT"
+                    placeholderTextColor="#94A3B8"
+                  />
+                </View>
+
+                {/* Guide Photo Selector */}
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>GUIDE PHOTO</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                    <TouchableOpacity
+                      style={styles.fileUploadBtn}
+                      onPress={() => {
+                        if (typeof document !== 'undefined') {
+                          const input = document.createElement('input');
+                          input.type = 'file';
+                          input.accept = 'image/*';
+                          input.onchange = (e: any) => {
+                            const file = e.target?.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (ev) => {
+                                const dataUrl = ev.target?.result as string;
+                                if (dataUrl) {
+                                  setGuideForm((prev) => ({ ...prev, imageKey: dataUrl }));
+                                }
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          };
+                          input.click();
+                        }
+                      }}
+                    >
+                      <Text style={styles.fileUploadBtnText}>📁 Upload Photo from Computer</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Preset Buttons */}
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: '#64748B', marginBottom: 6 }}>
+                    OR CHOOSE FROM PRESETS:
+                  </Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                    {PRESET_GUIDE_IMAGES.map((preset) => {
+                      const isSelected = guideForm.imageKey === preset.key;
+                      return (
+                        <TouchableOpacity
+                          key={preset.key}
+                          style={[styles.presetGuideBtn, isSelected && styles.presetGuideBtnActive]}
+                          onPress={() => setGuideForm({ ...guideForm, imageKey: preset.key })}
+                        >
+                          <Image source={resolveAsset(preset.key, 'guide1.jpg')} style={styles.presetGuideThumb} />
+                          <Text style={[styles.presetGuideBtnText, isSelected && styles.presetGuideBtnTextActive]}>
+                            {preset.label}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+
+                  {/* Custom URL Input */}
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: '#64748B', marginBottom: 4 }}>
+                    OR PASTE IMAGE URL:
+                  </Text>
+                  <TextInput
+                    style={styles.input}
+                    value={guideForm.imageKey.startsWith('data:') ? '[Uploaded Image Attached]' : guideForm.imageKey}
+                    onChangeText={(t) => {
+                      if (!t.startsWith('[Uploaded Image')) {
+                        setGuideForm({ ...guideForm, imageKey: t });
+                      }
+                    }}
+                    placeholder="https://example.com/guide.jpg or guide1.jpg"
+                    placeholderTextColor="#94A3B8"
+                  />
+
+                  {/* Live Preview Card */}
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: '#64748B', marginTop: 14, marginBottom: 6 }}>
+                    LIVE PREVIEW (CARD ON ABOUT PAGE):
+                  </Text>
+                  <View style={styles.modalPreviewCard}>
+                    <Image
+                      source={resolveAsset(guideForm.imageKey, 'guide1.jpg')}
+                      style={styles.modalPreviewImg}
+                      resizeMode="cover"
+                    />
+                    <View style={styles.modalPreviewOverlay}>
+                      <Text style={styles.modalPreviewCategory}>
+                        {guideForm.category || 'CATEGORY / ROLE'}
+                      </Text>
+                      <Text style={styles.modalPreviewName}>
+                        {guideForm.name || 'GUIDE FULL NAME'}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            </ScrollView>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => setIsGuideModalOpen(false)}
+              >
+                <Text style={styles.modalCancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.modalSaveBtn}
+                onPress={handleSaveGuide}
+              >
+                <Text style={styles.modalSaveBtnText}>
+                  {editingGuideId ? '✓ Save Changes' : '✓ Add Guide'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -1319,5 +1676,291 @@ const styles = StyleSheet.create({
     color: '#DC2626',
     fontSize: 13,
     fontWeight: '800',
+  },
+
+  /* TOUR GUIDES CMS STYLES */
+  addGuidePrimaryBtn: {
+    backgroundColor: '#0B5CAD',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+
+  addGuidePrimaryBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  guideHeaderBox: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+
+  guideCardsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+
+  guideAdminCard: {
+    width: '48.5%',
+    minWidth: 320,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  guideAdminThumb: {
+    width: 72,
+    height: 72,
+    borderRadius: 12,
+  },
+
+  guideAdminName: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+
+  guideAdminBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#E0F2FE',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    marginTop: 4,
+  },
+
+  guideAdminBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#0284C7',
+    letterSpacing: 0.5,
+  },
+
+  guideAdminActions: {
+    gap: 6,
+  },
+
+  guideEditBtn: {
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    alignItems: 'center',
+  },
+
+  guideEditBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#1D4ED8',
+  },
+
+  guideDeleteBtn: {
+    backgroundColor: '#FEF2F2',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    alignItems: 'center',
+  },
+
+  guideDeleteBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#DC2626',
+  },
+
+  /* GUIDE MODAL STYLES */
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+
+  modalContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    width: '100%',
+    maxWidth: 580,
+    overflow: 'hidden',
+  },
+
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+
+  modalSubtitle: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
+  },
+
+  modalCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  modalCloseText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+
+  modalFormContent: {
+    padding: 24,
+  },
+
+  fileUploadBtn: {
+    backgroundColor: '#0F172A',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+
+  fileUploadBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  presetGuideBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    backgroundColor: '#F8FAFC',
+  },
+
+  presetGuideBtnActive: {
+    borderColor: '#0B5CAD',
+    backgroundColor: '#EFF6FF',
+  },
+
+  presetGuideThumb: {
+    width: 24,
+    height: 24,
+    borderRadius: 4,
+  },
+
+  presetGuideBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#475569',
+  },
+
+  presetGuideBtnTextActive: {
+    color: '#0B5CAD',
+    fontWeight: '700',
+  },
+
+  modalPreviewCard: {
+    height: 180,
+    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: '#0F172A',
+    position: 'relative',
+  },
+
+  modalPreviewImg: {
+    width: '100%',
+    height: '100%',
+  },
+
+  modalPreviewOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 14,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+  },
+
+  modalPreviewCategory: {
+    color: '#38BDF8',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+    marginBottom: 2,
+  },
+
+  modalPreviewName: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+
+  modalFooter: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    backgroundColor: '#F8FAFC',
+  },
+
+  modalCancelBtn: {
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    backgroundColor: '#FFFFFF',
+  },
+
+  modalCancelBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#475569',
+  },
+
+  modalSaveBtn: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: '#0B5CAD',
+  },
+
+  modalSaveBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });

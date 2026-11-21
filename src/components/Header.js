@@ -19,7 +19,7 @@ export default function Header() {
   const [menuVisible, setMenuVisible] = useState(false);
   const { isDesktop, isTablet } = useResponsive();
   const isWideScreen = isDesktop || isTablet;
-  const { user, userProfile, logout } = useAuth();
+  const { user, userProfile, logout, isEmailVerified } = useAuth();
 
   const navigateTo = (screenName) => {
     setMenuVisible(false);
@@ -28,7 +28,7 @@ export default function Header() {
 
   const handleProfilePress = () => {
     setMenuVisible(false);
-    if (user && !user.emailVerified) {
+    if (user && !isEmailVerified) {
       navigation.navigate("EmailVerification");
     } else {
       navigation.navigate("Profile");
@@ -37,7 +37,7 @@ export default function Header() {
 
   const handleSettingsPress = () => {
     setMenuVisible(false);
-    if (user && !user.emailVerified) {
+    if (user && !isEmailVerified) {
       navigation.navigate("EmailVerification");
     } else {
       navigation.navigate("Settings");
@@ -103,7 +103,7 @@ export default function Header() {
             <View style={styles.desktopAuthRow}>
               {user ? (
                 <>
-                  {user && !user.emailVerified && (
+                  {user && !isEmailVerified && (
                     <TouchableOpacity
                       style={styles.desktopVerifyBadge}
                       onPress={() => navigateTo("EmailVerification")}
@@ -217,7 +217,7 @@ export default function Header() {
 
               {user ? (
                 <>
-                  {user && !user.emailVerified && (
+                  {user && !isEmailVerified && (
                     <TouchableOpacity
                       style={styles.mobileVerifyBanner}
                       onPress={() => navigateTo("EmailVerification")}

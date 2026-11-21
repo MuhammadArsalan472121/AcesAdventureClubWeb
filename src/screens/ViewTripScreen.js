@@ -73,7 +73,14 @@ export default function ViewTripScreen({ route }) {
             <View style={[styles.heroContent, { maxWidth: contentMaxWidth, width: "100%", alignSelf: "center" }]}>
               {currentTrip.badge ? (
                 <View style={styles.heroBadge}>
-                  <Text style={styles.heroBadgeText}>• {currentTrip.title.toUpperCase()} • {currentTrip.badge.toUpperCase()} •</Text>
+                  <Text style={styles.heroBadgeText}>
+                    • {currentTrip.tripCode ? `TRIP #${currentTrip.tripCode} • ` : ""}
+                    {currentTrip.title.toUpperCase()} • {currentTrip.badge.toUpperCase()} •
+                  </Text>
+                </View>
+              ) : currentTrip.tripCode ? (
+                <View style={styles.heroBadge}>
+                  <Text style={styles.heroBadgeText}>• TRIP #{currentTrip.tripCode} •</Text>
                 </View>
               ) : null}
 

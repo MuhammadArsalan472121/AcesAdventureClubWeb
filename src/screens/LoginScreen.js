@@ -15,7 +15,8 @@ import {
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { signInWithEmailAndPassword, reload } from "firebase/auth";
-import { auth } from "./firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "./firebaseConfig";
 import AdventureBearMascot from "../components/AdventureBearMascot";
 
 const heroImage = require("../../assets/adventure-bg.jpg");
@@ -77,7 +78,21 @@ export default function LoginScreen({ navigation }) {
       // Refresh user from Firebase to get accurate emailVerified status
       await reload(userCredential.user);
 
-      if (!userCredential.user.emailVerified) {
+      // Check if user is pre-verified in Firestore by Super Admin
+      let isPreVerifiedByAdmin = false;
+      try {
+        const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
+        if (userDoc.exists()) {
+          const uData = userDoc.data();
+          if (uData.emailVerified === true || uData.isVerified === true) {
+            isPreVerifiedByAdmin = true;
+          }
+        }
+      } catch (err) {
+        console.warn("[LOGIN_PREVERIFIED_CHECK_ERROR]", err);
+      }
+
+      if (!userCredential.user.emailVerified && !isPreVerifiedByAdmin) {
         setLoading(false);
         navigation?.navigate("EmailVerification", {
           email: userCredential.user.email,

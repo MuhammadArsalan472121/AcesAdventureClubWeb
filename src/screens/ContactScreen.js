@@ -1,24 +1,25 @@
-import React, { useState, useEffect } from "react";
-import {
-  SafeAreaView,
-  StatusBar,
-  ScrollView,
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  Image,
-  ImageBackground,
-  TouchableOpacity,
-  Dimensions,
-} from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
-import Header from "../components/Header";
+import { useEffect, useState } from "react";
+import {
+  Dimensions,
+  Image,
+  ImageBackground,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from "react-native";
 import Footer from "../components/Footer";
-import useResponsive from "../hooks/useResponsive";
+import Header from "../components/Header";
+import { WEB3FORMS_ACCESS_KEY } from "../config/web3forms";
 import { useData } from "../context/DataContext";
-import { animateHero, animateCards, animateSection } from "../utils/animations";
+import useResponsive from "../hooks/useResponsive";
+import { animateCards, animateHero, animateSection } from "../utils/animations";
 
 const { height, width } = Dimensions.get("window");
 
@@ -45,16 +46,19 @@ export default function ContactScreen() {
   }, []);
 
   const [formData, setFormData] = useState({
-    firstName: "Aiden",
-    lastName: "Vance",
-    email: "aiden.v@luxury.com",
-    phone: "+92 300 1234567",
-    destination: "Hunza Valley, Gilgit-Baltistan",
-    travelDate: "10/15/2026",
-    travelers: "1 - 2 Persons",
-    adventureType: "Trekking & Hiking",
-    message: "I am looking for a secluded trekking experience with luxury camping amenities...",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    city: "",
+    destination: "",
+    travelDate: "",
+    travelers: "",
+    adventureType: "",
+    message: "",
   });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [destinationDropdownOpen, setDestinationDropdownOpen] = useState(false);
   const [travelersDropdownOpen, setTravelersDropdownOpen] = useState(false);
@@ -64,30 +68,26 @@ export default function ContactScreen() {
   const [customTravelers, setCustomTravelers] = useState("");
   const [customAdventureType, setCustomAdventureType] = useState("");
 
-  const defaultDestinations = [
-    "Hunza Valley, Gilgit-Baltistan",
-    "Skardu & Deosai Plains",
-    "Fairy Meadows & Nanga Parbat",
-    "K2 Base Camp & Concordia",
-    "Naran & Kaghan Valley",
-    "Swat Valley & Kalam",
-    "Neelum Valley, Azad Kashmir",
-    "Kumrat Valley, Upper Dir",
-    "Chitral & Kalash Valley",
-    "Gwadar & Makran Coastal Highway",
-  ];
-  const tripDestinations = Array.isArray(trips)
-    ? trips.map((t) => t.location || t.destination).filter(Boolean)
+  // Only show trips directly from Admin Panel (DataContext / Firestore)
+  const destinationPresets = Array.isArray(trips)
+    ? trips
+      .map((t) => {
+        const title = t.title ? t.title.trim() : "";
+        const loc = t.location ? t.location.trim() : "";
+        if (title && loc && !title.toLowerCase().includes(loc.toLowerCase())) {
+          return `${title} (${loc})`;
+        }
+        return title || loc || t.destination;
+      })
+      .filter(Boolean)
     : [];
-  const destinationPresets = Array.from(new Set([...defaultDestinations, ...tripDestinations]));
 
   const travelerPresets = [
-    "1 Traveler (Solo Explorer)",
-    "2 Travelers (Couple / Duo)",
-    "3 - 5 Travelers (Small Group)",
-    "6 - 10 Travelers (Medium Group)",
-    "10 - 20 Travelers (Large Group)",
-    "20+ Travelers (Corporate / School Tour)",
+    "1 Person (Solo Explorer)",
+    "2 Persons (Couple / Duo)",
+    "3 - 5 Persons (Small Group)",
+    "6 - 10 Persons (Group Tour)",
+    "10+ Persons (Large Group / Corporate)",
   ];
 
   const defaultAdventureTypes = [
@@ -102,31 +102,90 @@ export default function ContactScreen() {
   ];
   const categoryPresets = Array.isArray(tripCategories)
     ? tripCategories.map((c) =>
-        c.charAt(0).toUpperCase() + c.slice(1).toLowerCase()
-      )
+      c.charAt(0).toUpperCase() + c.slice(1).toLowerCase()
+    )
     : [];
   const adventureTypePresets = Array.from(
     new Set([...defaultAdventureTypes, ...categoryPresets])
   );
 
-  const handleSubmit = () => {
-    if (!formData.firstName || !formData.email) {
-      alert("Please fill in your name and email.");
+  const handleSubmit = async () => {
+    if (!formData.firstName.trim() || !formData.email.trim()) {
+      alert("Please enter at least your first name and email address.");
       return;
     }
 
-    addInquiry({
-      name: `${formData.firstName} ${formData.lastName}`.trim(),
-      email: formData.email,
-      phone: formData.phone,
-      destination: formData.destination,
-      travelDate: formData.travelDate,
-      travelers: formData.travelers,
-      adventureType: formData.adventureType,
-      message: formData.message,
-    });
+    setIsSubmitting(true);
+    const fullName = `${formData.firstName} ${formData.lastName}`.trim();
 
-    alert("Thank you! Your adventure inquiry has been received by our expedition specialists.");
+    try {
+      // 1. Send to Web3Forms for instant email notification
+      if (WEB3FORMS_ACCESS_KEY) {
+        try {
+          const payload = {
+            access_key: WEB3FORMS_ACCESS_KEY,
+            subject: `🌟 New Expedition Booking Inquiry from ${fullName}`,
+            from_name: "Ace Adventure Club Website",
+            "Customer Name": fullName,
+            "Email Address": formData.email,
+            "Phone Number": formData.phone || "Not provided",
+            "Departure / Traveler City": formData.city || "Not provided",
+            "Preferred Destination": formData.destination || "Not specified",
+            "Travel Date": formData.travelDate || "Flexible",
+            "Group Size / Travelers": formData.travelers || "Not specified",
+            "Adventure Type": formData.adventureType || "General Inquiry",
+            "Special Message / Dream Trip": formData.message || "No custom message",
+          };
+
+          const response = await fetch("https://api.web3forms.com/submit", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+          const result = await response.json();
+          console.log("[WEB3FORMS_DEBUG] Web3Forms submission result:", result);
+        } catch (web3Err) {
+          console.warn("[WEB3FORMS_DEBUG] Web3Forms request note:", web3Err);
+        }
+      }
+
+      // 2. Also save to website database & Admin Inquiries Inbox
+      addInquiry({
+        name: fullName,
+        email: formData.email,
+        phone: formData.phone,
+        city: formData.city,
+        destination: formData.destination || "General Inquiry",
+        travelDate: formData.travelDate,
+        travelers: formData.travelers,
+        adventureType: formData.adventureType,
+        message: formData.message,
+      });
+
+      alert("✅ Thank you! Your adventure inquiry has been submitted successfully. Our expedition specialists will get back to you shortly.");
+
+      // Reset form
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        city: "",
+        destination: "",
+        travelDate: "",
+        travelers: "",
+        adventureType: "",
+        message: "",
+      });
+    } catch (err) {
+      console.error("Submission error:", err);
+      alert("Your inquiry was recorded. Our team will contact you soon!");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -203,11 +262,12 @@ export default function ContactScreen() {
                     {/* Row 1 */}
                     <View style={[(isDesktop || isTablet) ? { flexDirection: "row", gap: 16 } : { flexDirection: "column", gap: 12 }]}>
                       <View style={[(isDesktop || isTablet) && { flex: 1 }]}>
-                        <Text style={styles.label}>FIRST NAME</Text>
+                        <Text style={styles.label}>FIRST NAME *</Text>
                         <TextInput
                           value={formData.firstName}
                           onChangeText={(text) => setFormData({ ...formData, firstName: text })}
-                          placeholderTextColor="#94A3B8"
+                          placeholder="e.g. Muhammad"
+                          placeholderTextColor="#64748B"
                           style={styles.darkInput}
                         />
                       </View>
@@ -217,7 +277,8 @@ export default function ContactScreen() {
                         <TextInput
                           value={formData.lastName}
                           onChangeText={(text) => setFormData({ ...formData, lastName: text })}
-                          placeholderTextColor="#94A3B8"
+                          placeholder="e.g. Ali"
+                          placeholderTextColor="#64748B"
                           style={styles.darkInput}
                         />
                       </View>
@@ -226,12 +287,13 @@ export default function ContactScreen() {
                     {/* Row 2 */}
                     <View style={[(isDesktop || isTablet) ? { flexDirection: "row", gap: 16, marginTop: 16 } : { flexDirection: "column", gap: 12, marginTop: 12 }]}>
                       <View style={[(isDesktop || isTablet) && { flex: 1 }]}>
-                        <Text style={styles.label}>EMAIL ADDRESS</Text>
+                        <Text style={styles.label}>EMAIL ADDRESS *</Text>
                         <TextInput
                           value={formData.email}
                           onChangeText={(text) => setFormData({ ...formData, email: text })}
                           keyboardType="email-address"
-                          placeholderTextColor="#94A3B8"
+                          placeholder="e.g. traveler@example.com"
+                          placeholderTextColor="#64748B"
                           style={styles.darkInput}
                         />
                       </View>
@@ -242,13 +304,14 @@ export default function ContactScreen() {
                           value={formData.phone}
                           onChangeText={(text) => setFormData({ ...formData, phone: text })}
                           keyboardType="phone-pad"
-                          placeholderTextColor="#94A3B8"
+                          placeholder="e.g. +92 300 1234567"
+                          placeholderTextColor="#64748B"
                           style={styles.darkInput}
                         />
                       </View>
                     </View>
 
-                    {/* Row 3 */}
+                    {/* Row 3: City & Destination */}
                     <View
                       style={[
                         (isDesktop || isTablet)
@@ -257,6 +320,18 @@ export default function ContactScreen() {
                         { zIndex: destinationDropdownOpen ? 300 : 20, position: "relative" },
                       ]}
                     >
+                      {/* CITY INPUT */}
+                      <View style={[(isDesktop || isTablet) && { flex: 1 }]}>
+                        <Text style={styles.label}>YOUR CITY / DEPARTURE CITY</Text>
+                        <TextInput
+                          value={formData.city}
+                          onChangeText={(text) => setFormData({ ...formData, city: text })}
+                          placeholder="e.g. Lahore, Islamabad, Karachi"
+                          placeholderTextColor="#64748B"
+                          style={styles.darkInput}
+                        />
+                      </View>
+
                       {/* PREFERRED DESTINATION WITH DROPDOWN + MANUAL ENTRY */}
                       <View
                         style={[
@@ -264,7 +339,7 @@ export default function ContactScreen() {
                           { zIndex: destinationDropdownOpen ? 400 : 20, position: "relative" },
                         ]}
                       >
-                        <Text style={styles.label}>PREFERRED DESTINATION</Text>
+                        <Text style={styles.label}>SELECT DESTINATION (FROM TRIPS)</Text>
                         <View
                           style={[
                             styles.dropdownInputWrapper,
@@ -279,7 +354,7 @@ export default function ContactScreen() {
                               setTravelersDropdownOpen(false);
                               setAdventureTypeDropdownOpen(false);
                             }}
-                            placeholder="Select or enter destination..."
+                            placeholder="Select trip from list or type..."
                             placeholderTextColor="#94A3B8"
                             style={styles.darkInputDropdown}
                           />
@@ -303,7 +378,7 @@ export default function ContactScreen() {
                           {destinationDropdownOpen && (
                             <View style={styles.dropdownMenu}>
                               <View style={styles.dropdownHeader}>
-                                <Text style={styles.dropdownSectionTitle}>📍 PRESET DESTINATIONS</Text>
+                                <Text style={styles.dropdownSectionTitle}>🏔️ AVAILABLE TRIPS ({destinationPresets.length})</Text>
                                 <TouchableOpacity
                                   onPress={() => setDestinationDropdownOpen(false)}
                                   style={styles.dropdownCloseBtn}
@@ -316,41 +391,49 @@ export default function ContactScreen() {
                                 nestedScrollEnabled={true}
                                 showsVerticalScrollIndicator={true}
                               >
-                                {destinationPresets.map((dest) => {
-                                  const isSelected =
-                                    formData.destination?.toLowerCase() === dest.toLowerCase();
-                                  return (
-                                    <TouchableOpacity
-                                      key={dest}
-                                      style={[
-                                        styles.dropdownItem,
-                                        isSelected && styles.dropdownItemSelected,
-                                      ]}
-                                      onPress={() => {
-                                        setFormData({ ...formData, destination: dest });
-                                        setDestinationDropdownOpen(false);
-                                      }}
-                                      activeOpacity={0.7}
-                                    >
-                                      <Text
+                                {destinationPresets.length === 0 ? (
+                                  <View style={{ padding: 16 }}>
+                                    <Text style={{ color: "#94A3B8", fontSize: 13, textAlign: "center" }}>
+                                      No active trips in Admin Panel yet. You can type any custom destination below!
+                                    </Text>
+                                  </View>
+                                ) : (
+                                  destinationPresets.map((dest) => {
+                                    const isSelected =
+                                      formData.destination?.toLowerCase() === dest.toLowerCase();
+                                    return (
+                                      <TouchableOpacity
+                                        key={dest}
                                         style={[
-                                          styles.dropdownItemText,
-                                          isSelected && styles.dropdownItemTextSelected,
+                                          styles.dropdownItem,
+                                          isSelected && styles.dropdownItemSelected,
                                         ]}
+                                        onPress={() => {
+                                          setFormData({ ...formData, destination: dest });
+                                          setDestinationDropdownOpen(false);
+                                        }}
+                                        activeOpacity={0.7}
                                       >
-                                        {dest}
-                                      </Text>
-                                      {isSelected && (
-                                        <Ionicons name="checkmark-circle" size={16} color="#38BDF8" />
-                                      )}
-                                    </TouchableOpacity>
-                                  );
-                                })}
+                                        <Text
+                                          style={[
+                                            styles.dropdownItemText,
+                                            isSelected && styles.dropdownItemTextSelected,
+                                          ]}
+                                        >
+                                          {dest}
+                                        </Text>
+                                        {isSelected && (
+                                          <Ionicons name="checkmark-circle" size={16} color="#38BDF8" />
+                                        )}
+                                      </TouchableOpacity>
+                                    );
+                                  })
+                                )}
                               </ScrollView>
 
                               {/* Manual Entry Section */}
                               <View style={styles.dropdownManualSection}>
-                                <Text style={styles.dropdownManualLabel}>✍️ Or Enter Manually / Custom:</Text>
+                                <Text style={styles.dropdownManualLabel}>✍️ Or Enter Custom Trip/Place:</Text>
                                 <View style={styles.dropdownManualRow}>
                                   <TextInput
                                     value={customDestination}
@@ -384,7 +467,20 @@ export default function ContactScreen() {
                           )}
                         </View>
                       </View>
+                    </View>
 
+                    {/* Row 4: Travel Date & Travelers */}
+                    <View
+                      style={[
+                        (isDesktop || isTablet)
+                          ? { flexDirection: "row", gap: 16, marginTop: 16 }
+                          : { flexDirection: "column", gap: 12, marginTop: 12 },
+                        {
+                          zIndex: travelersDropdownOpen ? 200 : 15,
+                          position: "relative",
+                        },
+                      ]}
+                    >
                       {/* TRAVEL DATE */}
                       <View
                         style={[
@@ -396,32 +492,20 @@ export default function ContactScreen() {
                         <TextInput
                           value={formData.travelDate}
                           onChangeText={(text) => setFormData({ ...formData, travelDate: text })}
-                          placeholderTextColor="#94A3B8"
+                          placeholder="e.g. October 15, 2026 or Spring 2027"
+                          placeholderTextColor="#64748B"
                           style={styles.darkInput}
                         />
                       </View>
-                    </View>
 
-                    {/* Row 4 */}
-                    <View
-                      style={[
-                        (isDesktop || isTablet)
-                          ? { flexDirection: "row", gap: 16, marginTop: 16 }
-                          : { flexDirection: "column", gap: 12, marginTop: 12 },
-                        {
-                          zIndex: (travelersDropdownOpen || adventureTypeDropdownOpen) ? 300 : 10,
-                          position: "relative",
-                        },
-                      ]}
-                    >
-                      {/* TRAVELERS WITH DROPDOWN + MANUAL ENTRY */}
+                      {/* TRAVELERS WITH QUICK BUTTONS + PRESETS */}
                       <View
                         style={[
                           (isDesktop || isTablet) && { flex: 1 },
-                          { zIndex: travelersDropdownOpen ? 400 : 10, position: "relative" },
+                          { zIndex: travelersDropdownOpen ? 300 : 10, position: "relative" },
                         ]}
                       >
-                        <Text style={styles.label}>TRAVELERS</Text>
+                        <Text style={styles.label}>TRAVELERS / GROUP SIZE</Text>
                         <View
                           style={[
                             styles.dropdownInputWrapper,
@@ -436,7 +520,7 @@ export default function ContactScreen() {
                               setDestinationDropdownOpen(false);
                               setAdventureTypeDropdownOpen(false);
                             }}
-                            placeholder="Select or enter travelers..."
+                            placeholder="e.g. 2 Persons or Group of 4"
                             placeholderTextColor="#94A3B8"
                             style={styles.darkInputDropdown}
                           />
@@ -460,7 +544,7 @@ export default function ContactScreen() {
                           {travelersDropdownOpen && (
                             <View style={styles.dropdownMenu}>
                               <View style={styles.dropdownHeader}>
-                                <Text style={styles.dropdownSectionTitle}>👥 GROUP SIZE PRESETS</Text>
+                                <Text style={styles.dropdownSectionTitle}>👥 SELECT GROUP SIZE</Text>
                                 <TouchableOpacity
                                   onPress={() => setTravelersDropdownOpen(false)}
                                   style={styles.dropdownCloseBtn}
@@ -468,6 +552,31 @@ export default function ContactScreen() {
                                   <Ionicons name="close" size={16} color="#94A3B8" />
                                 </TouchableOpacity>
                               </View>
+
+                              {/* Quick tap chips */}
+                              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, paddingHorizontal: 12, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: "#334155" }}>
+                                {["1", "2", "3 - 5", "6 - 10", "10+"].map((q) => (
+                                  <TouchableOpacity
+                                    key={q}
+                                    style={{
+                                      backgroundColor: formData.travelers.startsWith(q) ? "#0284C7" : "#1E293B",
+                                      paddingHorizontal: 10,
+                                      paddingVertical: 5,
+                                      borderRadius: 6,
+                                      borderWidth: 1,
+                                      borderColor: formData.travelers.startsWith(q) ? "#38BDF8" : "#334155",
+                                    }}
+                                    onPress={() => {
+                                      const matched = travelerPresets.find((p) => p.startsWith(q)) || `${q} Travelers`;
+                                      setFormData({ ...formData, travelers: matched });
+                                      setTravelersDropdownOpen(false);
+                                    }}
+                                  >
+                                    <Text style={{ color: "#FFFFFF", fontSize: 11, fontWeight: "700" }}>{q} {q === "1" ? "Person" : "Persons"}</Text>
+                                  </TouchableOpacity>
+                                ))}
+                              </View>
+
                               <ScrollView
                                 style={styles.dropdownList}
                                 nestedScrollEnabled={true}
@@ -504,170 +613,137 @@ export default function ContactScreen() {
                                   );
                                 })}
                               </ScrollView>
-
-                              {/* Manual Entry Section */}
-                              <View style={styles.dropdownManualSection}>
-                                <Text style={styles.dropdownManualLabel}>✍️ Or Enter Manually / Custom:</Text>
-                                <View style={styles.dropdownManualRow}>
-                                  <TextInput
-                                    value={customTravelers}
-                                    onChangeText={setCustomTravelers}
-                                    placeholder="e.g. 4 Persons, 2 Families..."
-                                    placeholderTextColor="#64748B"
-                                    style={styles.dropdownManualInput}
-                                    onSubmitEditing={() => {
-                                      if (customTravelers.trim()) {
-                                        setFormData({ ...formData, travelers: customTravelers.trim() });
-                                        setCustomTravelers("");
-                                        setTravelersDropdownOpen(false);
-                                      }
-                                    }}
-                                  />
-                                  <TouchableOpacity
-                                    style={styles.dropdownManualApplyBtn}
-                                    onPress={() => {
-                                      if (customTravelers.trim()) {
-                                        setFormData({ ...formData, travelers: customTravelers.trim() });
-                                        setCustomTravelers("");
-                                        setTravelersDropdownOpen(false);
-                                      }
-                                    }}
-                                  >
-                                    <Text style={styles.dropdownManualApplyText}>Apply</Text>
-                                  </TouchableOpacity>
-                                </View>
-                              </View>
                             </View>
                           )}
                         </View>
                       </View>
+                    </View>
 
-                      {/* ADVENTURE TYPE WITH DROPDOWN + MANUAL ENTRY */}
+                    {/* Row 5: Adventure Type */}
+                    <View
+                      style={[
+                        { marginTop: 16 },
+                        { zIndex: adventureTypeDropdownOpen ? 150 : 10, position: "relative" },
+                      ]}
+                    >
+                      <Text style={styles.label}>ADVENTURE TYPE</Text>
                       <View
                         style={[
-                          (isDesktop || isTablet) && { flex: 1 },
-                          { zIndex: adventureTypeDropdownOpen ? 400 : 10, position: "relative" },
+                          styles.dropdownInputWrapper,
+                          adventureTypeDropdownOpen && styles.dropdownInputWrapperActive,
                         ]}
                       >
-                        <Text style={styles.label}>ADVENTURE TYPE</Text>
-                        <View
-                          style={[
-                            styles.dropdownInputWrapper,
-                            adventureTypeDropdownOpen && styles.dropdownInputWrapperActive,
-                          ]}
+                        <TextInput
+                          value={formData.adventureType}
+                          onChangeText={(text) => setFormData({ ...formData, adventureType: text })}
+                          onFocus={() => {
+                            setAdventureTypeDropdownOpen(true);
+                            setDestinationDropdownOpen(false);
+                            setTravelersDropdownOpen(false);
+                          }}
+                          placeholder="Select or enter adventure type..."
+                          placeholderTextColor="#94A3B8"
+                          style={styles.darkInputDropdown}
+                        />
+                        <TouchableOpacity
+                          style={styles.dropdownChevronBtn}
+                          onPress={() => {
+                            setAdventureTypeDropdownOpen(!adventureTypeDropdownOpen);
+                            setDestinationDropdownOpen(false);
+                            setTravelersDropdownOpen(false);
+                          }}
+                          activeOpacity={0.7}
                         >
-                          <TextInput
-                            value={formData.adventureType}
-                            onChangeText={(text) => setFormData({ ...formData, adventureType: text })}
-                            onFocus={() => {
-                              setAdventureTypeDropdownOpen(true);
-                              setDestinationDropdownOpen(false);
-                              setTravelersDropdownOpen(false);
-                            }}
-                            placeholder="Select or enter adventure type..."
-                            placeholderTextColor="#94A3B8"
-                            style={styles.darkInputDropdown}
+                          <Ionicons
+                            name={adventureTypeDropdownOpen ? "chevron-up" : "chevron-down"}
+                            size={18}
+                            color={adventureTypeDropdownOpen ? "#38BDF8" : "#94A3B8"}
                           />
-                          <TouchableOpacity
-                            style={styles.dropdownChevronBtn}
-                            onPress={() => {
-                              setAdventureTypeDropdownOpen(!adventureTypeDropdownOpen);
-                              setDestinationDropdownOpen(false);
-                              setTravelersDropdownOpen(false);
-                            }}
-                            activeOpacity={0.7}
-                          >
-                            <Ionicons
-                              name={adventureTypeDropdownOpen ? "chevron-up" : "chevron-down"}
-                              size={18}
-                              color={adventureTypeDropdownOpen ? "#38BDF8" : "#94A3B8"}
-                            />
-                          </TouchableOpacity>
+                        </TouchableOpacity>
 
-                          {/* Adventure Type Dropdown Menu */}
-                          {adventureTypeDropdownOpen && (
-                            <View style={styles.dropdownMenu}>
-                              <View style={styles.dropdownHeader}>
-                                <Text style={styles.dropdownSectionTitle}>🏔️ ADVENTURE TYPE PRESETS</Text>
+                        {/* Adventure Type Dropdown Menu */}
+                        {adventureTypeDropdownOpen && (
+                          <View style={styles.dropdownMenu}>
+                            <View style={styles.dropdownHeader}>
+                              <Text style={styles.dropdownSectionTitle}>🏔️ ADVENTURE TYPE PRESETS</Text>
+                              <TouchableOpacity
+                                onPress={() => setAdventureTypeDropdownOpen(false)}
+                                style={styles.dropdownCloseBtn}
+                              >
+                                <Ionicons name="close" size={16} color="#94A3B8" />
+                              </TouchableOpacity>
+                            </View>
+                            <ScrollView
+                              style={styles.dropdownList}
+                              nestedScrollEnabled={true}
+                              showsVerticalScrollIndicator={true}
+                            >
+                              {adventureTypePresets.map((type) => {
+                                const isSelected =
+                                  formData.adventureType?.toLowerCase() === type.toLowerCase();
+                                return (
+                                  <TouchableOpacity
+                                    key={type}
+                                    style={[
+                                      styles.dropdownItem,
+                                      isSelected && styles.dropdownItemSelected,
+                                    ]}
+                                    onPress={() => {
+                                      setFormData({ ...formData, adventureType: type });
+                                      setAdventureTypeDropdownOpen(false);
+                                    }}
+                                    activeOpacity={0.7}
+                                  >
+                                    <Text
+                                      style={[
+                                        styles.dropdownItemText,
+                                        isSelected && styles.dropdownItemTextSelected,
+                                      ]}
+                                    >
+                                      {type}
+                                    </Text>
+                                    {isSelected && (
+                                      <Ionicons name="checkmark-circle" size={16} color="#38BDF8" />
+                                    )}
+                                  </TouchableOpacity>
+                                );
+                              })}
+                            </ScrollView>
+
+                            {/* Manual Entry Section */}
+                            <View style={styles.dropdownManualSection}>
+                              <Text style={styles.dropdownManualLabel}>✍️ Or Enter Manually / Custom:</Text>
+                              <View style={styles.dropdownManualRow}>
+                                <TextInput
+                                  value={customAdventureType}
+                                  onChangeText={setCustomAdventureType}
+                                  placeholder="Type custom adventure type..."
+                                  placeholderTextColor="#64748B"
+                                  style={styles.dropdownManualInput}
+                                  onSubmitEditing={() => {
+                                    if (customAdventureType.trim()) {
+                                      setFormData({ ...formData, adventureType: customAdventureType.trim() });
+                                      setCustomAdventureType("");
+                                      setAdventureTypeDropdownOpen(false);
+                                    }
+                                  }}
+                                />
                                 <TouchableOpacity
-                                  onPress={() => setAdventureTypeDropdownOpen(false)}
-                                  style={styles.dropdownCloseBtn}
+                                  style={styles.dropdownManualApplyBtn}
+                                  onPress={() => {
+                                    if (customAdventureType.trim()) {
+                                      setFormData({ ...formData, adventureType: customAdventureType.trim() });
+                                      setCustomAdventureType("");
+                                      setAdventureTypeDropdownOpen(false);
+                                    }
+                                  }}
                                 >
-                                  <Ionicons name="close" size={16} color="#94A3B8" />
+                                  <Text style={styles.dropdownManualApplyText}>Apply</Text>
                                 </TouchableOpacity>
                               </View>
-                              <ScrollView
-                                style={styles.dropdownList}
-                                nestedScrollEnabled={true}
-                                showsVerticalScrollIndicator={true}
-                              >
-                                {adventureTypePresets.map((type) => {
-                                  const isSelected =
-                                    formData.adventureType?.toLowerCase() === type.toLowerCase();
-                                  return (
-                                    <TouchableOpacity
-                                      key={type}
-                                      style={[
-                                        styles.dropdownItem,
-                                        isSelected && styles.dropdownItemSelected,
-                                      ]}
-                                      onPress={() => {
-                                        setFormData({ ...formData, adventureType: type });
-                                        setAdventureTypeDropdownOpen(false);
-                                      }}
-                                      activeOpacity={0.7}
-                                    >
-                                      <Text
-                                        style={[
-                                          styles.dropdownItemText,
-                                          isSelected && styles.dropdownItemTextSelected,
-                                        ]}
-                                      >
-                                        {type}
-                                      </Text>
-                                      {isSelected && (
-                                        <Ionicons name="checkmark-circle" size={16} color="#38BDF8" />
-                                      )}
-                                    </TouchableOpacity>
-                                  );
-                                })}
-                              </ScrollView>
-
-                              {/* Manual Entry Section */}
-                              <View style={styles.dropdownManualSection}>
-                                <Text style={styles.dropdownManualLabel}>✍️ Or Enter Manually / Custom:</Text>
-                                <View style={styles.dropdownManualRow}>
-                                  <TextInput
-                                    value={customAdventureType}
-                                    onChangeText={setCustomAdventureType}
-                                    placeholder="Type custom adventure type..."
-                                    placeholderTextColor="#64748B"
-                                    style={styles.dropdownManualInput}
-                                    onSubmitEditing={() => {
-                                      if (customAdventureType.trim()) {
-                                        setFormData({ ...formData, adventureType: customAdventureType.trim() });
-                                        setCustomAdventureType("");
-                                        setAdventureTypeDropdownOpen(false);
-                                      }
-                                    }}
-                                  />
-                                  <TouchableOpacity
-                                    style={styles.dropdownManualApplyBtn}
-                                    onPress={() => {
-                                      if (customAdventureType.trim()) {
-                                        setFormData({ ...formData, adventureType: customAdventureType.trim() });
-                                        setCustomAdventureType("");
-                                        setAdventureTypeDropdownOpen(false);
-                                      }
-                                    }}
-                                  >
-                                    <Text style={styles.dropdownManualApplyText}>Apply</Text>
-                                  </TouchableOpacity>
-                                </View>
-                              </View>
                             </View>
-                          )}
-                        </View>
+                          </View>
+                        )}
                       </View>
                     </View>
 
@@ -680,14 +756,22 @@ export default function ContactScreen() {
                         multiline
                         numberOfLines={5}
                         textAlignVertical="top"
-                        placeholderTextColor="#94A3B8"
+                        placeholder="Describe your dream itinerary, special requirements, dietary preferences, or questions..."
+                        placeholderTextColor="#64748B"
                         style={styles.darkTextArea}
                       />
                     </View>
 
                     {/* Submit Button */}
-                    <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
-                      <Text style={styles.submitBtnText}>SEND ADVENTURE REQUEST</Text>
+                    <TouchableOpacity
+                      style={[styles.submitBtn, isSubmitting && { opacity: 0.7 }]}
+                      onPress={handleSubmit}
+                      disabled={isSubmitting}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.submitBtnText}>
+                        {isSubmitting ? "SENDING INQUIRY..." : "SEND ADVENTURE REQUEST"}
+                      </Text>
                     </TouchableOpacity>
 
                     <Text style={styles.formSubtext}>

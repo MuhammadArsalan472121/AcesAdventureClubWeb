@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
   Modal,
   Pressable,
@@ -13,6 +14,7 @@ import {
 
 import Sidebar from '../components/Sidebar';
 import TopBar from '../components/TopBar';
+import { useNavigation } from '@react-navigation/native';
 import { useData, resolveAsset, ASSET_MAP } from '../context/DataContext';
 
 const PRESET_IMAGES = [
@@ -28,11 +30,13 @@ const PRESET_IMAGES = [
 ];
 
 export default function ManageTripsScreen() {
+  const navigation = useNavigation<any>();
   const {
     trips,
     addTrip,
     updateTrip,
     deleteTrip,
+    tripsLoading,
     tripCategories = [],
     tripBadges = [],
     addTripCategory,
@@ -63,6 +67,7 @@ export default function ManageTripsScreen() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [sortByDays, setSortByDays] = useState<'ASC' | 'DESC'>('ASC');
   const [modalVisible, setModalVisible] = useState(false);
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
 
@@ -205,14 +210,27 @@ export default function ManageTripsScreen() {
     }
   };
 
-  const filteredTrips = trips.filter((trip: any) => {
-    const matchesSearch =
-      trip.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      trip.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (trip.category && trip.category.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesStatus = statusFilter === 'ALL' || trip.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const parseDays = (durationStr: string) => {
+    if (!durationStr) return 9999;
+    const match = String(durationStr).match(/\d+/);
+    return match ? parseInt(match[0], 10) : 9999;
+  };
+
+  const filteredTrips = trips
+    .filter((trip: any) => {
+      const matchesSearch =
+        trip.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        trip.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (trip.tripCode && String(trip.tripCode).includes(searchQuery)) ||
+        (trip.category && trip.category.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesStatus = statusFilter === 'ALL' || trip.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a: any, b: any) => {
+      const daysA = parseDays(a.duration);
+      const daysB = parseDays(b.duration);
+      return sortByDays === 'ASC' ? daysA - daysB : daysB - daysA;
+    });
 
   return (
     <View style={styles.container}>
@@ -239,10 +257,26 @@ export default function ManageTripsScreen() {
 
             <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
               <TouchableOpacity
+                style={styles.sortDaysBtn}
+                onPress={() => setSortByDays(sortByDays === 'ASC' ? 'DESC' : 'ASC')}
+              >
+                <Text style={styles.sortDaysBtnText}>
+                  ⏳ Days: {sortByDays === 'ASC' ? '1 ➔ 2 ➔ 3 (Low to High)' : 'High to Low'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
                 style={styles.managePresetsBtn}
                 onPress={() => setManagePresetsModalVisible(true)}
               >
                 <Text style={styles.managePresetsBtnText}>🏷️ Manage Presets</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.managePresetsBtn}
+                onPress={() => navigation.navigate('AdminFeatured')}
+              >
+                <Text style={styles.managePresetsBtnText}>📢 Featured Ads & Posters</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.addBtn} onPress={handleOpenAddModal}>
@@ -287,132 +321,201 @@ export default function ManageTripsScreen() {
             </View>
           </View>
 
-          {/* Table */}
-          <View style={styles.tableContainer}>
-            <View style={styles.tableHeader}>
-              <Text style={[styles.th, { flex: 2.2 }]}>TRIP & COVER</Text>
-              <Text style={[styles.th, { flex: 1.5 }]}>LOCATION</Text>
-              <Text style={[styles.th, { flex: 1.1 }]}>START DATE</Text>
-              <Text style={[styles.th, { flex: 1.1 }]}>END DATE</Text>
-              <Text style={styles.th}>CATEGORY</Text>
-              <Text style={styles.th}>DURATION</Text>
-              <Text style={styles.th}>DIFFICULTY</Text>
-              <Text style={styles.th}>PRICE (PKR)</Text>
-              <Text style={styles.th}>STATUS</Text>
-              <Text style={[styles.th, { textAlign: 'center', width: 150, flex: 0 }]}>ACTIONS</Text>
-            </View>
-
-            {filteredTrips.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>No trips found matching your search.</Text>
+          {/* Table with Horizontal Scroll */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={true}
+            style={{ width: '100%' }}
+            contentContainerStyle={{ minWidth: 1570 }}
+          >
+            <View style={[styles.tableContainer, { width: 1570 }]}>
+              {/* Table Header */}
+              <View style={[styles.tableHeader, { width: 1570 }]}>
+                <View style={{ width: 110, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={[styles.th, { textAlign: 'center' }]}>TRIP ID</Text>
+                </View>
+                <View style={{ width: 280, paddingRight: 14 }}>
+                  <Text style={styles.th}>TRIP & COVER</Text>
+                </View>
+                <View style={{ width: 180, paddingRight: 14 }}>
+                  <Text style={styles.th}>LOCATION</Text>
+                </View>
+                <View style={{ width: 120, paddingRight: 10 }}>
+                  <Text style={styles.th}>START DATE</Text>
+                </View>
+                <View style={{ width: 120, paddingRight: 10 }}>
+                  <Text style={styles.th}>END DATE</Text>
+                </View>
+                <View style={{ width: 120, paddingRight: 10 }}>
+                  <Text style={styles.th}>CATEGORY</Text>
+                </View>
+                <View style={{ width: 110, paddingRight: 10 }}>
+                  <Text style={[styles.th, { color: '#0B5CAD' }]}>DURATION</Text>
+                </View>
+                <View style={{ width: 120, paddingRight: 10 }}>
+                  <Text style={styles.th}>DIFFICULTY</Text>
+                </View>
+                <View style={{ width: 130, paddingRight: 10 }}>
+                  <Text style={styles.th}>PRICE (PKR)</Text>
+                </View>
+                <View style={{ width: 120, paddingRight: 10 }}>
+                  <Text style={styles.th}>STATUS</Text>
+                </View>
+                <View style={{ width: 160, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={[styles.th, { textAlign: 'center' }]}>ACTIONS</Text>
+                </View>
               </View>
-            ) : (
-              filteredTrips.map((trip: any) => (
-                <View style={styles.tableRow} key={trip.id}>
-                  {/* Title & Image & Badge */}
-                  <View style={[styles.td, { flex: 2.2, flexDirection: 'row', alignItems: 'center', gap: 12 }]}>
-                    <Image
-                      source={resolveAsset(trip.imageKey, 'hunza.jpg')}
-                      style={styles.tripThumb}
-                    />
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.tripTitleText}>{trip.title}</Text>
-                      <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
-                        {trip.badge ? (
-                          <View style={styles.badgeChip}>
-                            <Text style={styles.badgeText}>{trip.badge}</Text>
-                          </View>
-                        ) : null}
-                        <Text style={styles.membersText}>👥 {trip.members || '20'} max</Text>
+
+              {tripsLoading && filteredTrips.length === 0 ? (
+                <View style={[styles.emptyState, { paddingVertical: 45, width: 1570 }]}>
+                  <ActivityIndicator size="small" color="#0B5CAD" />
+                  <Text style={[styles.emptyText, { marginTop: 12, color: '#0B5CAD', fontWeight: '700' }]}>
+                    Loading trips from database...
+                  </Text>
+                </View>
+              ) : filteredTrips.length === 0 ? (
+                <View style={[styles.emptyState, { width: 1570 }]}>
+                  <Text style={styles.emptyText}>No trips found matching your search.</Text>
+                </View>
+              ) : (
+                filteredTrips.map((trip: any) => (
+                  <View style={[styles.tableRow, { width: 1570 }]} key={trip.id}>
+                    {/* 1. TRIP ID */}
+                    <View style={{ width: 110, alignItems: 'center', justifyContent: 'center' }}>
+                      <View style={styles.idChip}>
+                        <Text style={styles.idChipText}>#{trip.tripCode || String(trip.id).slice(-4)}</Text>
                       </View>
                     </View>
-                  </View>
 
-                  <Text style={[styles.td, { flex: 1.5 }]}>{trip.location}</Text>
-                  <Text style={[styles.td, { flex: 1.1, color: trip.tripStartDate ? '#0F172A' : '#94A3B8' }]}>
-                    {trip.tripStartDate || '—'}
-                  </Text>
-                  <Text style={[styles.td, { flex: 1.1, color: trip.tripEndDate ? '#0F172A' : '#94A3B8' }]}>
-                    {trip.tripEndDate || '—'}
-                  </Text>
-                  <Text style={styles.td}>{trip.category || 'Hiking'}</Text>
-                  <Text style={styles.td}>{trip.duration}</Text>
+                    {/* 2. TRIP & COVER */}
+                    <View style={{ width: 280, flexDirection: 'row', alignItems: 'center', gap: 12, paddingRight: 14 }}>
+                      <Image
+                        source={resolveAsset(trip.imageKey, 'hunza.jpg')}
+                        style={styles.tripThumb}
+                      />
+                      <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
+                        <Text style={styles.tripTitleText} numberOfLines={1}>{trip.title}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                          {trip.badge ? (
+                            <View style={styles.badgeChip}>
+                              <Text style={styles.badgeText}>{trip.badge}</Text>
+                            </View>
+                          ) : null}
+                          <Text style={styles.membersText} numberOfLines={1}>👥 {trip.members || '20'} max</Text>
+                        </View>
+                      </View>
+                    </View>
 
-                  {/* Difficulty */}
-                  <View style={styles.td}>
-                    <View
-                      style={[
-                        styles.diffBadge,
-                        {
-                          backgroundColor:
-                            trip.difficulty === 'Easy'
-                              ? '#DCFCE7'
-                              : trip.difficulty === 'Moderate'
-                              ? '#FEF3C7'
-                              : '#FEE2E2',
-                        },
-                      ]}
-                    >
-                      <Text
+                    {/* 3. LOCATION */}
+                    <View style={{ width: 180, paddingRight: 14, justifyContent: 'center' }}>
+                      <Text style={styles.td} numberOfLines={2}>{trip.location}</Text>
+                    </View>
+
+                    {/* 4. START DATE */}
+                    <View style={{ width: 120, paddingRight: 10, justifyContent: 'center' }}>
+                      <Text style={[styles.td, { color: trip.tripStartDate ? '#0F172A' : '#94A3B8' }]} numberOfLines={1}>
+                        {trip.tripStartDate || '—'}
+                      </Text>
+                    </View>
+
+                    {/* 5. END DATE */}
+                    <View style={{ width: 120, paddingRight: 10, justifyContent: 'center' }}>
+                      <Text style={[styles.td, { color: trip.tripEndDate ? '#0F172A' : '#94A3B8' }]} numberOfLines={1}>
+                        {trip.tripEndDate || '—'}
+                      </Text>
+                    </View>
+
+                    {/* 6. CATEGORY */}
+                    <View style={{ width: 120, paddingRight: 10, justifyContent: 'center' }}>
+                      <Text style={styles.td} numberOfLines={1}>{trip.category || 'Hiking'}</Text>
+                    </View>
+
+                    {/* 7. DURATION */}
+                    <View style={{ width: 110, paddingRight: 10, justifyContent: 'center' }}>
+                      <Text style={[styles.td, { fontWeight: '700', color: '#0B5CAD' }]} numberOfLines={1}>{trip.duration}</Text>
+                    </View>
+
+                    {/* 8. DIFFICULTY */}
+                    <View style={{ width: 120, paddingRight: 10, justifyContent: 'center' }}>
+                      <View
                         style={[
-                          styles.diffText,
+                          styles.diffBadge,
                           {
-                            color:
+                            alignSelf: 'flex-start',
+                            backgroundColor:
                               trip.difficulty === 'Easy'
+                                ? '#DCFCE7'
+                                : trip.difficulty === 'Moderate'
+                                ? '#FEF3C7'
+                                : '#FEE2E2',
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.diffText,
+                            {
+                              color:
+                                trip.difficulty === 'Easy'
                                 ? '#16A34A'
                                 : trip.difficulty === 'Moderate'
                                 ? '#D97706'
                                 : '#DC2626',
-                          },
-                        ]}
-                      >
-                        {trip.difficulty}
+                            },
+                          ]}
+                        >
+                          {trip.difficulty}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* 9. PRICE */}
+                    <View style={{ width: 130, paddingRight: 10, justifyContent: 'center' }}>
+                      <Text style={[styles.td, { fontWeight: '800', color: '#0B5CAD', fontSize: 14 }]} numberOfLines={1}>
+                        {trip.price}
                       </Text>
                     </View>
+
+                    {/* 10. STATUS */}
+                    <View style={{ width: 120, paddingRight: 10, justifyContent: 'center' }}>
+                      <Text
+                        style={[
+                          styles.statusTag,
+                          { alignSelf: 'flex-start' },
+                          trip.status === 'UPCOMING'
+                            ? styles.statusUpcoming
+                            : trip.status === 'ACTIVE'
+                            ? styles.statusActive
+                            : trip.status === 'COMPLETED'
+                            ? styles.statusCompleted
+                            : styles.statusDraft,
+                        ]}
+                      >
+                        {trip.status}
+                      </Text>
+                    </View>
+
+                    {/* 11. ACTIONS */}
+                    <View style={[styles.tdActions, { width: 160, alignItems: 'center', justifyContent: 'center' }]}>
+                      <TouchableOpacity
+                        style={styles.editActionBtn}
+                        onPress={() => handleOpenEditModal(trip)}
+                      >
+                        <Text style={styles.editActionText}>✏️ Edit</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.deleteActionBtn}
+                        onPress={() => handleDelete(trip.id, trip.title)}
+                      >
+                        <Text style={styles.deleteActionText}>🗑️ Delete</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-
-                  <Text style={[styles.td, { fontWeight: '800', color: '#0B5CAD', fontSize: 14 }]}>
-                    {trip.price}
-                  </Text>
-
-                  {/* Status */}
-                  <View style={styles.td}>
-                    <Text
-                      style={[
-                        styles.statusTag,
-                        trip.status === 'UPCOMING'
-                          ? styles.statusUpcoming
-                          : trip.status === 'ACTIVE'
-                          ? styles.statusActive
-                          : trip.status === 'COMPLETED'
-                          ? styles.statusCompleted
-                          : styles.statusDraft,
-                      ]}
-                    >
-                      {trip.status}
-                    </Text>
-                  </View>
-
-                  {/* Actions */}
-                  <View style={[styles.tdActions, { width: 150 }]}>
-                    <TouchableOpacity
-                      style={styles.editActionBtn}
-                      onPress={() => handleOpenEditModal(trip)}
-                    >
-                      <Text style={styles.editActionText}>✏️ Edit</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={styles.deleteActionBtn}
-                      onPress={() => handleDelete(trip.id, trip.title)}
-                    >
-                      <Text style={styles.deleteActionText}>🗑️ Delete</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ))
-            )}
-          </View>
+                ))
+              )}
+            </View>
+          </ScrollView>
         </ScrollView>
       </View>
 
@@ -1391,13 +1494,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#F8FAFC',
     paddingVertical: 14,
-    paddingHorizontal: 18,
+    paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
   },
 
   th: {
-    flex: 1,
     fontSize: 12,
     fontWeight: '800',
     color: '#475569',
@@ -1407,14 +1509,13 @@ const styles = StyleSheet.create({
   tableRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
 
   td: {
-    flex: 1,
     fontSize: 14,
     color: '#334155',
   },
@@ -1732,6 +1833,21 @@ const styles = StyleSheet.create({
   },
 
   /* Preset Management & Dropdown Styles */
+  sortDaysBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+  },
+
+  sortDaysBtnText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#15803D',
+  },
+
   managePresetsBtn: {
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -2083,6 +2199,26 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '700',
-    letterSpacing: 0.3,
+  },
+
+  idChip: {
+    backgroundColor: '#0B5CAD',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    minWidth: 68,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#0B5CAD',
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+  },
+
+  idChipText: {
+    fontSize: 12,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: 0.8,
   },
 });

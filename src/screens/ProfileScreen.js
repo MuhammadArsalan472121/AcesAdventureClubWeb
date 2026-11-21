@@ -33,7 +33,7 @@ export default function ProfileScreen() {
   } = useResponsive();
 
   const isWide = isDesktop || isTablet;
-  const { user, userProfile, updateUserProfile, updateUserPassword, loading } = useAuth();
+  const { user, userProfile, updateUserProfile, updateUserPassword, loading, isEmailVerified } = useAuth();
 
   const fileInputRef = useRef(null);
 
@@ -52,13 +52,13 @@ export default function ProfileScreen() {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    if (!loading && user && !user.emailVerified) {
+    if (!loading && user && !isEmailVerified) {
       navigation.navigate("EmailVerification", {
         email: user.email,
         requiresVerification: true,
       });
     }
-  }, [user, loading, navigation]);
+  }, [user, loading, navigation, isEmailVerified]);
 
   useEffect(() => {
     if (userProfile) {

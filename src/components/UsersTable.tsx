@@ -34,7 +34,12 @@ export default function UsersTable() {
       </View>
 
       {/* Rows */}
-      {recentUsers.map((user) => {
+      {recentUsers.length === 0 ? (
+        <View style={{ padding: 32, alignItems: 'center' }}>
+          <Text style={{ color: '#64748B', fontSize: 13 }}>No registered users found.</Text>
+        </View>
+      ) : (
+        recentUsers.map((user) => {
         const initials = user.name
           ? user.name
               .split(' ')
@@ -61,19 +66,24 @@ export default function UsersTable() {
               <Text
                 style={[
                   styles.status,
-                  user.status === 'ACTIVE'
+                  user.emailVerified === true || user.isVerified === true
+                    ? styles.verified
+                    : user.status === 'ACTIVE'
                     ? styles.active
                     : styles.inactive,
                 ]}
               >
-                {user.status}
+                {user.emailVerified === true || user.isVerified === true
+                  ? '✓ VERIFIED'
+                  : user.status}
               </Text>
             </View>
 
             <Text style={styles.cell}>{user.joined}</Text>
           </View>
         );
-      })}
+      })
+      )}
     </View>
   );
 }
@@ -206,6 +216,11 @@ const styles = StyleSheet.create({
   active: {
     color: '#16A34A',
     backgroundColor: '#DCFCE7',
+  },
+
+  verified: {
+    color: '#0B5CAD',
+    backgroundColor: '#DBEAFE',
   },
 
   inactive: {

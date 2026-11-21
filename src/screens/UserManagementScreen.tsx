@@ -7,17 +7,38 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 
 import Sidebar from '../components/Sidebar';
 import TopBar from '../components/TopBar';
 import { useData } from '../context/DataContext';
 import { useNavigation } from '@react-navigation/native';
-import { auth } from './firebaseConfig';
+import { auth, db } from './firebaseConfig';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { initializeApp, deleteApp } from 'firebase/app';
+import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+
+const SUPER_ADMIN_UID = "dAA4wFxhnjZHLP5yQA4lwuiSKDv1";
+const SUPER_ADMIN_EMAIL = "superadmin@acesclub.com";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCRJw3PyOjkmcVVjKxItQB7qa75RA6Z0hM",
+  authDomain: "adventuresacesclub.firebaseapp.com",
+  projectId: "adventuresacesclub",
+  storageBucket: "adventuresacesclub.firebasestorage.app",
+  messagingSenderId: "1017011729372",
+  appId: "1:1017011729372:web:3514640408ec101f991519",
+  measurementId: "G-687NLPDK9L"
+};
 
 export default function UserManagementScreen() {
   const navigation = useNavigation<any>();
-  const { users, addUser, updateUser, deleteUser } = useData();
+  const { users, addUser, updateUser, deleteUser, deleteAllUsersExceptSuperAdmin } = useData();
+
+  const [currentUserRole, setCurrentUserRole] = useState<string>('');
+  const [isSuperAdmin, setIsSuperAdmin] = useState<boolean>(false);
 
   useEffect(() => {
     if (!auth.currentUser) {
@@ -25,7 +46,33 @@ export default function UserManagementScreen() {
         index: 0,
         routes: [{ name: 'AdminLogin' }],
       });
+      return;
     }
+
+    const currentUid = auth.currentUser.uid;
+    const currentEmail = auth.currentUser.email?.toLowerCase();
+
+    if (currentUid === SUPER_ADMIN_UID || currentEmail === SUPER_ADMIN_EMAIL) {
+      setIsSuperAdmin(true);
+      setCurrentUserRole('super_admin');
+    }
+
+    // Fetch user role from Firestore
+    getDoc(doc(db, "users", currentUid))
+      .then((snap) => {
+        if (snap.exists()) {
+          const role = String(snap.data()?.role || snap.data()?.Role || '').trim().toLowerCase().replace(/[\s-]+/g, "_");
+          setCurrentUserRole(role);
+          if (role === 'super_admin' || currentUid === SUPER_ADMIN_UID || currentEmail === SUPER_ADMIN_EMAIL) {
+            setIsSuperAdmin(true);
+          } else {
+            setIsSuperAdmin(false);
+          }
+        }
+      })
+      .catch((err) => {
+        console.warn("Could not fetch admin role:", err);
+      });
   }, [navigation]);
 
   console.log('[USERS_DEBUG] UserManagementScreen rendered. users count:', users?.length, users);
@@ -33,6 +80,8 @@ export default function UserManagementScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [savingLoading, setSavingLoading] = useState(false);
+  const [formError, setFormError] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -41,25 +90,35 @@ export default function UserManagementScreen() {
     location: '',
     role: 'Member',
     status: 'ACTIVE',
+    password: '',
+    confirmPassword: '',
+    isVerified: false,
   });
 
-  const roles = ['Super Admin', 'Admin', 'Elite Voyager', 'Member', 'Sponsor Rep'];
+  const roles = isSuperAdmin 
+    ? ['Super Admin', 'Admin', 'Elite Voyager', 'Member', 'Sponsor Rep']
+    : ['Admin', 'Elite Voyager', 'Member', 'Sponsor Rep'];
 
   const handleOpenAdd = () => {
     setEditingUserId(null);
+    setFormError('');
     setFormData({
       name: '',
       email: '',
-      phone: '+92 300 0000000',
-      location: 'Islamabad, Pakistan',
+      phone: '',
+      location: '',
       role: 'Member',
       status: 'ACTIVE',
+      password: '',
+      confirmPassword: '',
+      isVerified: false,
     });
     setModalVisible(true);
   };
 
   const handleOpenEdit = (user: any) => {
     setEditingUserId(user.id);
+    setFormError('');
     setFormData({
       name: user.name || '',
       email: user.email || '',
@@ -67,29 +126,160 @@ export default function UserManagementScreen() {
       location: user.location || '',
       role: user.role || 'Member',
       status: user.status || 'ACTIVE',
+      password: '',
+      confirmPassword: '',
+      isVerified: user.emailVerified === true || user.isVerified === true,
     });
     setModalVisible(true);
   };
 
-  const handleSave = () => {
-    console.log('[USERS_DEBUG] handleSave invoked. editingUserId:', editingUserId, 'formData:', formData);
-    if (!formData.name.trim() || !formData.email.trim()) {
-      alert('Please fill in user full name and email address');
+  const handleSave = async () => {
+    setFormError('');
+    if (!formData.name.trim()) {
+      setFormError('Please enter user full name.');
+      return;
+    }
+    if (!formData.email.trim()) {
+      setFormError('Please enter valid email address.');
       return;
     }
 
-    if (editingUserId) {
-      updateUser(editingUserId, formData);
-    } else {
-      addUser(formData);
+    if (!editingUserId) {
+      if (!formData.password) {
+        setFormError('Please enter a password for the new member.');
+        return;
+      }
+      if (formData.password.length < 6) {
+        setFormError('Password must be at least 6 characters.');
+        return;
+      }
+      if (formData.password !== formData.confirmPassword) {
+        setFormError('Passwords do not match.');
+        return;
+      }
     }
-    setModalVisible(false);
+
+    setSavingLoading(true);
+
+    if (editingUserId) {
+      try {
+        const updatePayload: any = {
+          name: formData.name.trim(),
+          fullName: formData.name.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+          location: formData.location.trim(),
+          role: formData.role,
+          status: formData.status,
+        };
+        if (isSuperAdmin) {
+          updatePayload.emailVerified = !!formData.isVerified;
+        }
+        await updateUser(editingUserId, updatePayload);
+        setSavingLoading(false);
+        setModalVisible(false);
+      } catch (err: any) {
+        setSavingLoading(false);
+        setFormError(err?.message || 'Failed to update user.');
+      }
+      return;
+    }
+
+    // Creating a brand new member in Authentication + Firestore
+    let secondaryApp: any = null;
+    try {
+      const appName = `SecondaryAuth_${Date.now()}`;
+      secondaryApp = initializeApp(firebaseConfig, appName);
+      const secondaryAuth = getAuth(secondaryApp);
+
+      const userCredential = await createUserWithEmailAndPassword(
+        secondaryAuth,
+        formData.email.trim(),
+        formData.password
+      );
+
+      const newUid = userCredential.user.uid;
+      const formattedJoined = new Date().toLocaleDateString("en-US", {
+        month: "short",
+        day: "2-digit",
+        year: "numeric",
+      });
+
+      // Role normalization
+      let assignedRole = formData.role;
+      if (!isSuperAdmin && assignedRole.toLowerCase().includes('super')) {
+        assignedRole = 'Admin';
+      }
+
+      const userFirestoreDoc = {
+        name: formData.name.trim(),
+        fullName: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim() || "+92 300 0000000",
+        location: formData.location.trim() || "Islamabad, Pakistan",
+        role: assignedRole,
+        status: formData.status,
+        emailVerified: isSuperAdmin ? !!formData.isVerified : false,
+        joined: formattedJoined,
+        createdAt: serverTimestamp(),
+      };
+
+      // Save document in Firestore users/{newUid}
+      await setDoc(doc(db, "users", newUid), userFirestoreDoc);
+
+      // Sign out from secondary auth and clean up instance
+      await signOut(secondaryAuth);
+      await deleteApp(secondaryApp);
+
+      // Update UI state in DataContext
+      addUser({
+        id: newUid,
+        ...userFirestoreDoc,
+      });
+
+      setSavingLoading(false);
+      setModalVisible(false);
+      alert('New member created successfully in both Authentication and Database!');
+    } catch (err: any) {
+      console.error("[ADD_USER_ERROR]", err);
+      if (secondaryApp) {
+        try {
+          await deleteApp(secondaryApp);
+        } catch (_) {}
+      }
+      setSavingLoading(false);
+      if (err.code === 'auth/email-already-in-use') {
+        setFormError('This email is already registered in Firebase Authentication.');
+      } else if (err.code === 'auth/weak-password') {
+        setFormError('Password is too weak. Please use at least 6 characters.');
+      } else {
+        setFormError(err?.message || 'Failed to create user in Authentication.');
+      }
+    }
   };
 
   const handleDelete = (id: string, name: string) => {
+    if (id === SUPER_ADMIN_UID) {
+      alert("Super Admin account is protected and cannot be deleted!");
+      return;
+    }
     console.log(`[USERS_DEBUG] handleDelete invoked for user ID [${id}], name [${name}]`);
     if (confirm(`Are you sure you want to remove user "${name}" from the system?`)) {
       deleteUser(id);
+    }
+  };
+
+  const handleDeleteAll = () => {
+    if (!isSuperAdmin) {
+      alert("Only Super Admin has permission to delete all members.");
+      return;
+    }
+    const confirmed = confirm(
+      "WARNING: Are you sure you want to delete ALL registered users?\n\n(Note: The Super Admin account is protected and will NOT be deleted.)"
+    );
+    if (confirmed) {
+      deleteAllUsersExceptSuperAdmin();
+      alert("All members have been removed. Super Admin account preserved.");
     }
   };
 
@@ -130,9 +320,17 @@ export default function UserManagementScreen() {
               </Text>
             </View>
 
-            <TouchableOpacity style={styles.addBtn} onPress={handleOpenAdd}>
-              <Text style={styles.addBtnText}>+ ADD NEW MEMBER</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+              {isSuperAdmin && (
+                <TouchableOpacity style={styles.deleteAllBtn} onPress={handleDeleteAll}>
+                  <Text style={styles.deleteAllBtnText}>🗑️ DELETE ALL USERS</Text>
+                </TouchableOpacity>
+              )}
+
+              <TouchableOpacity style={styles.addBtn} onPress={handleOpenAdd}>
+                <Text style={styles.addBtnText}>+ ADD NEW MEMBER</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Search Bar */}
@@ -193,12 +391,16 @@ export default function UserManagementScreen() {
                       <Text
                         style={[
                           styles.statusTag,
-                          user.status === 'ACTIVE'
+                          user.emailVerified === true || user.isVerified === true
+                            ? styles.statusVerified
+                            : user.status === 'ACTIVE'
                             ? styles.statusActive
                             : styles.statusInactive,
                         ]}
                       >
-                        {user.status}
+                        {user.emailVerified === true || user.isVerified === true
+                          ? '✓ VERIFIED'
+                          : user.status}
                       </Text>
                     </View>
 
@@ -212,12 +414,14 @@ export default function UserManagementScreen() {
                         <Text style={styles.editActionText}>✏️ Edit</Text>
                       </TouchableOpacity>
 
-                      <TouchableOpacity
-                        style={styles.deleteActionBtn}
-                        onPress={() => handleDelete(user.id, user.name)}
-                      >
-                        <Text style={styles.deleteActionText}>🗑️ Delete</Text>
-                      </TouchableOpacity>
+                      {user.id !== SUPER_ADMIN_UID && user.email?.toLowerCase() !== SUPER_ADMIN_EMAIL && (
+                        <TouchableOpacity
+                          style={styles.deleteActionBtn}
+                          onPress={() => handleDelete(user.id, user.name)}
+                        >
+                          <Text style={styles.deleteActionText}>🗑️ Delete</Text>
+                        </TouchableOpacity>
+                      )}
                     </View>
                   </View>
                 );
@@ -245,12 +449,18 @@ export default function UserManagementScreen() {
               </TouchableOpacity>
             </View>
 
+            {formError ? (
+              <View style={styles.formErrorBox}>
+                <Text style={styles.formErrorText}>{formError}</Text>
+              </View>
+            ) : null}
+
             <View style={styles.formGrid}>
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>FULL NAME *</Text>
                 <TextInput
                   style={styles.formInput}
-                  placeholder="e.g. Sophia Miller"
+                  placeholder="e.g. Ali Khan"
                   placeholderTextColor="#94A3B8"
                   value={formData.name}
                   onChangeText={(t) => setFormData({ ...formData, name: t })}
@@ -261,20 +471,51 @@ export default function UserManagementScreen() {
                 <Text style={styles.formLabel}>EMAIL ADDRESS *</Text>
                 <TextInput
                   style={styles.formInput}
-                  placeholder="sophia@example.com"
+                  placeholder="e.g. member@acesclub.com"
                   placeholderTextColor="#94A3B8"
                   keyboardType="email-address"
+                  autoCapitalize="none"
                   value={formData.email}
+                  editable={!editingUserId}
                   onChangeText={(t) => setFormData({ ...formData, email: t })}
                 />
               </View>
+
+              {/* Password Fields for New Member */}
+              {!editingUserId && (
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 14 }]}>
+                    <Text style={styles.formLabel}>NEW PASSWORD *</Text>
+                    <TextInput
+                      style={styles.formInput}
+                      placeholder="Min 6 characters"
+                      placeholderTextColor="#94A3B8"
+                      secureTextEntry
+                      value={formData.password}
+                      onChangeText={(t) => setFormData({ ...formData, password: t })}
+                    />
+                  </View>
+
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel}>CONFIRM PASSWORD *</Text>
+                    <TextInput
+                      style={styles.formInput}
+                      placeholder="Repeat password"
+                      placeholderTextColor="#94A3B8"
+                      secureTextEntry
+                      value={formData.confirmPassword}
+                      onChangeText={(t) => setFormData({ ...formData, confirmPassword: t })}
+                    />
+                  </View>
+                </View>
+              )}
 
               <View style={styles.formRow}>
                 <View style={[styles.formGroup, { flex: 1, marginRight: 14 }]}>
                   <Text style={styles.formLabel}>PHONE NUMBER</Text>
                   <TextInput
                     style={styles.formInput}
-                    placeholder="+92 300 1234567"
+                    placeholder="e.g. +92 300 1234567"
                     placeholderTextColor="#94A3B8"
                     value={formData.phone}
                     onChangeText={(t) => setFormData({ ...formData, phone: t })}
@@ -285,7 +526,7 @@ export default function UserManagementScreen() {
                   <Text style={styles.formLabel}>LOCATION / CITY</Text>
                   <TextInput
                     style={styles.formInput}
-                    placeholder="Islamabad, Pakistan"
+                    placeholder="e.g. Islamabad, Pakistan"
                     placeholderTextColor="#94A3B8"
                     value={formData.location}
                     onChangeText={(t) => setFormData({ ...formData, location: t })}
@@ -342,20 +583,52 @@ export default function UserManagementScreen() {
                   ))}
                 </View>
               </View>
+
+              {/* Super Admin Exclusive: Pre-Verified Status Toggle */}
+              {isSuperAdmin && (
+                <View style={styles.verifiedBox}>
+                  <TouchableOpacity
+                    style={styles.checkboxRow}
+                    activeOpacity={0.8}
+                    onPress={() => setFormData({ ...formData, isVerified: !formData.isVerified })}
+                  >
+                    <View style={[styles.customCheckbox, formData.isVerified && styles.customCheckboxChecked]}>
+                      {formData.isVerified && <Text style={styles.checkmarkIcon}>✓</Text>}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.verifiedTitle}>
+                        🛡️ Pre-Verify Account (Super Admin Privilege)
+                      </Text>
+                      <Text style={styles.verifiedDesc}>
+                        When enabled, member can directly log in without requiring manual email verification link confirmation.
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
 
             <View style={styles.modalActions}>
               <TouchableOpacity
                 style={styles.cancelBtn}
+                disabled={savingLoading}
                 onPress={() => setModalVisible(false)}
               >
                 <Text style={styles.cancelBtnText}>Cancel</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-                <Text style={styles.saveBtnText}>
-                  {editingUserId ? 'Save Changes' : 'Create Member'}
-                </Text>
+              <TouchableOpacity
+                style={[styles.saveBtn, savingLoading && { opacity: 0.7 }]}
+                disabled={savingLoading}
+                onPress={handleSave}
+              >
+                {savingLoading ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.saveBtnText}>
+                    {editingUserId ? 'Save Changes' : 'Create Member'}
+                  </Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -421,6 +694,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
+  },
+
+  deleteAllBtn: {
+    backgroundColor: '#FEE2E2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+
+  deleteAllBtnText: {
+    color: '#DC2626',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.4,
   },
 
   addBtnText: {
@@ -539,6 +828,11 @@ const styles = StyleSheet.create({
   statusActive: {
     color: '#16A34A',
     backgroundColor: '#DCFCE7',
+  },
+
+  statusVerified: {
+    color: '#0B5CAD',
+    backgroundColor: '#DBEAFE',
   },
 
   statusInactive: {
@@ -737,5 +1031,71 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     color: '#FFFFFF',
+  },
+
+  formErrorBox: {
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 16,
+  },
+
+  formErrorText: {
+    color: '#DC2626',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  verifiedBox: {
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 4,
+  },
+
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+
+  customCheckbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#16A34A',
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  customCheckboxChecked: {
+    backgroundColor: '#16A34A',
+  },
+
+  checkmarkIcon: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '900',
+    marginTop: -2,
+  },
+
+  verifiedTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#15803D',
+  },
+
+  verifiedDesc: {
+    fontSize: 11,
+    color: '#166534',
+    marginTop: 2,
+    lineHeight: 15,
   },
 });

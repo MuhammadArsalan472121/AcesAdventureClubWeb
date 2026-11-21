@@ -22,6 +22,7 @@ import AdminLoginScreen from "../screens/AdminLoginScreen";
 import AdminDashboardScreen from "../screens/AdminDashboardScreen";
 import UserManagementScreen from "../screens/UserManagementScreen";
 import ManageTripsScreen from "../screens/ManageTripsScreen";
+import FeaturedPostersScreen from "../screens/FeaturedPostersScreen";
 import SponsorsManagementScreen from "../screens/SponsorsManagementScreen";
 import GalleryManagementScreen from "../screens/GalleryManagementScreen";
 import ConsoleSettingsScreen from "../screens/ConsoleSettingsScreen";
@@ -58,6 +59,7 @@ export default function AppNavigator() {
       <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} />
       <Stack.Screen name="AdminUsers" component={UserManagementScreen} />
       <Stack.Screen name="AdminTrips" component={ManageTripsScreen} />
+      <Stack.Screen name="AdminFeatured" component={FeaturedPostersScreen} />
       <Stack.Screen name="AdminSponsors" component={SponsorsManagementScreen} />
       <Stack.Screen name="AdminGallery" component={GalleryManagementScreen} />
       <Stack.Screen name="AdminSettings" component={ConsoleSettingsScreen} />

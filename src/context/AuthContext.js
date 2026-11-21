@@ -7,7 +7,8 @@ import {
   sendEmailVerification as firebaseSendEmailVerification,
   reload as firebaseReload,
 } from "firebase/auth";
-import { auth } from "../screens/firebaseConfig";
+import { auth, db } from "../screens/firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
 import { Platform } from "react-native";
 
 const AuthContext = createContext({
@@ -25,6 +26,7 @@ const AuthContext = createContext({
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isPreVerified, setIsPreVerified] = useState(false);
   const [userProfile, setUserProfile] = useState({
     fullName: "",
     email: "",
@@ -96,9 +98,26 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       loadProfile(currentUser);
+      if (currentUser) {
+        try {
+          const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            if (data.emailVerified === true || data.isVerified === true) {
+              setIsPreVerified(true);
+            } else {
+              setIsPreVerified(false);
+            }
+          }
+        } catch (e) {
+          console.warn("[AUTH_PREVERIFIED_FETCH_ERR]", e);
+        }
+      } else {
+        setIsPreVerified(false);
+      }
       setLoading(false);
     });
     return () => unsubscribe();
@@ -192,7 +211,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const isEmailVerified = user ? Boolean(user.emailVerified) : false;
+  const isEmailVerified = user ? Boolean(user.emailVerified || isPreVerified) : false;
 
   return (
     <AuthContext.Provider

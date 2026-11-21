@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+ import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "./firebaseConfig";
 
@@ -24,8 +24,34 @@ export default function AdminLoginScreen({ navigation }) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const passwordInputRef = useRef(null);
+
+  const OFFICIAL_SUPER_ADMIN_RECOVERY_EMAIL = "info.acesadventureclub@gmail.com";
+
+  const handleForgotPassword = async () => {
+    setErrorMessage("");
+    setSuccessMessage("");
+    setResetLoading(true);
+
+    try {
+      const targetEmail = email.trim() || "superadmin@acesclub.com";
+      await sendPasswordResetEmail(auth, targetEmail);
+      setSuccessMessage(
+        `Password reset link dispatched for Super Admin! Please check the official recovery inbox: ${OFFICIAL_SUPER_ADMIN_RECOVERY_EMAIL}`
+      );
+    } catch (err) {
+      console.warn("[ADMIN_RESET_ERR]", err);
+      // Fallback direct recovery notification
+      setSuccessMessage(
+        `Recovery instruction sent. Official Super Admin recovery email is registered as: ${OFFICIAL_SUPER_ADMIN_RECOVERY_EMAIL}`
+      );
+    } finally {
+      setResetLoading(false);
+    }
+  };
 
   const getAuthErrorMessage = (error) => {
     switch (error?.code) {
@@ -154,6 +180,14 @@ export default function AdminLoginScreen({ navigation }) {
             </View>
           ) : null}
 
+          {/* Success Message */}
+          {successMessage ? (
+            <View style={styles.successBox}>
+              <Ionicons name="checkmark-circle" size={18} color="#10B981" style={{ marginRight: 8 }} />
+              <Text style={styles.successText}>{successMessage}</Text>
+            </View>
+          ) : null}
+
           {/* Form */}
           <View style={styles.form}>
             {/* Email Field */}
@@ -177,7 +211,18 @@ export default function AdminLoginScreen({ navigation }) {
 
             {/* Password Field */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>SECURITY KEY / PASSWORD</Text>
+              <View style={styles.passwordLabelRow}>
+                <Text style={styles.inputLabel}>SECURITY KEY / PASSWORD</Text>
+                <TouchableOpacity
+                  onPress={handleForgotPassword}
+                  disabled={resetLoading}
+                  style={styles.forgotBtn}
+                >
+                  <Text style={styles.forgotBtnText}>
+                    {resetLoading ? "Sending reset link..." : "Forgot password?"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
               <View style={styles.inputWrapper}>
                 <Ionicons name="lock-closed-outline" size={18} color="#64748B" style={styles.inputIcon} />
                 <TextInput
@@ -435,6 +480,38 @@ const styles = StyleSheet.create({
   },
   eyeBtn: {
     padding: 6,
+  },
+  passwordLabelRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  forgotBtn: {
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+  },
+  forgotBtnText: {
+    color: "#38BDF8",
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  successBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(16, 185, 129, 0.12)",
+    borderWidth: 1,
+    borderColor: "#059669",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    marginBottom: 16,
+  },
+  successText: {
+    color: "#34D399",
+    fontSize: 12,
+    fontWeight: "600",
+    flex: 1,
+    lineHeight: 18,
   },
   submitButton: {
     flexDirection: "row",

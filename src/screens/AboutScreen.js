@@ -318,9 +318,9 @@ export default function AboutScreen() {
             {/* Header Row */}
             <View style={[styles.guidesHeaderRow, isDesktop && { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 35 }]}>
               <View style={{ maxWidth: isDesktop ? 650 : "100%" }}>
-                <Text style={styles.guidesTitle}>MEET OUR GUIDES</Text>
+                <Text style={styles.guidesTitle}>{aboutContent?.guidesTitle || "MEET OUR GUIDES"}</Text>
                 <Text style={styles.guidesDescription}>
-                  Each guide is a master of the mountains, highly skilled in rescue, navigation, and passion for sharing the wild.
+                  {aboutContent?.guidesDescription || "Each guide is a master of the mountains, highly skilled in rescue, navigation, and passion for sharing the wild."}
                 </Text>
               </View>
 
@@ -333,15 +333,15 @@ export default function AboutScreen() {
 
             {/* Guides Grid */}
             <View style={[styles.guidesGrid, { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" }]}>
-              {(aboutContent.guides || []).map((guide) => (
+              {(aboutContent?.guides || []).map((guide) => (
                 <View
                   className="gsap-card interactive-card"
                   style={[styles.guideCard, { width: isDesktop ? "23.5%" : isTablet ? "48%" : "100%", marginBottom: 20 }]}
                   key={guide.id}
                 >
-                  <Image source={resolveAsset(guide.imageKey, "guide1.jpg")} style={styles.guideImage} />
+                  <Image source={resolveAsset(guide.imageKey || guide.image, "guide1.jpg")} style={styles.guideImage} resizeMode="cover" />
                   <View style={styles.guideOverlay}>
-                    <Text style={styles.guideCategory}>{guide.category}</Text>
+                    <Text style={styles.guideCategory}>{guide.category || "MOUNTAIN GUIDE"}</Text>
                     <Text style={styles.guideName}>{guide.name}</Text>
                   </View>
                 </View>

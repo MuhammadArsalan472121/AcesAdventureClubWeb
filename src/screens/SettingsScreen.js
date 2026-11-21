@@ -31,16 +31,16 @@ export default function SettingsScreen() {
   } = useResponsive();
 
   const isWide = isDesktop || isTablet;
-  const { user, userProfile, updateUserProfile, updateUserPassword, logout, loading } = useAuth();
+  const { user, userProfile, updateUserProfile, updateUserPassword, logout, loading, isEmailVerified } = useAuth();
 
   useEffect(() => {
-    if (!loading && user && !user.emailVerified) {
+    if (!loading && user && !isEmailVerified) {
       navigation.navigate("EmailVerification", {
         email: user.email,
         requiresVerification: true,
       });
     }
-  }, [user, loading, navigation]);
+  }, [user, loading, navigation, isEmailVerified]);
 
   // Active tab in sidebar
   const [activeTab, setActiveTab] = useState("General"); // 'General' | 'Profile' | 'Security'

@@ -201,7 +201,7 @@ export default function SponsorsManagementScreen() {
             {sponsors.map((sponsor) => {
               const displayName = sponsor.sponsorName || sponsor.name || 'Sponsor';
               const displayCompany = sponsor.companyName || sponsor.name || '-';
-              const displayPhone = sponsor.phone || sponsor.contactNumber || '-';
+              const displayPhone = sponsor.phone || (sponsor as any).contactNumber || '-';
               const displayEmail = sponsor.email || sponsor.contact || '-';
               const tripsCount = sponsor.trips || '0';
               const initials = (displayName || displayCompany).substring(0, 2).toUpperCase();

@@ -17,6 +17,7 @@ export default function Sidebar({
     { label: 'Dashboard', icon: '▦', screen: 'AdminDashboard' },
     { label: 'Users', icon: '👥', screen: 'AdminUsers' },
     { label: 'Trips', icon: '🏔️', screen: 'AdminTrips' },
+    { label: 'Featured Ads', icon: '📢', screen: 'AdminFeatured' },
     { label: 'Sponsors', icon: '🤝', screen: 'AdminSponsors' },
     { label: 'Gallery', icon: '📸', screen: 'AdminGallery' },
     { label: 'Settings', icon: '⚙️', screen: 'AdminSettings' },

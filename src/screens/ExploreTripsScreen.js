@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
+  ActivityIndicator,
   View,
   Text,
   StyleSheet,
@@ -12,6 +13,7 @@ import {
   TextInput,
   Dimensions,
   Platform,
+  Linking,
 } from "react-native";
 import gsap from "gsap";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -27,10 +29,22 @@ const { height, width } = Dimensions.get("window");
 
 export default function ExploreTripsScreen() {
   const navigation = useNavigation();
-  const { trips, tripCategories = [] } = useData();
+  const { trips, tripCategories = [], tripsLoading, contactContent, socialLinks } = useData();
   const { userProfile, updateUserProfile } = useAuth();
   const [activeFilter, setActiveFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+
+  const handleOpenWhatsAppChat = () => {
+    const rawNumber = contactContent?.whatsapp || socialLinks?.whatsapp || "+923121578099";
+    const cleanNumber = String(rawNumber).replace(/[^0-9]/g, "");
+    const text = encodeURIComponent("Hello Ace Adventure Club! I want to get updates on upcoming trips & adventures.");
+    const url = `https://wa.me/${cleanNumber || "923121578099"}?text=${text}`;
+    if (Platform.OS === "web" && typeof window !== "undefined") {
+      window.open(url, "_blank");
+    } else {
+      Linking.openURL(url).catch((err) => console.warn("WhatsApp open error:", err));
+    }
+  };
 
   const toggleWishlist = async (trip) => {
     const current = userProfile?.wishlist || [];
@@ -57,15 +71,7 @@ export default function ExploreTripsScreen() {
     paddingHorizontal,
   } = useResponsive();
 
-  useEffect(() => {
-    animateHero(".gsap-hero-item");
-  }, []);
-
-  useEffect(() => {
-    animateCards(".gsap-card");
-  }, [activeFilter, searchQuery]);
-
-  const filteredTrips = trips.filter((t) => {
+  const filteredTrips = (trips || []).filter((t) => {
     // Hide DRAFT trips from public website
     if (t.status === "DRAFT") return false;
 
@@ -85,6 +91,14 @@ export default function ExploreTripsScreen() {
     if (activeFilter === "Heritage") return t.title.includes("Hunza") || t.title.includes("Heritage");
     return false;
   });
+
+  useEffect(() => {
+    animateHero(".gsap-hero-item");
+  }, []);
+
+  useEffect(() => {
+    animateCards(".gsap-card");
+  }, [activeFilter, searchQuery, filteredTrips.length]);
 
   const categoryFilters = [
     "All",
@@ -237,64 +251,84 @@ export default function ExploreTripsScreen() {
             <Text style={styles.curatedTitle}>CURATED JOURNEYS</Text>
 
             {/* Cards Grid */}
-            <View style={[styles.curatedGrid, { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", marginTop: 35 }]}>
-              {filteredTrips.map((item) => (
-                <View
-                  key={item.id}
-                  className="gsap-card interactive-card"
-                  style={[styles.curatedCard, { width: isDesktop ? "23.5%" : isTablet ? "48%" : "100%", marginBottom: 24 }]}
-                >
-                  <View style={styles.cardImageWrapper}>
-                    <Image source={resolveAsset(item.imageKey, "hunza.jpg")} style={styles.curatedImage} />
-                    {item.badge && (
-                      <View style={styles.curatedBadge}>
-                        <Text style={styles.curatedBadgeText}>{item.badge}</Text>
-                      </View>
-                    )}
-                    <TouchableOpacity
-                      style={styles.heartBtn}
-                      onPress={() => toggleWishlist(item)}
-                      activeOpacity={0.8}
-                    >
-                      <Ionicons
-                        name={isWishlisted(item) ? "heart" : "heart-outline"}
-                        size={18}
-                        color={isWishlisted(item) ? "#EF4444" : "#FFFFFF"}
-                      />
-                    </TouchableOpacity>
-                  </View>
-
-                  <View style={styles.curatedContent}>
-                    <Text style={styles.curatedLocation}>{item.location}</Text>
-                    <Text style={styles.curatedCardTitle}>{item.title}</Text>
-                    <Text style={styles.curatedDescription} numberOfLines={2}>{item.description}</Text>
-
-                    <View style={styles.curatedDivider} />
-
-                    <View style={styles.curatedBottomRow}>
-                      <View>
-                        <Text style={styles.curatedMetaLabel}>DURATION</Text>
-                        <Text style={styles.curatedMetaValue}>{item.duration}</Text>
-                      </View>
-
-                      <View>
-                        <Text style={styles.curatedMetaLabel}>DIFFICULTY</Text>
-                        <Text style={[styles.curatedMetaValue, { color: item.difficultyColor || "#22C55E" }]}>
-                          {item.difficulty}
-                        </Text>
-                      </View>
+            {tripsLoading && filteredTrips.length === 0 ? (
+              <View style={{ width: "100%", paddingVertical: 60, alignItems: "center", justifyContent: "center" }}>
+                <ActivityIndicator size="large" color="#0B5CAD" />
+                <Text style={{ marginTop: 16, fontSize: 16, fontWeight: "700", color: "#0B5CAD" }}>
+                  Loading Curated Expeditions...
+                </Text>
+              </View>
+            ) : filteredTrips.length === 0 ? (
+              <View style={{ width: "100%", paddingVertical: 50, alignItems: "center", justifyContent: "center" }}>
+                <Text style={{ fontSize: 16, fontWeight: "600", color: "#64748B" }}>
+                  No expeditions found matching your filters.
+                </Text>
+              </View>
+            ) : (
+              <View style={[styles.curatedGrid, { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", marginTop: 35 }]}>
+                {filteredTrips.map((item) => (
+                  <View
+                    key={item.id}
+                    className="gsap-card interactive-card"
+                    style={[styles.curatedCard, { width: isDesktop ? "23.5%" : isTablet ? "48%" : "100%", marginBottom: 24 }]}
+                  >
+                    <View style={styles.cardImageWrapper}>
+                      <Image source={resolveAsset(item.imageKey, "hunza.jpg")} style={styles.curatedImage} />
+                      {item.badge && (
+                        <View style={styles.curatedBadge}>
+                          <Text style={styles.curatedBadgeText}>{item.badge}</Text>
+                        </View>
+                      )}
+                      <TouchableOpacity
+                        style={styles.heartBtn}
+                        onPress={() => toggleWishlist(item)}
+                        activeOpacity={0.8}
+                      >
+                        <Ionicons
+                          name={isWishlisted(item) ? "heart" : "heart-outline"}
+                          size={18}
+                          color={isWishlisted(item) ? "#EF4444" : "#FFFFFF"}
+                        />
+                      </TouchableOpacity>
                     </View>
 
-                    <TouchableOpacity
-                      style={styles.viewDetailsBtn}
-                      onPress={() => navigation.navigate("ViewTrip", { tripId: item.id })}
-                    >
-                      <Text style={styles.viewDetailsBtnText}>View Details</Text>
-                    </TouchableOpacity>
+                    <View style={styles.curatedContent}>
+                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                        <Text style={styles.curatedLocation}>{item.location}</Text>
+                        <Text style={{ fontSize: 11, fontWeight: "800", color: "#0088FF" }}>
+                          #{item.tripCode || String(item.id).slice(-4)}
+                        </Text>
+                      </View>
+                      <Text style={styles.curatedCardTitle}>{item.title}</Text>
+                      <Text style={styles.curatedDescription} numberOfLines={2}>{item.description}</Text>
+
+                      <View style={styles.curatedDivider} />
+
+                      <View style={styles.curatedBottomRow}>
+                        <View>
+                          <Text style={styles.curatedMetaLabel}>DURATION</Text>
+                          <Text style={styles.curatedMetaValue}>{item.duration}</Text>
+                        </View>
+
+                        <View>
+                          <Text style={styles.curatedMetaLabel}>DIFFICULTY</Text>
+                          <Text style={[styles.curatedMetaValue, { color: item.difficultyColor || "#22C55E" }]}>
+                            {item.difficulty}
+                          </Text>
+                        </View>
+                      </View>
+
+                      <TouchableOpacity
+                        style={styles.viewDetailsBtn}
+                        onPress={() => navigation.navigate("ViewTrip", { tripId: item.id })}
+                      >
+                        <Text style={styles.viewDetailsBtnText}>View Details</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                </View>
-              ))}
-            </View>
+                ))}
+              </View>
+            )}
 
             {/* ================= PAGINATION CONTROL ================= */}
             {/* ================= PAGINATION CONTROL ================= */}
@@ -444,28 +478,17 @@ export default function ExploreTripsScreen() {
                     Join our community of explorers and discover breathtaking destinations, unforgettable experiences and adventures that create memories for a lifetime.
                   </Text>
 
-                  {/* Form Row */}
-                  <View
-                    style={[
-                      styles.subscribeContainer,
-                      { width: "100%", maxWidth: 540, marginTop: isDesktop ? 30 : 20 },
-                      isMobile && styles.subscribeContainerMobile,
-                    ]}
+                  {/* WhatsApp Direct Action Button */}
+                  <TouchableOpacity
+                    style={[styles.newsWhatsAppBtn, { marginTop: isDesktop ? 30 : 20 }]}
+                    onPress={handleOpenWhatsAppChat}
+                    activeOpacity={0.85}
                   >
-                    <TextInput
-                      placeholder="Enter your email address"
-                      placeholderTextColor="#94A3B8"
-                      style={[styles.emailInput, isMobile && styles.emailInputMobile]}
-                    />
-                    <TouchableOpacity
-                      style={[styles.subscribeButton, isMobile && styles.subscribeButtonMobile]}
-                      onPress={() => navigation.navigate("Contact")}
-                    >
-                      <Text style={styles.subscribeButtonText}>Subscribe Free</Text>
-                    </TouchableOpacity>
-                  </View>
+                    <Ionicons name="logo-whatsapp" size={22} color="#FFFFFF" />
+                    <Text style={styles.newsWhatsAppBtnText}>Chat with Us on WhatsApp</Text>
+                  </TouchableOpacity>
 
-                  <Text style={styles.smallText}>No spam ever • Unsubscribe in one click</Text>
+                  <Text style={styles.smallText}>Instant booking & trip updates directly on WhatsApp</Text>
                 </View>
               </View>
             </ImageBackground>
@@ -1066,6 +1089,26 @@ const styles = StyleSheet.create({
     color: "#94A3B8",
     fontSize: 13,
     marginTop: 14,
+  },
+
+  newsWhatsAppBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#22C55E",
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 30,
+    gap: 10,
+    elevation: 5,
+    cursor: "pointer",
+  },
+
+  newsWhatsAppBtnText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
 
   startExploringBtn: {

@@ -37,7 +37,7 @@ export default function AdminDashboardScreen() {
       icon: '🏔️',
       value: trips.length.toString(),
       label: 'TOTAL EXPEDITIONS',
-      change: `${trips.filter(t => t.status === 'UPCOMING' || t.status === 'ACTIVE').length} Live`,
+      change: `${trips.filter((t: any) => t.status === 'UPCOMING' || t.status === 'ACTIVE').length} Live`,
     },
     {
       icon: '🤝',
