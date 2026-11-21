@@ -1,0 +1,88 @@
+# ==============================================================================
+# Apache Configuration for Aces Adventure Club (React Native / Expo Web SPA)
+# Optimized for InfinityFree, cPanel, and Apache Static Hosting
+# ==============================================================================
+
+# Enable Rewrite Engine for Single Page Application (SPA) Routing
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Allow direct access to expo and assets directories
+  RewriteRule ^expo/ - [L]
+  RewriteRule ^assets/ - [L]
+
+  # If file or directory exists, serve directly
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Otherwise redirect all requests to index.html for client-side navigation
+  RewriteRule ^ index.html [QSA,L]
+</IfModule>
+
+# ==============================================================================
+# Enable GZIP / DEFLATE Compression (Reduces 3MB JS Bundle to ~650KB)
+# ==============================================================================
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html
+  AddOutputFilterByType DEFLATE text/css
+  AddOutputFilterByType DEFLATE text/javascript
+  AddOutputFilterByType DEFLATE application/javascript
+  AddOutputFilterByType DEFLATE application/x-javascript
+  AddOutputFilterByType DEFLATE application/json
+  AddOutputFilterByType DEFLATE image/svg+xml
+  AddOutputFilterByType DEFLATE font/ttf
+  AddOutputFilterByType DEFLATE font/otf
+  AddOutputFilterByType DEFLATE application/vnd.ms-fontobject
+  AddOutputFilterByType DEFLATE application/x-font-ttf
+</IfModule>
+
+# ==============================================================================
+# Enable Browser Caching (Instant Sub-Second Subsequent Loads)
+# ==============================================================================
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresDefault "access plus 1 month"
+
+  # HTML files (short cache to ensure latest updates)
+  ExpiresByType text/html "access plus 0 seconds"
+
+  # JavaScript & CSS (cached with hash versioning)
+  ExpiresByType text/javascript "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType text/css "access plus 1 year"
+
+  # Images & Icons
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+  ExpiresByType image/x-icon "access plus 1 year"
+
+  # Fonts (Ionicons, Vector Icons)
+  ExpiresByType font/ttf "access plus 1 year"
+  ExpiresByType font/woff "access plus 1 year"
+  ExpiresByType font/woff2 "access plus 1 year"
+  ExpiresByType application/x-font-ttf "access plus 1 year"
+</IfModule>
+
+# ==============================================================================
+# Ensure Correct MIME Types
+# ==============================================================================
+<IfModule mod_mime.c>
+  AddType application/javascript .js
+  AddType application/json .json
+  AddType image/webp .webp
+  AddType font/ttf .ttf
+  AddType font/woff .woff
+  AddType font/woff2 .woff2
+</IfModule>
+
+# ==============================================================================
+# Security and Header Optimizations
+# ==============================================================================
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set Access-Control-Allow-Origin "*"
+</IfModule>
