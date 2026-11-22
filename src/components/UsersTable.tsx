@@ -66,14 +66,14 @@ export default function UsersTable() {
               <Text
                 style={[
                   styles.status,
-                  user.emailVerified === true || user.isVerified === true
+                  user.emailVerified === true || user.isVerified === true || user.status === 'VERIFIED'
                     ? styles.verified
                     : user.status === 'ACTIVE'
                     ? styles.active
                     : styles.inactive,
                 ]}
               >
-                {user.emailVerified === true || user.isVerified === true
+                {user.emailVerified === true || user.isVerified === true || user.status === 'VERIFIED'
                   ? '✓ VERIFIED'
                   : user.status}
               </Text>
@@ -214,13 +214,13 @@ const styles = StyleSheet.create({
   },
 
   active: {
-    color: '#16A34A',
-    backgroundColor: '#DCFCE7',
+    color: '#B45309',
+    backgroundColor: '#FEF3C7',
   },
 
   verified: {
-    color: '#0B5CAD',
-    backgroundColor: '#DBEAFE',
+    color: '#15803D',
+    backgroundColor: '#DCFCE7',
   },
 
   inactive: {

@@ -5,10 +5,11 @@ import {
   updateProfile as firebaseUpdateProfile,
   updatePassword as firebaseUpdatePassword,
   sendEmailVerification as firebaseSendEmailVerification,
+  sendPasswordResetEmail as firebaseSendPasswordResetEmail,
   reload as firebaseReload,
 } from "firebase/auth";
 import { auth, db } from "../screens/firebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { Platform } from "react-native";
 
 const AuthContext = createContext({
@@ -82,6 +83,16 @@ export const AuthProvider = ({ children }) => {
         })
       : new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
+    const savedRoleUpper = String(saved?.role || "").trim().toUpperCase();
+    const initialTier =
+      savedRoleUpper === "SUPER_ADMIN" || savedRoleUpper === "SUPER ADMIN"
+        ? "Aces Super Admin"
+        : savedRoleUpper === "ADMIN"
+        ? "Aces Admin"
+        : savedRoleUpper.includes("LEADER")
+        ? "Aces Leader"
+        : "Aces Member";
+
     setUserProfile({
       fullName: saved?.fullName || currentUser.displayName || defaultName,
       email: currentUser.email || saved?.email || "",
@@ -90,37 +101,86 @@ export const AuthProvider = ({ children }) => {
       avatarUrl: saved?.avatarUrl || null,
       wishlist: Array.isArray(saved?.wishlist) ? saved.wishlist : [],
       aboutMe: saved?.aboutMe || "",
-      membershipTier: saved?.membershipTier || "Aces Member",
-      role: saved?.role || "Explorer • Aces Club Member",
+      membershipTier: initialTier,
+      role: saved?.role || "Member",
       joinedDate: saved?.joinedDate || realJoinedDate,
       theme: saved?.theme || "light",
     });
   };
 
   useEffect(() => {
+    let unsubsDoc = null;
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       loadProfile(currentUser);
+
       if (currentUser) {
         try {
-          const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-          if (userDoc.exists()) {
-            const data = userDoc.data();
-            if (data.emailVerified === true || data.isVerified === true) {
-              setIsPreVerified(true);
-            } else {
-              setIsPreVerified(false);
+          const userDocRef = doc(db, "users", currentUser.uid);
+          unsubsDoc = onSnapshot(userDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+              const data = docSnap.data();
+              if (data.emailVerified === true || data.isVerified === true || data.status === "VERIFIED") {
+                setIsPreVerified(true);
+              } else {
+                setIsPreVerified(false);
+              }
+
+              // Real-time synchronization of role, status, phone, location into userProfile!
+              setUserProfile((prev) => {
+                const currentRole = data.role !== undefined && data.role !== null ? data.role : (prev?.role || "Member");
+                const roleUpper = String(currentRole || "").trim().toUpperCase();
+                const isSuperAdmin = roleUpper === "SUPER_ADMIN" || roleUpper === "SUPER ADMIN";
+                const isAdmin = isSuperAdmin || roleUpper === "ADMIN";
+                const isLeader = roleUpper.includes("LEADER");
+
+                const tier = isSuperAdmin
+                  ? "Aces Super Admin"
+                  : isAdmin
+                  ? "Aces Admin"
+                  : isLeader
+                  ? "Aces Leader"
+                  : "Aces Member";
+
+                const updated = {
+                  ...prev,
+                  fullName: data.name || data.fullName || prev?.fullName || currentUser.displayName || "",
+                  email: currentUser.email || data.email || prev?.email || "",
+                  phone: data.phone !== undefined && data.phone !== "" ? data.phone : (prev?.phone || ""),
+                  location: data.location !== undefined && data.location !== "" ? data.location : (data.city || prev?.location || ""),
+                  role: currentRole,
+                  membershipTier: tier,
+                  status: data.status || prev?.status || "ACTIVE",
+                };
+
+                if (Platform.OS === "web" && typeof window !== "undefined" && window.localStorage) {
+                  try {
+                    window.localStorage.setItem(getStorageKey(currentUser.uid), JSON.stringify(updated));
+                  } catch (_) {}
+                }
+                return updated;
+              });
             }
-          }
+          }, (err) => {
+            console.warn("[AUTH_USER_DOC_SNAPSHOT_ERR]", err);
+          });
         } catch (e) {
-          console.warn("[AUTH_PREVERIFIED_FETCH_ERR]", e);
+          console.warn("[AUTH_USER_DOC_LISTENER_ERR]", e);
         }
       } else {
+        if (unsubsDoc) {
+          unsubsDoc();
+          unsubsDoc = null;
+        }
         setIsPreVerified(false);
       }
       setLoading(false);
     });
-    return () => unsubscribe();
+
+    return () => {
+      unsubscribe();
+      if (unsubsDoc) unsubsDoc();
+    };
   }, []);
 
   useEffect(() => {
@@ -201,6 +261,14 @@ export const AuthProvider = ({ children }) => {
     await firebaseUpdatePassword(auth.currentUser, newPassword);
   };
 
+  const sendPasswordReset = async (targetEmail) => {
+    const emailToReset = targetEmail || auth.currentUser?.email;
+    if (!emailToReset) {
+      throw new Error("No email address provided for password reset.");
+    }
+    await firebaseSendPasswordResetEmail(auth, emailToReset);
+  };
+
   const logout = async () => {
     try {
       await signOut(auth);
@@ -226,6 +294,7 @@ export const AuthProvider = ({ children }) => {
         setUserProfile,
         reloadUser,
         sendVerificationEmail,
+        sendPasswordReset,
       }}
     >
       {children}

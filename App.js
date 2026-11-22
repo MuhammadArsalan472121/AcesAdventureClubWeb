@@ -39,6 +39,7 @@ const linking = {
       AdminDashboard: "admin",
       AdminUsers: "admin-users",
       AdminTrips: "admin-trips",
+      AdminFeatured: "admin-featured",
       AdminSponsors: "admin-sponsors",
       AdminGallery: "admin-gallery",
       AdminSettings: "admin-settings",
