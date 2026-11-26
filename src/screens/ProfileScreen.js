@@ -65,7 +65,7 @@ export default function ProfileScreen() {
       setFullName(userProfile.fullName || user?.displayName || "");
       setEmail(user?.email || userProfile.email || "");
       setPhone(userProfile.phone || "");
-      setLocation(userProfile.location || "");
+      setLocation(userProfile.location || userProfile.city || "");
       setAboutMe(userProfile.aboutMe || "");
     }
   }, [userProfile, user]);
@@ -181,7 +181,7 @@ export default function ProfileScreen() {
       setFullName(userProfile.fullName || user?.displayName || "");
       setEmail(user?.email || userProfile.email || "");
       setPhone(userProfile.phone || "");
-      setLocation(userProfile.location || "");
+      setLocation(userProfile.location || userProfile.city || "");
       setAboutMe(userProfile.aboutMe || "");
       setNewPassword("");
       setConfirmPassword("");
@@ -202,6 +202,26 @@ export default function ProfileScreen() {
   const upcomingTrips = userProfile?.upcomingTrips || 0;
   const totalTrips = completedTrips + upcomingTrips;
   const travelGoalProgress = userProfile?.goalProgress || 0;
+
+  const userRoleRaw = String(userProfile?.role || "").trim().toUpperCase();
+  const isSuperAdminUser = userRoleRaw === "SUPER_ADMIN" || userRoleRaw === "SUPER ADMIN";
+  const isAdminUser = isSuperAdminUser || userRoleRaw === "ADMIN";
+
+  const dynamicRoleBadge = isSuperAdminUser
+    ? "Aces Super Admin"
+    : isAdminUser
+    ? "Aces Admin"
+    : userRoleRaw.includes("LEADER")
+    ? "Aces Leader"
+    : "Aces Member";
+
+  const dynamicRoleSubtext = isSuperAdminUser
+    ? "👑 Super Administrator • Aces Club Owner"
+    : isAdminUser
+    ? "🛡️ Administrator • Aces Club Management"
+    : userRoleRaw.includes("LEADER")
+    ? "🧭 Expedition Leader • Aces Adventure Club"
+    : "Explorer • Aces Club Member";
 
   return (
     <SafeAreaView style={styles.container}>
@@ -309,12 +329,18 @@ export default function ProfileScreen() {
                     <View style={styles.avatarInfo}>
                       <View style={styles.nameHeaderRow}>
                         <Text style={styles.profileName}>{fullName || user?.displayName || "Explorer"}</Text>
-                        <View style={styles.vipBadge}>
-                          <Ionicons name="sparkles" size={12} color="#F59E0B" />
-                          <Text style={styles.vipBadgeText}>{userProfile?.membershipTier || "Aces Member"}</Text>
+                        <View style={[styles.vipBadge, isAdminUser && styles.adminBadgeBg]}>
+                          <Ionicons
+                            name={isSuperAdminUser ? "shield-half" : isAdminUser ? "shield-checkmark" : "sparkles"}
+                            size={12}
+                            color={isAdminUser ? "#FFFFFF" : "#F59E0B"}
+                          />
+                          <Text style={[styles.vipBadgeText, isAdminUser && styles.adminBadgeText]}>
+                            {dynamicRoleBadge}
+                          </Text>
                         </View>
                       </View>
-                      <Text style={styles.profileRole}>{userProfile?.role || "Explorer • Aces Club Member"}</Text>
+                      <Text style={styles.profileRole}>{dynamicRoleSubtext}</Text>
                       <View style={styles.metaRow}>
                         <View style={styles.metaItem}>
                           <Ionicons name="location-outline" size={14} color="#64748B" />
@@ -327,14 +353,27 @@ export default function ProfileScreen() {
                       </View>
                     </View>
 
-                    {/* Quick link to Settings */}
-                    <TouchableOpacity
-                      style={styles.settingsQuickBtn}
-                      onPress={() => navigation.navigate("Settings")}
-                    >
-                      <Ionicons name="settings-outline" size={18} color="#0B5CAD" />
-                      {isDesktop && <Text style={styles.settingsQuickText}>Account Settings</Text>}
-                    </TouchableOpacity>
+                    {/* Quick link to Settings & Admin Redirect */}
+                    <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
+                      {isAdminUser && (
+                        <TouchableOpacity
+                          style={styles.adminPortalBtn}
+                          onPress={() => navigation.navigate("AdminDashboard")}
+                          activeOpacity={0.85}
+                        >
+                          <Ionicons name="shield-checkmark" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                          <Text style={styles.adminPortalBtnText}>ADMIN PANEL</Text>
+                        </TouchableOpacity>
+                      )}
+
+                      <TouchableOpacity
+                        style={styles.settingsQuickBtn}
+                        onPress={() => navigation.navigate("Settings")}
+                      >
+                        <Ionicons name="settings-outline" size={18} color="#0B5CAD" />
+                        {isDesktop && <Text style={styles.settingsQuickText}>Settings</Text>}
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 </View>
 
@@ -458,7 +497,7 @@ export default function ProfileScreen() {
                               <View style={styles.inputWrapper}>
                                 <Ionicons name="lock-closed-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
                                 <TextInput
-                                  style={styles.textInput}
+                                  style={[styles.textInput, { flex: 1 }]}
                                   value={newPassword}
                                   onChangeText={(t) => {
                                     setNewPassword(t);
@@ -467,7 +506,20 @@ export default function ProfileScreen() {
                                   placeholder="Leave blank to keep current"
                                   placeholderTextColor="#94A3B8"
                                   secureTextEntry={!showPassword}
+                                  autoComplete="new-password"
+                                  textContentType="newPassword"
                                 />
+                                <TouchableOpacity
+                                  onPress={() => setShowPassword(!showPassword)}
+                                  style={{ padding: 8 }}
+                                  activeOpacity={0.7}
+                                >
+                                  <Ionicons
+                                    name={showPassword ? "eye-off-outline" : "eye-outline"}
+                                    size={18}
+                                    color="#64748B"
+                                  />
+                                </TouchableOpacity>
                               </View>
                             </View>
 
@@ -476,7 +528,7 @@ export default function ProfileScreen() {
                               <View style={styles.inputWrapper}>
                                 <Ionicons name="shield-checkmark-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
                                 <TextInput
-                                  style={styles.textInput}
+                                  style={[styles.textInput, { flex: 1 }]}
                                   value={confirmPassword}
                                   onChangeText={(t) => {
                                     setConfirmPassword(t);
@@ -485,7 +537,20 @@ export default function ProfileScreen() {
                                   placeholder="Repeat new password"
                                   placeholderTextColor="#94A3B8"
                                   secureTextEntry={!showPassword}
+                                  autoComplete="new-password"
+                                  textContentType="newPassword"
                                 />
+                                <TouchableOpacity
+                                  onPress={() => setShowPassword(!showPassword)}
+                                  style={{ padding: 8 }}
+                                  activeOpacity={0.7}
+                                >
+                                  <Ionicons
+                                    name={showPassword ? "eye-off-outline" : "eye-outline"}
+                                    size={18}
+                                    color="#64748B"
+                                  />
+                                </TouchableOpacity>
                               </View>
                             </View>
                           </View>
@@ -827,9 +892,30 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#FDE68A",
   },
+  adminBadgeBg: {
+    backgroundColor: "#0B5CAD",
+    borderColor: "#0284C7",
+  },
   vipBadgeText: {
     color: "#B45309",
     fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
+  adminBadgeText: {
+    color: "#FFFFFF",
+  },
+  adminPortalBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#0B5CAD",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  adminPortalBtnText: {
+    color: "#FFFFFF",
+    fontSize: 12,
     fontWeight: "800",
     letterSpacing: 0.5,
   },

@@ -13,7 +13,8 @@ import {
   AppState,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { auth } from "./firebaseConfig";
+import { auth, db } from "./firebaseConfig";
+import { doc, updateDoc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import AdventureBearMascot from "../components/AdventureBearMascot";
 
@@ -80,6 +81,21 @@ export default function EmailVerificationScreen({ route, navigation }) {
           setIsVerified(true);
           setSuccessMessage("Your email has been verified! Redirecting to Home...");
           setErrorMessage("");
+
+          // Update user status to VERIFIED in Firestore
+          const currentUid = refreshedUser?.uid || auth.currentUser?.uid;
+          if (currentUid) {
+            try {
+              await updateDoc(doc(db, "users", currentUid), {
+                status: "VERIFIED",
+                emailVerified: true,
+                isVerified: true,
+              });
+            } catch (statusErr) {
+              console.warn("Could not update user status to VERIFIED:", statusErr);
+            }
+          }
+
           setTimeout(() => {
             navigation.reset({
               index: 0,

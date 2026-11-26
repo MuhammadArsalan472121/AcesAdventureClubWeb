@@ -7,7 +7,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  Switch,
   ImageBackground,
   StyleSheet,
   Alert,
@@ -31,7 +30,7 @@ export default function SettingsScreen() {
   } = useResponsive();
 
   const isWide = isDesktop || isTablet;
-  const { user, userProfile, updateUserProfile, updateUserPassword, logout, loading, isEmailVerified } = useAuth();
+  const { user, userProfile, updateUserProfile, updateUserPassword, sendPasswordReset, logout, loading, isEmailVerified } = useAuth();
 
   useEffect(() => {
     if (!loading && user && !isEmailVerified) {
@@ -48,13 +47,22 @@ export default function SettingsScreen() {
   // Appearance State
   const [selectedTheme, setSelectedTheme] = useState(userProfile?.theme || "light"); // 'dark' | 'light'
   const [highContrast, setHighContrast] = useState(userProfile?.highContrast || false);
-  const [reducedMotion, setReducedMotion] = useState(userProfile?.reducedMotion || false);
+
+  // Dynamic Role Tier Computation
+  const userRoleRaw = String(userProfile?.role || "").trim().toUpperCase();
+  const isSuperAdminUser = userRoleRaw === "SUPER_ADMIN" || userRoleRaw === "SUPER ADMIN";
+  const isAdminUser = isSuperAdminUser || userRoleRaw === "ADMIN";
+  const dynamicTier = isSuperAdminUser
+    ? "Aces Super Admin"
+    : isAdminUser
+    ? "Aces Admin"
+    : userRoleRaw.includes("LEADER")
+    ? "Aces Leader"
+    : "Aces Member";
 
   // Security State
-  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [twoFactorAuth, setTwoFactorAuth] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [updatingPassword, setUpdatingPassword] = useState(false);
 
@@ -71,7 +79,6 @@ export default function SettingsScreen() {
     if (userProfile) {
       if (userProfile.theme) setSelectedTheme(userProfile.theme);
       if (userProfile.highContrast !== undefined) setHighContrast(userProfile.highContrast);
-      if (userProfile.reducedMotion !== undefined) setReducedMotion(userProfile.reducedMotion);
       if (userProfile.emailExpeditions !== undefined) setEmailExpeditions(userProfile.emailExpeditions);
       if (userProfile.pushAlerts !== undefined) setPushAlerts(userProfile.pushAlerts);
       if (userProfile.smsAlerts !== undefined) setSmsAlerts(userProfile.smsAlerts);
@@ -92,7 +99,6 @@ export default function SettingsScreen() {
       await updateUserProfile({
         theme: selectedTheme,
         highContrast,
-        reducedMotion,
         emailExpeditions,
         pushAlerts,
         smsAlerts,
@@ -139,7 +145,6 @@ export default function SettingsScreen() {
     try {
       await updateUserPassword(newPassword);
       setPasswordSuccess(true);
-      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
       setTimeout(() => {
@@ -154,6 +159,32 @@ export default function SettingsScreen() {
       }
     } finally {
       setUpdatingPassword(false);
+    }
+  };
+
+  const handleSendResetEmail = async () => {
+    const targetEmail = user?.email || userProfile?.email;
+    if (!targetEmail) {
+      if (Platform.OS === "web") {
+        alert("No email address found for this account.");
+      } else {
+        Alert.alert("Error", "No email address found for this account.");
+      }
+      return;
+    }
+    try {
+      await sendPasswordReset(targetEmail);
+      if (Platform.OS === "web") {
+        alert(`A password reset link has been sent to ${targetEmail}. Please check your inbox and spam folder.`);
+      } else {
+        Alert.alert("Password Reset Sent", `A password reset link has been sent to ${targetEmail}.`);
+      }
+    } catch (e) {
+      if (Platform.OS === "web") {
+        alert(e.message || "Failed to send password reset email.");
+      } else {
+        Alert.alert("Error", e.message || "Failed to send password reset email.");
+      }
     }
   };
 
@@ -291,7 +322,7 @@ export default function SettingsScreen() {
                         {userProfile?.fullName || user?.displayName || (user ? "Adventurer" : "Guest Explorer")}
                       </Text>
                       <Text style={[styles.miniUserTier, { color: themeColors.textSecondary }]}>
-                        {user ? (userProfile?.membershipTier || "Aces Gold Member") : "Not Logged In"}
+                        {user ? dynamicTier : "Not Logged In"}
                       </Text>
                     </View>
                   </View>
@@ -453,43 +484,6 @@ export default function SettingsScreen() {
                       </View>
                     </TouchableOpacity>
                   </View>
-
-                  {/* Accessibility Toggles */}
-                  <View style={styles.toggleList}>
-                    {/* High Contrast */}
-                    <View style={styles.toggleRow}>
-                      <View style={{ flex: 1, paddingRight: 16 }}>
-                        <Text style={[styles.toggleLabel, { color: themeColors.textPrimary }]}>High Contrast</Text>
-                        <Text style={[styles.toggleSubtext, { color: themeColors.textSecondary }]}>
-                          Enhance text legibility and outline contrast across borders
-                        </Text>
-                      </View>
-                      <Switch
-                        value={highContrast}
-                        onValueChange={setHighContrast}
-                        trackColor={{ false: "#E2E8F0", true: "#0B5CAD" }}
-                        thumbColor="#FFFFFF"
-                      />
-                    </View>
-
-                    <View style={[styles.innerDivider, { backgroundColor: themeColors.divider }]} />
-
-                    {/* Reduced Motion */}
-                    <View style={styles.toggleRow}>
-                      <View style={{ flex: 1, paddingRight: 16 }}>
-                        <Text style={[styles.toggleLabel, { color: themeColors.textPrimary }]}>Reduced Motion</Text>
-                        <Text style={[styles.toggleSubtext, { color: themeColors.textSecondary }]}>
-                          Minimize parallax motion effects and smooth animations
-                        </Text>
-                      </View>
-                      <Switch
-                        value={reducedMotion}
-                        onValueChange={setReducedMotion}
-                        trackColor={{ false: "#E2E8F0", true: "#0B5CAD" }}
-                        thumbColor="#FFFFFF"
-                      />
-                    </View>
-                  </View>
                 </View>
 
                 {/* ================= 2. SECURITY CARD ================= */}
@@ -509,32 +503,6 @@ export default function SettingsScreen() {
                   <View style={[styles.cardDivider, { backgroundColor: themeColors.divider }]} />
 
                   <View style={styles.formGrid}>
-                    {/* Current Password */}
-                    <View style={styles.inputGroup}>
-                      <Text style={[styles.inputLabel, { color: themeColors.textPrimary }]}>Current Password</Text>
-                      <View style={[styles.inputWrapper, { backgroundColor: themeColors.inputBg, borderColor: themeColors.cardBorder }]}>
-                        <Ionicons name="key-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
-                        <TextInput
-                          style={[styles.textInput, { color: themeColors.textPrimary }]}
-                          value={currentPassword}
-                          onChangeText={setCurrentPassword}
-                          placeholder="Enter your existing password"
-                          placeholderTextColor="#94A3B8"
-                          secureTextEntry={!showPassword}
-                        />
-                        <TouchableOpacity
-                          onPress={() => setShowPassword(!showPassword)}
-                          style={styles.eyeBtn}
-                        >
-                          <Ionicons
-                            name={showPassword ? "eye-off-outline" : "eye-outline"}
-                            size={18}
-                            color="#94A3B8"
-                          />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-
                     {/* New Password & Confirm Password */}
                     <View style={[styles.inputRow, { flexDirection: isWide ? "row" : "column", gap: 16 }]}>
                       <View style={[styles.inputGroup, { flex: 1 }]}>
@@ -542,13 +510,25 @@ export default function SettingsScreen() {
                         <View style={[styles.inputWrapper, { backgroundColor: themeColors.inputBg, borderColor: themeColors.cardBorder }]}>
                           <Ionicons name="lock-closed-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
                           <TextInput
-                            style={[styles.textInput, { color: themeColors.textPrimary }]}
+                            style={[styles.textInput, { color: themeColors.textPrimary, flex: 1 }]}
                             value={newPassword}
                             onChangeText={setNewPassword}
                             placeholder="Min. 8 characters"
                             placeholderTextColor="#94A3B8"
                             secureTextEntry={!showPassword}
+                            autoComplete="new-password"
+                            textContentType="newPassword"
                           />
+                          <TouchableOpacity
+                            onPress={() => setShowPassword(!showPassword)}
+                            style={styles.eyeBtn}
+                          >
+                            <Ionicons
+                              name={showPassword ? "eye-off-outline" : "eye-outline"}
+                              size={18}
+                              color="#94A3B8"
+                            />
+                          </TouchableOpacity>
                         </View>
                       </View>
 
@@ -557,13 +537,30 @@ export default function SettingsScreen() {
                         <View style={[styles.inputWrapper, { backgroundColor: themeColors.inputBg, borderColor: themeColors.cardBorder }]}>
                           <Ionicons name="lock-closed-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
                           <TextInput
-                            style={[styles.textInput, { color: themeColors.textPrimary }]}
+                            style={[styles.textInput, { color: themeColors.textPrimary, flex: 1 }]}
                             value={confirmPassword}
+                            onChangeText={setConfirmPassword}
+                            placeholder="Repeat new password"
+                            placeholderTextColor="#94A3B8"
+                            secureTextEntry={!showPassword}
+                            autoComplete="new-password"
+                            textContentType="newPassword"
+                          />
                             onChangeText={setConfirmPassword}
                             placeholder="Re-type new password"
                             placeholderTextColor="#94A3B8"
                             secureTextEntry={!showPassword}
                           />
+                          <TouchableOpacity
+                            onPress={() => setShowPassword(!showPassword)}
+                            style={styles.eyeBtn}
+                          >
+                            <Ionicons
+                              name={showPassword ? "eye-off-outline" : "eye-outline"}
+                              size={18}
+                              color="#94A3B8"
+                            />
+                          </TouchableOpacity>
                         </View>
                       </View>
                     </View>
@@ -589,91 +586,22 @@ export default function SettingsScreen() {
 
                     <View style={[styles.innerDivider, { backgroundColor: themeColors.divider }]} />
 
-                    {/* Two-Factor Authentication */}
+                    {/* Password Reset via Email Link */}
                     <View style={styles.toggleRow}>
                       <View style={{ flex: 1, paddingRight: 16 }}>
-                        <Text style={[styles.toggleLabel, { color: themeColors.textPrimary }]}>Two-Factor Authentication (2FA)</Text>
+                        <Text style={[styles.toggleLabel, { color: themeColors.textPrimary }]}>Forgot or Reset Password</Text>
                         <Text style={[styles.toggleSubtext, { color: themeColors.textSecondary }]}>
-                          Require an authentication code via email/SMS when signing in
+                          Send a secure password reset link directly to your registered email ({user?.email || userProfile?.email})
                         </Text>
                       </View>
-                      <Switch
-                        value={twoFactorAuth}
-                        onValueChange={setTwoFactorAuth}
-                        trackColor={{ false: "#E2E8F0", true: "#0B5CAD" }}
-                        thumbColor="#FFFFFF"
-                      />
-                    </View>
-                  </View>
-                </View>
-
-                {/* ================= 3. NOTIFICATION SETTINGS ================= */}
-                <View style={[styles.sectionCard, { backgroundColor: themeColors.cardBg, borderColor: themeColors.cardBorder }]}>
-                  <View style={styles.cardHeader}>
-                    <View style={[styles.cardHeaderIcon, { backgroundColor: "#FEF3C7" }]}>
-                      <Ionicons name="notifications" size={22} color="#D97706" />
-                    </View>
-                    <View>
-                      <Text style={[styles.cardHeaderTitle, { color: themeColors.textPrimary }]}>Notification Settings</Text>
-                      <Text style={[styles.cardHeaderSubtitle, { color: themeColors.textSecondary }]}>
-                        Control which trip updates, expedition notices, and club emails you receive
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={[styles.cardDivider, { backgroundColor: themeColors.divider }]} />
-
-                  <View style={styles.toggleList}>
-                    {/* Email Expeditions */}
-                    <View style={styles.toggleRow}>
-                      <View style={{ flex: 1, paddingRight: 16 }}>
-                        <Text style={[styles.toggleLabel, { color: themeColors.textPrimary }]}>Email Expeditions & Newsletters</Text>
-                        <Text style={[styles.toggleSubtext, { color: themeColors.textSecondary }]}>
-                          Receive announcements for upcoming trips, member discounts, and early-bird tickets
-                        </Text>
-                      </View>
-                      <Switch
-                        value={emailExpeditions}
-                        onValueChange={setEmailExpeditions}
-                        trackColor={{ false: "#E2E8F0", true: "#0B5CAD" }}
-                        thumbColor="#FFFFFF"
-                      />
-                    </View>
-
-                    <View style={[styles.innerDivider, { backgroundColor: themeColors.divider }]} />
-
-                    {/* Push Alerts */}
-                    <View style={styles.toggleRow}>
-                      <View style={{ flex: 1, paddingRight: 16 }}>
-                        <Text style={[styles.toggleLabel, { color: themeColors.textPrimary }]}>Push Alerts & Live Weather Notices</Text>
-                        <Text style={[styles.toggleSubtext, { color: themeColors.textSecondary }]}>
-                          Real-time alerts regarding booked route departures, weather updates, and guide communications
-                        </Text>
-                      </View>
-                      <Switch
-                        value={pushAlerts}
-                        onValueChange={setPushAlerts}
-                        trackColor={{ false: "#E2E8F0", true: "#0B5CAD" }}
-                        thumbColor="#FFFFFF"
-                      />
-                    </View>
-
-                    <View style={[styles.innerDivider, { backgroundColor: themeColors.divider }]} />
-
-                    {/* SMS Alerts */}
-                    <View style={styles.toggleRow}>
-                      <View style={{ flex: 1, paddingRight: 16 }}>
-                        <Text style={[styles.toggleLabel, { color: themeColors.textPrimary }]}>SMS Critical Updates</Text>
-                        <Text style={[styles.toggleSubtext, { color: themeColors.textSecondary }]}>
-                          Urgent emergency and transit notifications sent directly to your phone
-                        </Text>
-                      </View>
-                      <Switch
-                        value={smsAlerts}
-                        onValueChange={setSmsAlerts}
-                        trackColor={{ false: "#E2E8F0", true: "#0B5CAD" }}
-                        thumbColor="#FFFFFF"
-                      />
+                      <TouchableOpacity
+                        style={styles.sendResetEmailBtn}
+                        onPress={handleSendResetEmail}
+                        activeOpacity={0.8}
+                      >
+                        <Ionicons name="mail-unread-outline" size={16} color="#0B5CAD" style={{ marginRight: 6 }} />
+                        <Text style={styles.sendResetEmailText}>Send Reset Link</Text>
+                      </TouchableOpacity>
                     </View>
                   </View>
                 </View>
@@ -696,7 +624,6 @@ export default function SettingsScreen() {
                       onPress={() => {
                         setSelectedTheme("light");
                         setHighContrast(false);
-                        setReducedMotion(false);
                         setEmailExpeditions(true);
                         setPushAlerts(true);
                         setSmsAlerts(false);
@@ -1104,6 +1031,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
     letterSpacing: 0.5,
+  },
+  sendResetEmailBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F0F9FF",
+    borderWidth: 1,
+    borderColor: "#BAE6FD",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  sendResetEmailText: {
+    color: "#0369A1",
+    fontSize: 13,
+    fontWeight: "700",
   },
   bottomActionBar: {
     flexDirection: "row",

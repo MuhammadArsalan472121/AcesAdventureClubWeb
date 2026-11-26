@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useData } from '../context/DataContext';
 
@@ -64,21 +64,22 @@ export default function RecentActivities() {
       const isElite = u.role === 'Elite Voyager';
       const isAdmin = u.role === 'Admin' || u.role === 'Super Admin';
       const isInactive = u.status === 'INACTIVE';
+      const isVerified = u.emailVerified === true || u.isVerified === true || u.status === 'VERIFIED';
 
       list.push({
         id: `user_${u.id || idx}`,
         title: isElite
           ? 'Elite Voyager Enrolled'
           : isAdmin
-          ? 'Admin Profile Synced'
-          : 'New Member Registered',
+            ? 'Admin Profile Synced'
+            : 'New Member Registered',
         description: `${u.name} joined as ${u.role || 'Member'} (${u.location || 'Pakistan'}).`,
         time: formatRelativeTime(d),
         timestamp: d.getTime(),
         icon: isElite ? '⭐' : isAdmin ? '🛡️' : '👤',
         category: 'members',
-        badgeText: isInactive ? 'INACTIVE' : isElite ? 'VIP TIER' : 'ACTIVE',
-        badgeType: isInactive ? 'warning' : isElite ? 'info' : 'success',
+        badgeText: isInactive ? 'INACTIVE' : isVerified ? 'VERIFIED' : isElite ? 'VIP TIER' : 'ACTIVE',
+        badgeType: isInactive ? 'warning' : isVerified ? 'success' : isElite ? 'info' : 'warning',
       });
     });
 

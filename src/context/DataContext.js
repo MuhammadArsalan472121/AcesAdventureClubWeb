@@ -147,7 +147,8 @@ const normalizeGalleryItem = (docSnap) => {
   return {
     id: docSnap.id,
     title: data.title || "Untitled Photo",
-    category: data.category ? String(data.category).toUpperCase() : "MOUNTAINS",
+    tripTitle: data.tripTitle || data.category || "",
+    category: data.category ? String(data.category).toUpperCase() : (data.tripTitle ? String(data.tripTitle).toUpperCase() : "GENERAL"),
     imageKey: data.imageKey || "gallery1.jpg",
     height: typeof data.height === "number" ? data.height : Number(data.height) || 260,
     createdAt: data.createdAt || null,
@@ -916,17 +917,38 @@ export const DataProvider = ({ children }) => {
           console.log(`[ADMIN_USERS_READ_DEBUG] Documents received by onSnapshot: ${snapshot.docs.length}`);
           const fetchedUsers = snapshot.docs.map((docSnap) => {
             const data = docSnap.data();
+            const isSuperAdminUser =
+              docSnap.id === "dAA4wFxhnjZHLP5yQA4lwuiSKDv1" ||
+              (data.email && data.email.toLowerCase() === "superadmin@acesclub.com") ||
+              (data.role && (data.role.toString().toUpperCase() === "SUPER ADMIN" || data.role.toString().toUpperCase() === "SUPER_ADMIN"));
+
+            const isVerified =
+              isSuperAdminUser ||
+              data.emailVerified === true ||
+              data.isVerified === true ||
+              String(data.status).toUpperCase() === "VERIFIED";
+
+            const rawStatus = String(data.status || "").toUpperCase();
+            const resolvedStatus = isSuperAdminUser
+              ? "ACTIVE"
+              : rawStatus === "INACTIVE"
+              ? "INACTIVE"
+              : isVerified
+              ? "VERIFIED"
+              : normalizeStatus(data.status);
+
             return {
               id: docSnap.id,
-              name: data.name || data.fullName || "Member",
-              email: data.email || "",
-              role: normalizeRole(data.role),
-              status: normalizeStatus(data.status),
+              name: data.name || data.fullName || (isSuperAdminUser ? "Super Admin" : "Member"),
+              email: data.email || (isSuperAdminUser ? "superadmin@acesclub.com" : ""),
+              role: isSuperAdminUser ? "Super Admin" : normalizeRole(data.role),
+              status: resolvedStatus,
               joined: normalizeJoined(data.joined, data.createdAt),
-              phone: data.phone || "",
+              phone: isSuperAdminUser ? (data.phone || "+92 340 5866007") : (data.phone || ""),
               location: data.location || "",
               createdAt: data.createdAt || null,
-              emailVerified: data.emailVerified === true || data.isVerified === true,
+              emailVerified: isVerified,
+              isVerified: isVerified,
             };
           });
 
@@ -1200,7 +1222,7 @@ export const DataProvider = ({ children }) => {
           try {
             const defaultItem = DEFAULT_DATA.featuredPosters[0];
             await addDoc(collection(db, "featured_posters"), {
-              ...payload,
+              ...defaultItem,
               createdAt: serverTimestamp(),
             });
           } catch (e) {
@@ -1557,9 +1579,12 @@ export const DataProvider = ({ children }) => {
   const addGalleryItem = async (item) => {
     console.log("[GALLERY_FIRESTORE_DEBUG] addGalleryItem called with:", item);
     const tempId = "temp_" + Date.now();
+    const tripTitle = item.tripTitle || item.category || "";
+    const category = item.category ? String(item.category).toUpperCase() : (tripTitle ? String(tripTitle).toUpperCase() : "GENERAL");
     const payload = {
       title: item.title || "New Photo",
-      category: item.category ? String(item.category).toUpperCase() : "MOUNTAINS",
+      tripTitle: tripTitle,
+      category: category,
       imageKey: item.imageKey || "gallery1.jpg",
       height: typeof item.height === "number" ? item.height : Number(item.height) || 260,
       createdAt: serverTimestamp(),

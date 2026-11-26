@@ -1,27 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Modal,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-  ActivityIndicator,
-  Alert,
+  View
 } from 'react-native';
 
+import { useNavigation } from '@react-navigation/native';
+import { deleteApp, initializeApp } from 'firebase/app';
+import { createUserWithEmailAndPassword, getAuth, signOut } from 'firebase/auth';
+import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import Sidebar from '../components/Sidebar';
 import TopBar from '../components/TopBar';
 import { useData } from '../context/DataContext';
-import { useNavigation } from '@react-navigation/native';
 import { auth, db } from './firebaseConfig';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { initializeApp, deleteApp } from 'firebase/app';
-import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 
 const SUPER_ADMIN_UID = "dAA4wFxhnjZHLP5yQA4lwuiSKDv1";
 const SUPER_ADMIN_EMAIL = "superadmin@acesclub.com";
+const SUPER_ADMIN_PHONE = "+92 340 5866007";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCRJw3PyOjkmcVVjKxItQB7qa75RA6Z0hM",
@@ -37,7 +37,6 @@ export default function UserManagementScreen() {
   const navigation = useNavigation<any>();
   const { users, addUser, updateUser, deleteUser, deleteAllUsersExceptSuperAdmin } = useData();
 
-  const [currentUserRole, setCurrentUserRole] = useState<string>('');
   const [isSuperAdmin, setIsSuperAdmin] = useState<boolean>(false);
 
   useEffect(() => {
@@ -54,7 +53,16 @@ export default function UserManagementScreen() {
 
     if (currentUid === SUPER_ADMIN_UID || currentEmail === SUPER_ADMIN_EMAIL) {
       setIsSuperAdmin(true);
-      setCurrentUserRole('super_admin');
+      // Ensure super admin default phone and role in Firestore
+      setDoc(
+        doc(db, "users", currentUid),
+        {
+          phone: SUPER_ADMIN_PHONE,
+          role: "Super Admin",
+          status: "ACTIVE",
+        },
+        { merge: true }
+      ).catch((err) => console.warn("Failed to set default super admin data:", err));
     }
 
     // Fetch user role from Firestore
@@ -62,7 +70,6 @@ export default function UserManagementScreen() {
       .then((snap) => {
         if (snap.exists()) {
           const role = String(snap.data()?.role || snap.data()?.Role || '').trim().toLowerCase().replace(/[\s-]+/g, "_");
-          setCurrentUserRole(role);
           if (role === 'super_admin' || currentUid === SUPER_ADMIN_UID || currentEmail === SUPER_ADMIN_EMAIL) {
             setIsSuperAdmin(true);
           } else {
@@ -95,7 +102,7 @@ export default function UserManagementScreen() {
     isVerified: false,
   });
 
-  const roles = isSuperAdmin 
+  const roles = isSuperAdmin
     ? ['Super Admin', 'Admin', 'Elite Voyager', 'Member', 'Sponsor Rep']
     : ['Admin', 'Elite Voyager', 'Member', 'Sponsor Rep'];
 
@@ -117,18 +124,20 @@ export default function UserManagementScreen() {
   };
 
   const handleOpenEdit = (user: any) => {
+    const isTargetSuper = user.id === SUPER_ADMIN_UID || user.email?.toLowerCase() === SUPER_ADMIN_EMAIL || (user.role && String(user.role).toLowerCase().includes('super'));
+    const isUserVerified = isTargetSuper || user.emailVerified === true || user.isVerified === true || String(user.status).toUpperCase() === 'VERIFIED';
     setEditingUserId(user.id);
     setFormError('');
     setFormData({
-      name: user.name || '',
+      name: user.name || (isTargetSuper ? 'Super Admin' : ''),
       email: user.email || '',
-      phone: user.phone || '',
+      phone: user.phone || (isTargetSuper ? SUPER_ADMIN_PHONE : ''),
       location: user.location || '',
-      role: user.role || 'Member',
-      status: user.status || 'ACTIVE',
+      role: isTargetSuper ? 'Super Admin' : (user.role || 'Member'),
+      status: isTargetSuper ? 'ACTIVE' : (isUserVerified ? 'VERIFIED' : (user.status || 'ACTIVE')),
       password: '',
       confirmPassword: '',
-      isVerified: user.emailVerified === true || user.isVerified === true,
+      isVerified: isUserVerified,
     });
     setModalVisible(true);
   };
@@ -163,18 +172,27 @@ export default function UserManagementScreen() {
 
     if (editingUserId) {
       try {
+        const isTargetSuper = editingUserId === SUPER_ADMIN_UID || formData.email?.toLowerCase() === SUPER_ADMIN_EMAIL || formData.role === 'Super Admin';
+        const isUserVerified = isTargetSuper || (isSuperAdmin && !!formData.isVerified) || formData.status === 'VERIFIED';
+        const finalStatus = isTargetSuper
+          ? 'ACTIVE'
+          : formData.status === 'INACTIVE'
+          ? 'INACTIVE'
+          : isUserVerified
+          ? 'VERIFIED'
+          : formData.status || 'ACTIVE';
+
         const updatePayload: any = {
           name: formData.name.trim(),
           fullName: formData.name.trim(),
           email: formData.email.trim(),
-          phone: formData.phone.trim(),
+          phone: isTargetSuper ? (formData.phone.trim() || SUPER_ADMIN_PHONE) : formData.phone.trim(),
           location: formData.location.trim(),
-          role: formData.role,
-          status: formData.status,
+          role: isTargetSuper ? 'Super Admin' : formData.role,
+          status: finalStatus,
+          emailVerified: isUserVerified,
+          isVerified: isUserVerified,
         };
-        if (isSuperAdmin) {
-          updatePayload.emailVerified = !!formData.isVerified;
-        }
         await updateUser(editingUserId, updatePayload);
         setSavingLoading(false);
         setModalVisible(false);
@@ -211,6 +229,9 @@ export default function UserManagementScreen() {
         assignedRole = 'Admin';
       }
 
+      const shouldBeVerified = isSuperAdmin ? !!formData.isVerified : false;
+      const finalStatus = shouldBeVerified ? 'VERIFIED' : formData.status;
+
       const userFirestoreDoc = {
         name: formData.name.trim(),
         fullName: formData.name.trim(),
@@ -218,8 +239,9 @@ export default function UserManagementScreen() {
         phone: formData.phone.trim() || "+92 300 0000000",
         location: formData.location.trim() || "Islamabad, Pakistan",
         role: assignedRole,
-        status: formData.status,
-        emailVerified: isSuperAdmin ? !!formData.isVerified : false,
+        status: finalStatus,
+        emailVerified: shouldBeVerified,
+        isVerified: shouldBeVerified,
         joined: formattedJoined,
         createdAt: serverTimestamp(),
       };
@@ -245,7 +267,7 @@ export default function UserManagementScreen() {
       if (secondaryApp) {
         try {
           await deleteApp(secondaryApp);
-        } catch (_) {}
+        } catch (_) { }
       }
       setSavingLoading(false);
       if (err.code === 'auth/email-already-in-use') {
@@ -366,10 +388,10 @@ export default function UserManagementScreen() {
               filteredUsers.map((user) => {
                 const initials = user.name
                   ? user.name
-                      .split(' ')
-                      .map((n: string) => n[0])
-                      .join('')
-                      .toUpperCase()
+                    .split(' ')
+                    .map((n: string) => n[0])
+                    .join('')
+                    .toUpperCase()
                   : 'U';
 
                 return (
@@ -391,14 +413,14 @@ export default function UserManagementScreen() {
                       <Text
                         style={[
                           styles.statusTag,
-                          user.emailVerified === true || user.isVerified === true
+                          user.emailVerified === true || user.isVerified === true || user.status === 'VERIFIED'
                             ? styles.statusVerified
                             : user.status === 'ACTIVE'
-                            ? styles.statusActive
-                            : styles.statusInactive,
+                              ? styles.statusActive
+                              : styles.statusInactive,
                         ]}
                       >
-                        {user.emailVerified === true || user.isVerified === true
+                        {user.emailVerified === true || user.isVerified === true || user.status === 'VERIFIED'
                           ? '✓ VERIFIED'
                           : user.status}
                       </Text>
@@ -534,55 +556,96 @@ export default function UserManagementScreen() {
                 </View>
               </View>
 
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>ROLE / MEMBERSHIP TIER</Text>
-                <View style={styles.optionPillRow}>
-                  {roles.map((r) => (
-                    <TouchableOpacity
-                      key={r}
-                      style={[
-                        styles.optionPill,
-                        formData.role === r && styles.activeOptionPill,
-                      ]}
-                      onPress={() => setFormData({ ...formData, role: r })}
-                    >
-                      <Text
-                        style={[
-                          styles.optionPillText,
-                          formData.role === r && styles.activeOptionPillText,
-                        ]}
-                      >
-                        {r}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
+              {/* Role / Membership Tier & Status with Super Admin Protection */}
+              {(() => {
+                const isTargetSuper = editingUserId === SUPER_ADMIN_UID || formData.email?.toLowerCase() === SUPER_ADMIN_EMAIL;
+                return (
+                  <>
+                    <View style={styles.formGroup}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                        <Text style={styles.formLabel}>ROLE / MEMBERSHIP TIER</Text>
+                        {isTargetSuper && (
+                          <Text style={{ fontSize: 11, color: '#0B5CAD', fontWeight: '800' }}>🔒 Super Admin (Permanent Role)</Text>
+                        )}
+                      </View>
+                      <View style={styles.optionPillRow}>
+                        {roles.map((r) => {
+                          const isPillDisabled = isTargetSuper;
+                          const isPillActive = isTargetSuper ? r === 'Super Admin' : formData.role === r;
+                          return (
+                            <TouchableOpacity
+                              key={r}
+                              disabled={isPillDisabled}
+                              style={[
+                                styles.optionPill,
+                                isPillActive && styles.activeOptionPill,
+                                isTargetSuper && r !== 'Super Admin' && { opacity: 0.35, cursor: 'not-allowed' as any },
+                                isTargetSuper && r === 'Super Admin' && { cursor: 'not-allowed' as any },
+                              ]}
+                              onPress={() => !isTargetSuper && setFormData({ ...formData, role: r })}
+                            >
+                              <Text
+                                style={[
+                                  styles.optionPillText,
+                                  isPillActive && styles.activeOptionPillText,
+                                ]}
+                              >
+                                {r}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    </View>
 
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>ACCOUNT STATUS</Text>
-                <View style={styles.optionPillRow}>
-                  {['ACTIVE', 'INACTIVE'].map((st) => (
-                    <TouchableOpacity
-                      key={st}
-                      style={[
-                        styles.optionPill,
-                        formData.status === st && styles.activeOptionPill,
-                      ]}
-                      onPress={() => setFormData({ ...formData, status: st })}
-                    >
-                      <Text
-                        style={[
-                          styles.optionPillText,
-                          formData.status === st && styles.activeOptionPillText,
-                        ]}
-                      >
-                        {st}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
+                    <View style={styles.formGroup}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                        <Text style={styles.formLabel}>ACCOUNT STATUS</Text>
+                        {isTargetSuper && (
+                          <Text style={{ fontSize: 11, color: '#0B5CAD', fontWeight: '800' }}>🔒 Status Locked (Active)</Text>
+                        )}
+                      </View>
+                      <View style={styles.optionPillRow}>
+                        {['ACTIVE', 'VERIFIED', 'INACTIVE'].map((st) => {
+                          const isPillDisabled = isTargetSuper;
+                          const isPillActive = isTargetSuper
+                            ? st === 'ACTIVE'
+                            : (formData.isVerified && st === 'VERIFIED') || (!formData.isVerified && formData.status === st);
+                          return (
+                            <TouchableOpacity
+                              key={st}
+                              disabled={isPillDisabled}
+                              style={[
+                                styles.optionPill,
+                                isPillActive && styles.activeOptionPill,
+                                isTargetSuper && st !== 'ACTIVE' && { opacity: 0.35, cursor: 'not-allowed' as any },
+                                isTargetSuper && st === 'ACTIVE' && { cursor: 'not-allowed' as any },
+                              ]}
+                              onPress={() => {
+                                if (isTargetSuper) return;
+                                if (st === 'VERIFIED') {
+                                  setFormData({ ...formData, status: 'VERIFIED', isVerified: true });
+                                } else {
+                                  setFormData({ ...formData, status: st, isVerified: false });
+                                }
+                              }}
+                            >
+                              <Text
+                                style={[
+                                  styles.optionPillText,
+                                  isPillActive && styles.activeOptionPillText,
+                                ]}
+                              >
+                                {st === 'VERIFIED' ? '✓ VERIFIED' : st}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    </View>
+                  </>
+                );
+              })()}
 
               {/* Super Admin Exclusive: Pre-Verified Status Toggle */}
               {isSuperAdmin && (
@@ -590,7 +653,14 @@ export default function UserManagementScreen() {
                   <TouchableOpacity
                     style={styles.checkboxRow}
                     activeOpacity={0.8}
-                    onPress={() => setFormData({ ...formData, isVerified: !formData.isVerified })}
+                    onPress={() => {
+                      const nextVerified = !formData.isVerified;
+                      setFormData({
+                        ...formData,
+                        isVerified: nextVerified,
+                        status: nextVerified ? 'VERIFIED' : 'ACTIVE',
+                      });
+                    }}
                   >
                     <View style={[styles.customCheckbox, formData.isVerified && styles.customCheckboxChecked]}>
                       {formData.isVerified && <Text style={styles.checkmarkIcon}>✓</Text>}
@@ -826,13 +896,13 @@ const styles = StyleSheet.create({
   },
 
   statusActive: {
-    color: '#16A34A',
-    backgroundColor: '#DCFCE7',
+    color: '#B45309',
+    backgroundColor: '#FEF3C7',
   },
 
   statusVerified: {
-    color: '#0B5CAD',
-    backgroundColor: '#DBEAFE',
+    color: '#15803D',
+    backgroundColor: '#DCFCE7',
   },
 
   statusInactive: {

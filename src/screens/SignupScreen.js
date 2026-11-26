@@ -131,9 +131,10 @@ export default function SignupScreen({ navigation }) {
                 email: email.trim(),
                 phone: phone.trim(),
                 location: location.trim(),
-                aboutMe: "High-altitude trekking enthusiast, landscape photographer, and passionate mountain explorer.",
-                membershipTier: "Aces Elite Gold",
-                role: "Expedition Explorer • Aces Club Member",
+                city: location.trim(),
+                aboutMe: "",
+                membershipTier: "Aces Member",
+                role: "Member",
                 joinedDate: new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }),
               })
             );
@@ -154,11 +155,13 @@ export default function SignupScreen({ navigation }) {
       const payload = {
         uid: uid,
         name: fullName.trim(),
+        fullName: fullName.trim(),
         email: email.trim(),
         role: "Member",
         status: "ACTIVE",
         phone: phone.trim(),
         location: location.trim(),
+        city: location.trim(),
         joined: formattedJoined,
         createdAt: serverTimestamp(),
       };
