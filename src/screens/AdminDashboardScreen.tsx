@@ -31,7 +31,7 @@ export default function AdminDashboardScreen() {
       icon: '👥',
       value: users.length.toString(),
       label: 'REGISTERED USERS',
-      change: `+${users.filter(u => u.status === 'ACTIVE').length} Active`,
+      change: `+${users.filter(u => u.status === 'VERIFIED' || u.status === 'ACTIVE' || u.emailVerified || u.isVerified).length} Active/Verified`,
     },
     {
       icon: '🏔️',

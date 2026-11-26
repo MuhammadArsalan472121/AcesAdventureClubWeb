@@ -9,7 +9,7 @@ import {
   reload as firebaseReload,
 } from "firebase/auth";
 import { auth, db } from "../screens/firebaseConfig";
-import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { Platform } from "react-native";
 
 const AuthContext = createContext({
@@ -116,12 +116,34 @@ export const AuthProvider = ({ children }) => {
 
       if (currentUser) {
         try {
+          // If currentUser is verified in Firebase Auth, sync to Firestore if not already marked VERIFIED
+          if (currentUser.emailVerified) {
+            updateDoc(doc(db, "users", currentUser.uid), {
+              status: "VERIFIED",
+              emailVerified: true,
+              isVerified: true,
+            }).catch(() => {});
+          }
+
           const userDocRef = doc(db, "users", currentUser.uid);
           unsubsDoc = onSnapshot(userDocRef, (docSnap) => {
             if (docSnap.exists()) {
               const data = docSnap.data();
-              if (data.emailVerified === true || data.isVerified === true || data.status === "VERIFIED") {
+              const isDocVerified =
+                data.emailVerified === true ||
+                data.isVerified === true ||
+                data.status === "VERIFIED" ||
+                currentUser.emailVerified === true;
+
+              if (isDocVerified) {
                 setIsPreVerified(true);
+                if (currentUser.emailVerified && data.status !== "VERIFIED") {
+                  updateDoc(userDocRef, {
+                    status: "VERIFIED",
+                    emailVerified: true,
+                    isVerified: true,
+                  }).catch(() => {});
+                }
               } else {
                 setIsPreVerified(false);
               }
@@ -211,6 +233,18 @@ export const AuthProvider = ({ children }) => {
       auth.currentUser
     );
     setUser(refreshed);
+    if (auth.currentUser.emailVerified) {
+      setIsPreVerified(true);
+      try {
+        await updateDoc(doc(db, "users", auth.currentUser.uid), {
+          status: "VERIFIED",
+          emailVerified: true,
+          isVerified: true,
+        });
+      } catch (e) {
+        console.warn("Could not sync verified status in reloadUser:", e);
+      }
+    }
     return refreshed;
   };
 

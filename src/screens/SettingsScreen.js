@@ -61,7 +61,6 @@ export default function SettingsScreen() {
     : "Aces Member";
 
   // Security State
-  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -146,7 +145,6 @@ export default function SettingsScreen() {
     try {
       await updateUserPassword(newPassword);
       setPasswordSuccess(true);
-      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
       setTimeout(() => {
@@ -505,32 +503,6 @@ export default function SettingsScreen() {
                   <View style={[styles.cardDivider, { backgroundColor: themeColors.divider }]} />
 
                   <View style={styles.formGrid}>
-                    {/* Current Password */}
-                    <View style={styles.inputGroup}>
-                      <Text style={[styles.inputLabel, { color: themeColors.textPrimary }]}>Current Password</Text>
-                      <View style={[styles.inputWrapper, { backgroundColor: themeColors.inputBg, borderColor: themeColors.cardBorder }]}>
-                        <Ionicons name="key-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
-                        <TextInput
-                          style={[styles.textInput, { color: themeColors.textPrimary }]}
-                          value={currentPassword}
-                          onChangeText={setCurrentPassword}
-                          placeholder="Enter your existing password"
-                          placeholderTextColor="#94A3B8"
-                          secureTextEntry={!showPassword}
-                        />
-                        <TouchableOpacity
-                          onPress={() => setShowPassword(!showPassword)}
-                          style={styles.eyeBtn}
-                        >
-                          <Ionicons
-                            name={showPassword ? "eye-off-outline" : "eye-outline"}
-                            size={18}
-                            color="#94A3B8"
-                          />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-
                     {/* New Password & Confirm Password */}
                     <View style={[styles.inputRow, { flexDirection: isWide ? "row" : "column", gap: 16 }]}>
                       <View style={[styles.inputGroup, { flex: 1 }]}>
@@ -544,6 +516,8 @@ export default function SettingsScreen() {
                             placeholder="Min. 8 characters"
                             placeholderTextColor="#94A3B8"
                             secureTextEntry={!showPassword}
+                            autoComplete="new-password"
+                            textContentType="newPassword"
                           />
                           <TouchableOpacity
                             onPress={() => setShowPassword(!showPassword)}
@@ -565,6 +539,13 @@ export default function SettingsScreen() {
                           <TextInput
                             style={[styles.textInput, { color: themeColors.textPrimary, flex: 1 }]}
                             value={confirmPassword}
+                            onChangeText={setConfirmPassword}
+                            placeholder="Repeat new password"
+                            placeholderTextColor="#94A3B8"
+                            secureTextEntry={!showPassword}
+                            autoComplete="new-password"
+                            textContentType="newPassword"
+                          />
                             onChangeText={setConfirmPassword}
                             placeholder="Re-type new password"
                             placeholderTextColor="#94A3B8"

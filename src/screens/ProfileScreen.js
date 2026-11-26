@@ -506,6 +506,8 @@ export default function ProfileScreen() {
                                   placeholder="Leave blank to keep current"
                                   placeholderTextColor="#94A3B8"
                                   secureTextEntry={!showPassword}
+                                  autoComplete="new-password"
+                                  textContentType="newPassword"
                                 />
                                 <TouchableOpacity
                                   onPress={() => setShowPassword(!showPassword)}
@@ -535,6 +537,8 @@ export default function ProfileScreen() {
                                   placeholder="Repeat new password"
                                   placeholderTextColor="#94A3B8"
                                   secureTextEntry={!showPassword}
+                                  autoComplete="new-password"
+                                  textContentType="newPassword"
                                 />
                                 <TouchableOpacity
                                   onPress={() => setShowPassword(!showPassword)}

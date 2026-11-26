@@ -125,6 +125,7 @@ export default function UserManagementScreen() {
 
   const handleOpenEdit = (user: any) => {
     const isTargetSuper = user.id === SUPER_ADMIN_UID || user.email?.toLowerCase() === SUPER_ADMIN_EMAIL || (user.role && String(user.role).toLowerCase().includes('super'));
+    const isUserVerified = isTargetSuper || user.emailVerified === true || user.isVerified === true || String(user.status).toUpperCase() === 'VERIFIED';
     setEditingUserId(user.id);
     setFormError('');
     setFormData({
@@ -133,10 +134,10 @@ export default function UserManagementScreen() {
       phone: user.phone || (isTargetSuper ? SUPER_ADMIN_PHONE : ''),
       location: user.location || '',
       role: isTargetSuper ? 'Super Admin' : (user.role || 'Member'),
-      status: isTargetSuper ? 'ACTIVE' : (user.status || 'ACTIVE'),
+      status: isTargetSuper ? 'ACTIVE' : (isUserVerified ? 'VERIFIED' : (user.status || 'ACTIVE')),
       password: '',
       confirmPassword: '',
-      isVerified: isTargetSuper || user.emailVerified === true || user.isVerified === true,
+      isVerified: isUserVerified,
     });
     setModalVisible(true);
   };
@@ -172,6 +173,15 @@ export default function UserManagementScreen() {
     if (editingUserId) {
       try {
         const isTargetSuper = editingUserId === SUPER_ADMIN_UID || formData.email?.toLowerCase() === SUPER_ADMIN_EMAIL || formData.role === 'Super Admin';
+        const isUserVerified = isTargetSuper || (isSuperAdmin && !!formData.isVerified) || formData.status === 'VERIFIED';
+        const finalStatus = isTargetSuper
+          ? 'ACTIVE'
+          : formData.status === 'INACTIVE'
+          ? 'INACTIVE'
+          : isUserVerified
+          ? 'VERIFIED'
+          : formData.status || 'ACTIVE';
+
         const updatePayload: any = {
           name: formData.name.trim(),
           fullName: formData.name.trim(),
@@ -179,11 +189,10 @@ export default function UserManagementScreen() {
           phone: isTargetSuper ? (formData.phone.trim() || SUPER_ADMIN_PHONE) : formData.phone.trim(),
           location: formData.location.trim(),
           role: isTargetSuper ? 'Super Admin' : formData.role,
-          status: isTargetSuper ? 'ACTIVE' : formData.status,
+          status: finalStatus,
+          emailVerified: isUserVerified,
+          isVerified: isUserVerified,
         };
-        if (isSuperAdmin) {
-          updatePayload.emailVerified = !!formData.isVerified;
-        }
         await updateUser(editingUserId, updatePayload);
         setSavingLoading(false);
         setModalVisible(false);
@@ -220,6 +229,9 @@ export default function UserManagementScreen() {
         assignedRole = 'Admin';
       }
 
+      const shouldBeVerified = isSuperAdmin ? !!formData.isVerified : false;
+      const finalStatus = shouldBeVerified ? 'VERIFIED' : formData.status;
+
       const userFirestoreDoc = {
         name: formData.name.trim(),
         fullName: formData.name.trim(),
@@ -227,8 +239,9 @@ export default function UserManagementScreen() {
         phone: formData.phone.trim() || "+92 300 0000000",
         location: formData.location.trim() || "Islamabad, Pakistan",
         role: assignedRole,
-        status: formData.status,
-        emailVerified: isSuperAdmin ? !!formData.isVerified : false,
+        status: finalStatus,
+        emailVerified: shouldBeVerified,
+        isVerified: shouldBeVerified,
         joined: formattedJoined,
         createdAt: serverTimestamp(),
       };
@@ -593,9 +606,11 @@ export default function UserManagementScreen() {
                         )}
                       </View>
                       <View style={styles.optionPillRow}>
-                        {['ACTIVE', 'INACTIVE'].map((st) => {
+                        {['ACTIVE', 'VERIFIED', 'INACTIVE'].map((st) => {
                           const isPillDisabled = isTargetSuper;
-                          const isPillActive = isTargetSuper ? st === 'ACTIVE' : formData.status === st;
+                          const isPillActive = isTargetSuper
+                            ? st === 'ACTIVE'
+                            : (formData.isVerified && st === 'VERIFIED') || (!formData.isVerified && formData.status === st);
                           return (
                             <TouchableOpacity
                               key={st}
@@ -606,7 +621,14 @@ export default function UserManagementScreen() {
                                 isTargetSuper && st !== 'ACTIVE' && { opacity: 0.35, cursor: 'not-allowed' as any },
                                 isTargetSuper && st === 'ACTIVE' && { cursor: 'not-allowed' as any },
                               ]}
-                              onPress={() => !isTargetSuper && setFormData({ ...formData, status: st })}
+                              onPress={() => {
+                                if (isTargetSuper) return;
+                                if (st === 'VERIFIED') {
+                                  setFormData({ ...formData, status: 'VERIFIED', isVerified: true });
+                                } else {
+                                  setFormData({ ...formData, status: st, isVerified: false });
+                                }
+                              }}
                             >
                               <Text
                                 style={[
@@ -614,7 +636,7 @@ export default function UserManagementScreen() {
                                   isPillActive && styles.activeOptionPillText,
                                 ]}
                               >
-                                {st}
+                                {st === 'VERIFIED' ? '✓ VERIFIED' : st}
                               </Text>
                             </TouchableOpacity>
                           );
@@ -631,7 +653,14 @@ export default function UserManagementScreen() {
                   <TouchableOpacity
                     style={styles.checkboxRow}
                     activeOpacity={0.8}
-                    onPress={() => setFormData({ ...formData, isVerified: !formData.isVerified })}
+                    onPress={() => {
+                      const nextVerified = !formData.isVerified;
+                      setFormData({
+                        ...formData,
+                        isVerified: nextVerified,
+                        status: nextVerified ? 'VERIFIED' : 'ACTIVE',
+                      });
+                    }}
                   >
                     <View style={[styles.customCheckbox, formData.isVerified && styles.customCheckboxChecked]}>
                       {formData.isVerified && <Text style={styles.checkmarkIcon}>✓</Text>}

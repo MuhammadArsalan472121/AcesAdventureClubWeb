@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { signInWithEmailAndPassword, reload } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "./firebaseConfig";
 import AdventureBearMascot from "../components/AdventureBearMascot";
 
@@ -99,6 +99,19 @@ export default function LoginScreen({ navigation }) {
           requiresVerification: true,
         });
         return;
+      }
+
+      // Sync verified status to Firestore so Admin Panel instantly shows VERIFIED (Green)
+      if (userCredential.user.emailVerified || isPreVerifiedByAdmin) {
+        try {
+          await updateDoc(doc(db, "users", userCredential.user.uid), {
+            status: "VERIFIED",
+            emailVerified: true,
+            isVerified: true,
+          });
+        } catch (_syncErr) {
+          console.warn("[LOGIN_SYNC_VERIFIED_ERROR]", _syncErr);
+        }
       }
 
       setLoading(false);

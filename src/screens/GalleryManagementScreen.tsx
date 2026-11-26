@@ -33,7 +33,7 @@ const GALLERY_PRESETS = [
 ];
 
 export default function GalleryManagementScreen() {
-  const { gallery, addGalleryItem, updateGalleryItem, deleteGalleryItem } = useData() as any;
+  const { gallery, trips = [], addGalleryItem, updateGalleryItem, deleteGalleryItem } = useData() as any;
 
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [modalVisible, setModalVisible] = useState(false);
@@ -41,14 +41,25 @@ export default function GalleryManagementScreen() {
 
   const [formData, setFormData] = useState({
     title: '',
-    category: 'MOUNTAINS',
+    tripTitle: '',
+    category: 'GENERAL',
     imageKey: 'gallery1.jpg',
     height: 260,
     uploadedFileName: '',
     uploadedFileSize: '',
   });
 
-  const categories = ['ALL', 'MOUNTAINS', 'LAKES', 'CAMPING', 'TREKKING', 'NATURE TRAILS'];
+  const tripTitles = Array.from(
+    new Set((trips || []).map((t: any) => (t.title ? String(t.title).trim() : '')).filter(Boolean))
+  );
+  const otherCategories = Array.from(
+    new Set(
+      (gallery || [])
+        .map((g: any) => String(g.tripTitle || g.category || '').trim())
+        .filter((c: string) => c && !tripTitles.some((t: string) => t.toLowerCase() === c.toLowerCase()))
+    )
+  );
+  const categories = ['ALL', ...tripTitles, ...otherCategories];
 
   const handleUploadFromDevice = async () => {
     try {
@@ -68,9 +79,11 @@ export default function GalleryManagementScreen() {
 
   const handleOpenAdd = () => {
     setEditingItemId(null);
+    const initialTrip = selectedCategory !== 'ALL' ? selectedCategory : (tripTitles[0] || 'General Adventure');
     setFormData({
       title: '',
-      category: selectedCategory === 'ALL' ? 'MOUNTAINS' : selectedCategory,
+      tripTitle: initialTrip,
+      category: initialTrip.toUpperCase(),
       imageKey: 'gallery1.jpg',
       height: 260,
       uploadedFileName: '',
@@ -81,9 +94,11 @@ export default function GalleryManagementScreen() {
 
   const handleOpenEdit = (item: any) => {
     setEditingItemId(item.id);
+    const currentTrip = item.tripTitle || item.category || '';
     setFormData({
       title: item.title || '',
-      category: item.category || 'MOUNTAINS',
+      tripTitle: currentTrip,
+      category: item.category || (currentTrip ? currentTrip.toUpperCase() : 'GENERAL'),
       imageKey: item.imageKey || 'gallery1.jpg',
       height: item.height || 260,
       uploadedFileName: '',
@@ -97,11 +112,17 @@ export default function GalleryManagementScreen() {
       alert('Please enter a photo title or caption');
       return;
     }
+    const finalTrip = formData.tripTitle.trim() || 'General Adventure';
+    const payload = {
+      ...formData,
+      tripTitle: finalTrip,
+      category: finalTrip.toUpperCase(),
+    };
 
     if (editingItemId) {
-      updateGalleryItem(editingItemId, formData);
+      updateGalleryItem(editingItemId, payload);
     } else {
-      addGalleryItem(formData);
+      addGalleryItem(payload);
     }
     setModalVisible(false);
   };
@@ -115,9 +136,13 @@ export default function GalleryManagementScreen() {
   const filteredGallery =
     selectedCategory.toUpperCase() === 'ALL'
       ? (gallery || [])
-      : (gallery || []).filter((item: any) =>
-          String(item.category || '').trim().toUpperCase() === selectedCategory.trim().toUpperCase()
-        );
+      : (gallery || []).filter((item: any) => {
+          const target = selectedCategory.trim().toLowerCase();
+          const itemTrip = String(item.tripTitle || '').trim().toLowerCase();
+          const itemCat = String(item.category || '').trim().toLowerCase();
+          const itemTitle = String(item.title || '').trim().toLowerCase();
+          return itemTrip === target || itemCat === target || itemTitle.includes(target);
+        });
 
   return (
     <View style={styles.container}>
@@ -182,7 +207,7 @@ export default function GalleryManagementScreen() {
 
                 <View style={styles.cardInfo}>
                   <View style={styles.categoryBadge}>
-                    <Text style={styles.categoryBadgeText}>{item.category}</Text>
+                    <Text style={styles.categoryBadgeText}>{item.tripTitle || item.category || 'Trip Photo'}</Text>
                   </View>
                   <Text style={styles.cardTitle}>{item.title}</Text>
 
@@ -240,30 +265,42 @@ export default function GalleryManagementScreen() {
                 </View>
 
                 <View style={styles.formGroup}>
-                  <Text style={styles.formLabel}>CATEGORY</Text>
-                  <View style={styles.optionPillRow}>
-                    {categories
-                      .filter((c) => c !== 'ALL')
-                      .map((cat) => (
-                        <TouchableOpacity
-                          key={cat}
-                          style={[
-                            styles.optionPill,
-                            formData.category === cat && styles.activeOptionPill,
-                          ]}
-                          onPress={() => setFormData({ ...formData, category: cat })}
-                        >
-                          <Text
+                  <Text style={styles.formLabel}>ASSIGN TO TRIP / TRIP TITLE *</Text>
+                  <TextInput
+                    style={styles.formInput}
+                    placeholder="Select from below or type custom trip title (e.g. Naran Kaghan Expedition)"
+                    placeholderTextColor="#94A3B8"
+                    value={formData.tripTitle}
+                    onChangeText={(t) => setFormData({ ...formData, tripTitle: t, category: t.toUpperCase() })}
+                  />
+                  {tripTitles.length > 0 && (
+                    <View style={{ marginTop: 8 }}>
+                      <Text style={[styles.formLabel, { fontSize: 11, marginBottom: 6, color: '#64748B' }]}>
+                        OR QUICK SELECT FROM TRIPS:
+                      </Text>
+                      <View style={styles.optionPillRow}>
+                        {tripTitles.map((tripName: string) => (
+                          <TouchableOpacity
+                            key={tripName}
                             style={[
-                              styles.optionPillText,
-                              formData.category === cat && styles.activeOptionPillText,
+                              styles.optionPill,
+                              formData.tripTitle.toLowerCase() === tripName.toLowerCase() && styles.activeOptionPill,
                             ]}
+                            onPress={() => setFormData({ ...formData, tripTitle: tripName, category: tripName.toUpperCase() })}
                           >
-                            {cat}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                  </View>
+                            <Text
+                              style={[
+                                styles.optionPillText,
+                                formData.tripTitle.toLowerCase() === tripName.toLowerCase() && styles.activeOptionPillText,
+                              ]}
+                            >
+                              {tripName}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+                  )}
                 </View>
 
                 {/* Upload Image From Device Option */}

@@ -65,6 +65,13 @@ if (fs.existsSync(indexHtmlPath)) {
     console.log(`✓ Injected font preload for ${relPath}`);
   }
 
+  // Ensure Google AdSense is present in <head>
+  const adsenseTag = '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2597803188750818" crossorigin="anonymous"></script>';
+  if (!content.includes('ca-pub-2597803188750818')) {
+    content = content.replace('<head>', `<head>\n    ${adsenseTag}`);
+    console.log('✓ Injected Google AdSense script into <head>');
+  }
+
   // Inject font-display: swap and preloads before </head>
   const headInject = `
     ${fontPreloadTag}
