@@ -25,7 +25,6 @@ const linking = {
       About: "about",
       BrowseTrips: "trips",
       Gallery: "gallery",
-      Map: "map",
       Sponsors: "sponsors",
       Contact: "contact",
       Login: "login",

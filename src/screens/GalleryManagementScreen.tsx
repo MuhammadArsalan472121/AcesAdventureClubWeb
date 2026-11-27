@@ -49,17 +49,21 @@ export default function GalleryManagementScreen() {
     uploadedFileSize: '',
   });
 
-  const tripTitles = Array.from(
-    new Set((trips || []).map((t: any) => (t.title ? String(t.title).trim() : '')).filter(Boolean))
-  );
-  const otherCategories = Array.from(
-    new Set(
-      (gallery || [])
-        .map((g: any) => String(g.tripTitle || g.category || '').trim())
-        .filter((c: string) => c && !tripTitles.some((t: string) => t.toLowerCase() === c.toLowerCase()))
+  const tripTitles: string[] = Array.from(
+    new Set<string>(
+      (trips || [])
+        .map((t: any) => (t && t.title ? String(t.title).trim() : ''))
+        .filter((t: string): t is string => Boolean(t))
     )
   );
-  const categories = ['ALL', ...tripTitles, ...otherCategories];
+  const otherCategories: string[] = Array.from(
+    new Set<string>(
+      (gallery || [])
+        .map((g: any) => String(g?.tripTitle || g?.category || '').trim())
+        .filter((c: string): c is string => Boolean(c) && !tripTitles.some((t: string) => t.toLowerCase() === c.toLowerCase()))
+    )
+  );
+  const categories: string[] = ['ALL', ...tripTitles, ...otherCategories];
 
   const handleUploadFromDevice = async () => {
     try {
@@ -79,7 +83,7 @@ export default function GalleryManagementScreen() {
 
   const handleOpenAdd = () => {
     setEditingItemId(null);
-    const initialTrip = selectedCategory !== 'ALL' ? selectedCategory : (tripTitles[0] || 'General Adventure');
+    const initialTrip: string = selectedCategory !== 'ALL' ? selectedCategory : (tripTitles[0] || 'General Adventure');
     setFormData({
       title: '',
       tripTitle: initialTrip,
@@ -174,7 +178,7 @@ export default function GalleryManagementScreen() {
 
           {/* Category Filter Pills */}
           <View style={styles.categoryRow}>
-            {categories.map((cat) => (
+            {categories.map((cat: string) => (
               <Pressable
                 key={cat}
                 style={[

@@ -932,10 +932,10 @@ export const DataProvider = ({ children }) => {
             const resolvedStatus = isSuperAdminUser
               ? "ACTIVE"
               : rawStatus === "INACTIVE"
-              ? "INACTIVE"
-              : isVerified
-              ? "VERIFIED"
-              : normalizeStatus(data.status);
+                ? "INACTIVE"
+                : isVerified
+                  ? "VERIFIED"
+                  : normalizeStatus(data.status);
 
             return {
               id: docSnap.id,

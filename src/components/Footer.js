@@ -139,10 +139,6 @@ export default function Footer() {
         {/* EXPLORE */}
         <View style={styles.linkColumn}>
           <Text style={styles.columnTitle}>Explore</Text>
-          <TouchableOpacity style={styles.linkRow} onPress={() => navigateTo("Map")}>
-            <Ionicons name="chevron-forward" size={14} color="#0B5CAD" />
-            <Text style={styles.linkText}>Route Explorer Map</Text>
-          </TouchableOpacity>
           <TouchableOpacity style={styles.linkRow} onPress={() => navigateTo("Sponsors")}>
             <Ionicons name="chevron-forward" size={14} color="#0B5CAD" />
             <Text style={styles.linkText}>Our Partners</Text>

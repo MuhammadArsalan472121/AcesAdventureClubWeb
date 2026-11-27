@@ -5,7 +5,6 @@ import HomeScreen from "../screens/Homescreen";
 import AboutScreen from "../screens/AboutScreen";
 import ExploreTripsScreen from "../screens/ExploreTripsScreen";
 import GalleryScreen from "../screens/GalleryScreen";
-import MapScreen from "../screens/MapScreen";
 import PartnerScreen from "../screens/SponseredScreen";
 import ContactScreen from "../screens/ContactScreen";
 import LoginScreen from "../screens/LoginScreen";
@@ -44,7 +43,6 @@ export default function AppNavigator() {
       <Stack.Screen name="About" component={AboutScreen} />
       <Stack.Screen name="BrowseTrips" component={ExploreTripsScreen} />
       <Stack.Screen name="Gallery" component={GalleryScreen} />
-      <Stack.Screen name="Map" component={MapScreen} />
       <Stack.Screen name="Sponsors" component={PartnerScreen} />
       <Stack.Screen name="Contact" component={ContactScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
