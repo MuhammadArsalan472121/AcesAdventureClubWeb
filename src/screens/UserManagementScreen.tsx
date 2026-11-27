@@ -177,10 +177,10 @@ export default function UserManagementScreen() {
         const finalStatus = isTargetSuper
           ? 'ACTIVE'
           : formData.status === 'INACTIVE'
-          ? 'INACTIVE'
-          : isUserVerified
-          ? 'VERIFIED'
-          : formData.status || 'ACTIVE';
+            ? 'INACTIVE'
+            : isUserVerified
+              ? 'VERIFIED'
+              : formData.status || 'ACTIVE';
 
         const updatePayload: any = {
           name: formData.name.trim(),

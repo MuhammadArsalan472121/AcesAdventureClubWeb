@@ -1,22 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useEffect, useState } from 'react';
 import {
   Image,
   Linking,
   Modal,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
-import Ionicons from '@expo/vector-icons/Ionicons';
 
 import Sidebar from '../components/Sidebar';
 import TopBar from '../components/TopBar';
-import { useData, resolveAsset } from '../context/DataContext';
+import { resolveAsset, useData } from '../context/DataContext';
 
 const PRESET_GUIDE_IMAGES = [
   { key: 'guide1.jpg', label: 'Guide 1 (Marcus)' },
@@ -1034,8 +1033,8 @@ export default function ConsoleSettingsScreen() {
                             inq.status === 'NEW'
                               ? styles.inqStatusNew
                               : inq.status === 'CONTACTED'
-                              ? styles.inqStatusContacted
-                              : styles.inqStatusResolved,
+                                ? styles.inqStatusContacted
+                                : styles.inqStatusResolved,
                           ]}>
                             <Text style={styles.inqStatusText}>{inq.status}</Text>
                           </View>

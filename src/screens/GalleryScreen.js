@@ -6,7 +6,6 @@ import {
   Image,
   ImageBackground,
   Linking,
-  Modal,
   Platform,
   SafeAreaView,
   ScrollView,
@@ -23,8 +22,7 @@ import useResponsive from "../hooks/useResponsive";
 import {
   animateCards,
   animateHero,
-  animateModal,
-  animateSection,
+  animateSection
 } from "../utils/animations";
 
 const { height, width } = Dimensions.get("window");
@@ -33,7 +31,6 @@ export default function GalleryScreen() {
   const navigation = useNavigation();
   const { gallery = [], trips = [], contactContent, socialLinks } = useData();
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [lightboxIndex, setLightboxIndex] = useState(null);
 
   const handleOpenWhatsAppChat = () => {
     const rawNumber = contactContent?.whatsapp || socialLinks?.whatsapp || "+923121578099";
@@ -84,59 +81,18 @@ export default function GalleryScreen() {
   const filteredGallery = isAllSelected
     ? (gallery || [])
     : (gallery || []).filter((item) => {
-        if (!item) return false;
-        const target = selectedCategory.trim().toLowerCase();
-        const itemTrip = (item.tripTitle || "").trim().toLowerCase();
-        const itemCat = (item.category || "").trim().toLowerCase();
-        const itemTitle = (item.title || "").trim().toLowerCase();
-        return itemTrip === target || itemCat === target || itemTitle.includes(target);
-      });
+      if (!item) return false;
+      const target = selectedCategory.trim().toLowerCase();
+      const itemTrip = (item.tripTitle || "").trim().toLowerCase();
+      const itemCat = (item.category || "").trim().toLowerCase();
+      const itemTitle = (item.title || "").trim().toLowerCase();
+      return itemTrip === target || itemCat === target || itemTitle.includes(target);
+    });
 
-  const currentLightboxItem = lightboxIndex !== null ? filteredGallery[lightboxIndex] : null;
-
-  const handleOpenLightbox = (index) => {
-    setLightboxIndex(index);
-    if (Platform.OS === "web") {
-      setTimeout(() => {
-        animateModal(".gsap-lightbox-modal");
-      }, 40);
-    }
-  };
-
-  const handleCloseLightbox = () => {
-    setLightboxIndex(null);
-  };
-
-  const handlePrevImage = (e) => {
-    if (e && e.stopPropagation) e.stopPropagation();
-    if (lightboxIndex !== null && filteredGallery.length > 0) {
-      setLightboxIndex((prev) => (prev > 0 ? prev - 1 : filteredGallery.length - 1));
-    }
-  };
-
-  const handleNextImage = (e) => {
-    if (e && e.stopPropagation) e.stopPropagation();
-    if (lightboxIndex !== null && filteredGallery.length > 0) {
-      setLightboxIndex((prev) => (prev < filteredGallery.length - 1 ? prev + 1 : 0));
-    }
-  };
-
-  // Keyboard navigation for desktop web (Esc to close, left/right arrows)
-  useEffect(() => {
-    if (Platform.OS !== "web" || typeof window === "undefined") return;
-    const handleKeyDown = (e) => {
-      if (lightboxIndex === null) return;
-      if (e.key === "Escape") {
-        handleCloseLightbox();
-      } else if (e.key === "ArrowLeft") {
-        handlePrevImage();
-      } else if (e.key === "ArrowRight") {
-        handleNextImage();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [lightboxIndex, filteredGallery]);
+  // Distribute items across 3 columns for desktop masonry
+  const col1 = filteredGallery.filter((_, idx) => idx % 3 === 0);
+  const col2 = filteredGallery.filter((_, idx) => idx % 3 === 1);
+  const col3 = filteredGallery.filter((_, idx) => idx % 3 === 2);
 
   const signatureDestinations = trips.slice(0, 3);
 
@@ -233,49 +189,53 @@ export default function GalleryScreen() {
                   <Text style={styles.emptyResetBtnText}>View All Photos ({gallery.length})</Text>
                 </TouchableOpacity>
               </View>
-            ) : (
-              <View style={styles.uniformGalleryGrid}>
-                {filteredGallery.map((item, index) => (
-                  <TouchableOpacity
-                    key={item.id || index}
-                    className="gsap-gallery-card interactive-card"
-                    style={[
-                      styles.uniformImageCard,
-                      isDesktop
-                        ? { width: "31.8%" }
-                        : isTablet
-                        ? { width: "48%" }
-                        : { width: "100%" },
-                    ]}
-                    onPress={() => handleOpenLightbox(index)}
-                    activeOpacity={0.92}
-                  >
-                    <Image
-                      source={resolveAsset(item.imageKey, "gallery1.jpg")}
-                      style={styles.uniformGalleryImage}
-                      resizeMode="cover"
-                    />
-
-                    {/* Gradient Overlay & Hover Actions */}
-                    <View style={styles.imageOverlayGradient}>
-                      <View style={styles.topActionBadge}>
-                        <Ionicons name="expand-outline" size={16} color="#FFFFFF" />
-                      </View>
-
-                      <View style={styles.bottomCardInfo}>
-                        <View style={styles.imageTagOverlay}>
-                          <Text style={styles.imageTagText}>
-                            {item.tripTitle || item.category || "Trip Photo"}
-                          </Text>
-                        </View>
-                        {item.title ? (
-                          <Text style={styles.cardImageTitle} numberOfLines={1}>
-                            {item.title}
-                          </Text>
-                        ) : null}
+            ) : isDesktop ? (
+              <View style={[styles.masonryGrid, { flexDirection: "row", justifyContent: "space-between" }]}>
+                {/* Column 1 */}
+                <View style={[styles.masonryColumn, { width: "32%" }]}>
+                  {col1.map((item) => (
+                    <View key={item.id} className="gsap-gallery-card interactive-card" style={styles.imageCardContainer}>
+                      <Image source={resolveAsset(item.imageKey, "gallery1.jpg")} style={[styles.galleryImage, { height: item.height || 260 }]} />
+                      <View style={styles.imageTagOverlay}>
+                        <Text style={styles.imageTagText}>{item.tripTitle || item.category || "Trip Photo"}</Text>
                       </View>
                     </View>
-                  </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Column 2 */}
+                <View style={[styles.masonryColumn, { width: "32%" }]}>
+                  {col2.map((item) => (
+                    <View key={item.id} className="gsap-gallery-card interactive-card" style={styles.imageCardContainer}>
+                      <Image source={resolveAsset(item.imageKey, "gallery2.jpg")} style={[styles.galleryImage, { height: item.height || 220 }]} />
+                      <View style={styles.imageTagOverlay}>
+                        <Text style={styles.imageTagText}>{item.tripTitle || item.category || "Trip Photo"}</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+
+                {/* Column 3 */}
+                <View style={[styles.masonryColumn, { width: "32%" }]}>
+                  {col3.map((item) => (
+                    <View key={item.id} className="gsap-gallery-card interactive-card" style={styles.imageCardContainer}>
+                      <Image source={resolveAsset(item.imageKey, "gallery3.jpg")} style={[styles.galleryImage, { height: item.height || 280 }]} />
+                      <View style={styles.imageTagOverlay}>
+                        <Text style={styles.imageTagText}>{item.tripTitle || item.category || "Trip Photo"}</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ) : (
+              <View style={styles.mobileGridContainer}>
+                {filteredGallery.map((item) => (
+                  <View key={item.id} className="gsap-gallery-card interactive-card" style={[styles.mobileImageCard, isTablet && { width: "48%" }]}>
+                    <Image source={resolveAsset(item.imageKey, "gallery1.jpg")} style={styles.mobileGalleryImage} />
+                    <View style={styles.imageTagOverlay}>
+                      <Text style={styles.imageTagText}>{item.tripTitle || item.category || "Trip Photo"}</Text>
+                    </View>
+                  </View>
                 ))}
               </View>
             )}
@@ -395,98 +355,6 @@ export default function GalleryScreen() {
         {/* ================= FOOTER ================= */}
         <Footer />
       </ScrollView>
-
-      {/* ================= ANIMATED FULL-SIZE POPUP LIGHTBOX ================= */}
-      {lightboxIndex !== null && currentLightboxItem && (
-        <Modal
-          visible={lightboxIndex !== null}
-          transparent
-          animationType="fade"
-          onRequestClose={handleCloseLightbox}
-        >
-          <View style={styles.lightboxBackdrop}>
-            {/* Background click to dismiss */}
-            <TouchableOpacity
-              style={styles.lightboxBackdropDismiss}
-              activeOpacity={1}
-              onPress={handleCloseLightbox}
-            />
-
-            {/* Lightbox Content Container */}
-            <View
-              className="gsap-lightbox-modal"
-              style={[
-                styles.lightboxContainer,
-                {
-                  maxWidth: isDesktop ? 960 : "94%",
-                  maxHeight: isDesktop ? "90%" : "94%",
-                },
-              ]}
-            >
-              {/* Top Header Bar with trip badge, counter & close button */}
-              <View style={styles.lightboxHeader}>
-                <View style={styles.lightboxBadgeGroup}>
-                  <View style={styles.lightboxTripBadge}>
-                    <Ionicons name="location-outline" size={14} color="#38BDF8" style={{ marginRight: 6 }} />
-                    <Text style={styles.lightboxTripText}>
-                      {currentLightboxItem.tripTitle || currentLightboxItem.category || "Expedition Photo"}
-                    </Text>
-                  </View>
-                  <Text style={styles.lightboxCounter}>
-                    {lightboxIndex + 1} / {filteredGallery.length}
-                  </Text>
-                </View>
-
-                <TouchableOpacity
-                  style={styles.lightboxCloseBtn}
-                  onPress={handleCloseLightbox}
-                  activeOpacity={0.8}
-                >
-                  <Ionicons name="close" size={24} color="#FFFFFF" />
-                </TouchableOpacity>
-              </View>
-
-              {/* Center Image Display with Next & Prev buttons */}
-              <View style={[styles.lightboxImageWrapper, { height: isDesktop ? 540 : isTablet ? 420 : 320 }]}>
-                {filteredGallery.length > 1 && (
-                  <TouchableOpacity
-                    style={[styles.lightboxNavBtn, styles.lightboxPrevBtn]}
-                    onPress={handlePrevImage}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons name="chevron-back" size={26} color="#FFFFFF" />
-                  </TouchableOpacity>
-                )}
-
-                <Image
-                  source={resolveAsset(currentLightboxItem.imageKey, "gallery1.jpg")}
-                  style={styles.lightboxFullImage}
-                  resizeMode="contain"
-                />
-
-                {filteredGallery.length > 1 && (
-                  <TouchableOpacity
-                    style={[styles.lightboxNavBtn, styles.lightboxNextBtn]}
-                    onPress={handleNextImage}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons name="chevron-forward" size={26} color="#FFFFFF" />
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              {/* Bottom Caption Bar */}
-              {currentLightboxItem.title ? (
-                <View style={styles.lightboxFooter}>
-                  <Text style={styles.lightboxTitleText}>
-                    {currentLightboxItem.title}
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-          </View>
-        </Modal>
-      )}
     </SafeAreaView>
   );
 }
@@ -687,205 +555,65 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
-  /* UNIFORM GALLERY GRID */
+  /* MASONRY GALLERY GRID */
   galleryGridWrapper: {},
 
   gallerySection: {},
 
-  uniformGalleryGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 20,
-    justifyContent: "flex-start",
+  masonryGrid: {
+    gap: 16,
   },
 
-  uniformImageCard: {
-    height: 280,
+  masonryColumn: {
+    flexDirection: "column",
+    gap: 16,
+  },
+
+  imageCardContainer: {
+    position: "relative",
+    marginBottom: 16,
     borderRadius: 20,
     overflow: "hidden",
-    position: "relative",
-    backgroundColor: "#E2E8F0",
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 14,
-    elevation: 4,
-    cursor: "pointer",
   },
 
-  uniformGalleryImage: {
+  galleryImage: {
     width: "100%",
-    height: "100%",
-  },
-
-  imageOverlayGradient: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(15, 23, 42, 0.22)",
-    justifyContent: "space-between",
-    padding: 14,
-  },
-
-  topActionBadge: {
-    alignSelf: "flex-end",
-    backgroundColor: "rgba(15, 23, 42, 0.65)",
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.25)",
-  },
-
-  bottomCardInfo: {
-    gap: 6,
+    borderRadius: 20,
+    resizeMode: "cover",
   },
 
   imageTagOverlay: {
-    alignSelf: "flex-start",
-    backgroundColor: "rgba(11, 92, 173, 0.88)",
+    position: "absolute",
+    bottom: 12,
+    left: 12,
+    backgroundColor: "rgba(15, 23, 42, 0.65)",
     paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 12,
+    paddingVertical: 4,
+    borderRadius: 14,
   },
 
   imageTagText: {
     color: "#FFFFFF",
     fontSize: 11,
     fontWeight: "700",
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
 
-  cardImageTitle: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "700",
-    textShadowColor: "rgba(0, 0, 0, 0.8)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+  mobileGridContainer: {
+    gap: 16,
   },
 
-  /* LIGHTBOX MODAL STYLES */
-  lightboxBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(10, 15, 30, 0.94)",
-    justifyContent: "center",
-    alignItems: "center",
+  mobileImageCard: {
     position: "relative",
-  },
-
-  lightboxBackdropDismiss: {
-    ...StyleSheet.absoluteFillObject,
-  },
-
-  lightboxContainer: {
-    width: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 10,
-  },
-
-  lightboxHeader: {
-    width: "100%",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginBottom: 8,
-  },
-
-  lightboxBadgeGroup: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-
-  lightboxTripBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.12)",
-    paddingHorizontal: 14,
-    paddingVertical: 6,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.25)",
+    overflow: "hidden",
+    marginBottom: 16,
   },
 
-  lightboxTripText: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "700",
-  },
-
-  lightboxCounter: {
-    color: "#94A3B8",
-    fontSize: 13,
-    fontWeight: "600",
-  },
-
-  lightboxCloseBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.25)",
-    cursor: "pointer",
-  },
-
-  lightboxImageWrapper: {
+  mobileGalleryImage: {
     width: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
-  },
-
-  lightboxFullImage: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 16,
-  },
-
-  lightboxNavBtn: {
-    position: "absolute",
-    top: "50%",
-    transform: [{ translateY: -24 }],
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "rgba(15, 23, 42, 0.75)",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.3)",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 20,
-    cursor: "pointer",
-  },
-
-  lightboxPrevBtn: {
-    left: 14,
-  },
-
-  lightboxNextBtn: {
-    right: 14,
-  },
-
-  lightboxFooter: {
-    marginTop: 14,
-    width: "100%",
-    paddingHorizontal: 16,
-    alignItems: "center",
-  },
-
-  lightboxTitleText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
-    textAlign: "center",
-    letterSpacing: 0.4,
+    height: 240,
+    borderRadius: 20,
   },
 
   /* SIGNATURE DESTINATIONS */
